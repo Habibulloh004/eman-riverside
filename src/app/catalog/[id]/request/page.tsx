@@ -3,12 +3,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Header, Footer } from "@/components/sections";
 import { PageHero } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MapPin, Phone, Mail, ChevronLeft } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { MapPin, Phone, Mail, Check, Plus, Minus } from "lucide-react";
 
 // Apartment data (same as catalog)
 const apartments = [
@@ -74,32 +75,92 @@ const apartments = [
   },
 ];
 
-// Footer links
-const footerLinks = {
-  about: [
-    { label: "О Комплексе", href: "/about" },
-    { label: "Локация", href: "/location" },
-    { label: "Галерея", href: "/#gallery" },
-  ],
-  buyers: [
-    { label: "Каталог", href: "/catalog" },
-    { label: "Условия покупки", href: "/payment" },
-    { label: "Ход строительства", href: "/construction" },
-  ],
-};
+// Purchase steps with icons
+const purchaseSteps = [
+  {
+    icon: "building",
+    title: "Процесс Покупки 1",
+    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.",
+  },
+  {
+    icon: "grid",
+    title: "Процесс Покупки 2",
+    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.",
+  },
+  {
+    icon: "document",
+    title: "Процесс Покупки 3",
+    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.",
+  },
+];
+
+// Payment options
+const paymentOptions = [
+  {
+    title: "Ипотека",
+    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.",
+    price: "1 млн сум",
+    priceNote: "в Месяц.",
+    color: "primary",
+    buttonText: "Узнать подробнее",
+    buttonFilled: true,
+    features: [
+      "Lorem ipsum dolor sit amet,",
+      "Lorem ipsum dolor sit amet,",
+      "Lorem ipsum dolor sit amet,",
+      "Lorem ipsum dolor sit amet,",
+      "Lorem ipsum dolor sit amet,",
+      "Lorem ipsum dolor sit amet,",
+      "Lorem ipsum dolor sit amet,",
+      "Lorem ipsum dolor sit amet,",
+    ],
+  },
+  {
+    title: "Рассрочка",
+    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.",
+    price: "2 млн сум",
+    priceNote: "в Месяц.",
+    color: "white",
+    buttonText: "Узнать подробнее",
+    buttonFilled: false,
+    features: [
+      "Lorem ipsum dolor sit amet,",
+      "Lorem ipsum dolor sit amet,",
+      "Lorem ipsum dolor sit amet,",
+      "Lorem ipsum dolor sit amet,",
+      "Lorem ipsum dolor sit amet,",
+      "Lorem ipsum dolor sit amet,",
+      "Lorem ipsum dolor sit amet,",
+      "Lorem ipsum dolor sit amet,",
+    ],
+  },
+];
+
+// FAQ items
+const faqItems = [
+  {
+    question: "Вопрос 1",
+    answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.",
+  },
+  { question: "Вопрос 2", answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
+  { question: "Вопрос 3", answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
+  { question: "Вопрос 4", answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
+  { question: "Вопрос 5", answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
+];
 
 export default function ApartmentRequestPage() {
   const params = useParams();
-  const router = useRouter();
   const apartmentId = Number(params.id);
   const apartment = apartments.find((a) => a.id === apartmentId);
 
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
+    comment: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   if (!apartment) {
     return (
@@ -121,10 +182,7 @@ export default function ApartmentRequestPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
-    // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1500));
-
     setIsSubmitting(false);
     setIsSuccess(true);
   };
@@ -139,18 +197,15 @@ export default function ApartmentRequestPage() {
             subtitle="СПАСИБО ЗА ОБРАЩЕНИЕ"
             image="/images/hero/1.png"
           />
-
           <section className="py-16 lg:py-24">
             <div className="container mx-auto px-4 lg:px-8">
               <div className="max-w-md mx-auto text-center">
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-10 h-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <Check className="w-10 h-10 text-green-500" />
                 </div>
                 <h2 className="text-2xl font-serif mb-4">Ваша заявка принята!</h2>
                 <p className="text-gray-600 mb-8">
-                  Наш менеджер свяжется с вами в ближайшее время для уточнения деталей по квартире "{apartment.name}"
+                  Наш менеджер свяжется с вами в ближайшее время для уточнения деталей по квартире &quot;{apartment.name}&quot;
                 </p>
                 <div className="flex gap-4 justify-center">
                   <Button asChild>
@@ -174,67 +229,276 @@ export default function ApartmentRequestPage() {
       <Header />
       <main>
         <PageHero
-          title="Оставить заявку"
-          subtitle={`ЗАЯВКА НА КВАРТИРУ ${apartment.name.toUpperCase()}`}
+          title="Схема покупки"
+          subtitle="СХЕМА ПОКУПКИ КВАРТИРЫ EMAN RIVERSIDE"
           image="/images/hero/1.png"
         />
 
-        {/* Request Form Section */}
-        <section className="py-10 lg:py-14 bg-beige">
+        {/* Purchase Steps */}
+        <section className="relative py-16 lg:py-24 bg-[#F5ECE4] overflow-hidden">
+          {/* Background image */}
+          <div className="absolute inset-0 z-0">
+            <Image
+              src="/images/hero/1.png"
+              alt=""
+              fill
+              className="object-cover opacity-[0.03]"
+            />
+          </div>
+
+          <div className="container mx-auto px-4 lg:px-8 relative z-10">
+            <div className="grid md:grid-cols-3 gap-8 lg:gap-16 relative">
+              {purchaseSteps.map((step, idx) => (
+                <div key={idx} className="text-center relative">
+                  {/* Icon */}
+                  <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-white shadow-sm flex items-center justify-center mx-auto mb-6">
+                    {step.icon === "building" && (
+                      <svg className="w-8 h-8 lg:w-10 lg:h-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    )}
+                    {step.icon === "grid" && (
+                      <svg className="w-8 h-8 lg:w-10 lg:h-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                      </svg>
+                    )}
+                    {step.icon === "document" && (
+                      <svg className="w-8 h-8 lg:w-10 lg:h-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    )}
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-900 mb-3">{step.title}</h3>
+                  <p className="text-xs text-gray-500 leading-relaxed max-w-xs mx-auto">{step.description}</p>
+                </div>
+              ))}
+
+              {/* First curved arrow - between step 1 and 2 */}
+              <div className="hidden md:block absolute top-6 lg:top-8 left-[22%] w-[22%] pointer-events-none">
+                <Image
+                  src="/images/catalog/Arc 1.svg"
+                  alt=""
+                  width={340}
+                  height={30}
+                  className="w-full h-auto"
+                />
+              </div>
+
+              {/* Second curved arrow - between step 2 and 3 */}
+              <div className="hidden md:block absolute top-6 lg:top-8 right-[22%] w-[22%] pointer-events-none">
+                <Image
+                  src="/images/catalog/Arc 2.svg"
+                  alt=""
+                  width={340}
+                  height={30}
+                  className="w-full h-auto"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Payment Conditions */}
+        <section className="relative py-16 lg:py-24 bg-[#F5ECE4] overflow-hidden">
+          {/* Background image */}
+          <div className="absolute inset-0 z-0">
+            <Image
+              src="/images/hero/1.png"
+              alt=""
+              fill
+              className="object-cover opacity-[0.03]"
+            />
+          </div>
+
+          <div className="container mx-auto px-4 lg:px-8 relative z-10">
+            <h2 className="text-2xl lg:text-3xl font-serif text-center mb-12">Условия:</h2>
+
+            <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+              {paymentOptions.map((option, idx) => (
+                <div
+                  key={idx}
+                  className={`rounded-xl p-8 ${
+                    option.color === "primary" ? "bg-primary text-white" : "bg-white border border-gray-200"
+                  }`}
+                >
+                  {/* Title and Description */}
+                  <div className="mb-6">
+                    <h3 className={`font-semibold text-lg mb-2 ${option.color === "primary" ? "text-yellow-300" : "text-yellow-600"}`}>
+                      {option.title}
+                    </h3>
+                    <p className={`text-xs leading-relaxed ${option.color === "primary" ? "text-white/70" : "text-gray-500"}`}>
+                      {option.description}
+                    </p>
+                  </div>
+
+                  {/* Price */}
+                  <div className="mb-6">
+                    <span className="text-3xl lg:text-4xl font-bold">{option.price}</span>
+                    <span className={`text-sm ml-2 ${option.color === "primary" ? "text-white/70" : "text-gray-500"}`}>
+                      {option.priceNote}
+                    </span>
+                  </div>
+
+                  {/* Button */}
+                  <button
+                    className={`w-full py-3 px-4 rounded-lg text-sm font-medium mb-6 transition-colors ${
+                      option.buttonFilled
+                        ? "bg-white text-primary hover:bg-gray-100"
+                        : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    {option.buttonText}
+                  </button>
+
+                  {/* Features */}
+                  <ul className="space-y-3">
+                    {option.features.map((feature, fIdx) => (
+                      <li key={fIdx} className="flex items-start gap-3 text-sm">
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                          option.color === "primary" ? "bg-white/20" : "bg-primary/10"
+                        }`}>
+                          <Check className={`w-3 h-3 ${option.color === "primary" ? "text-white" : "text-primary"}`} />
+                        </div>
+                        <span className={option.color === "primary" ? "text-white/90" : "text-gray-600"}>
+                          {feature}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section className="py-16 lg:py-24 bg-[#F5ECE4]">
           <div className="container mx-auto px-4 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <h2 className="text-2xl lg:text-3xl font-serif text-center mb-12">FAQ</h2>
+
+            <div className="flex flex-col md:flex-row gap-4 max-w-5xl mx-auto">
+              {/* Left column */}
+              <div className="flex-1 flex flex-col gap-4">
+                {faqItems.filter((_, idx) => idx % 2 === 0).map((item) => {
+                  const idx = faqItems.indexOf(item);
+                  return (
+                    <div
+                      key={idx}
+                      className={`bg-white rounded-2xl transition-all shadow-sm ${
+                        openFaq === idx ? "ring-2 ring-primary" : ""
+                      }`}
+                    >
+                      <button
+                        onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                        className="w-full p-5 flex items-start gap-4 text-left"
+                      >
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                          openFaq === idx ? "bg-primary text-white" : "bg-gray-100 text-gray-400"
+                        }`}>
+                          {openFaq === idx ? (
+                            <Minus className="w-4 h-4" />
+                          ) : (
+                            <Plus className="w-4 h-4" />
+                          )}
+                        </div>
+                        <div className="flex-1 pt-1">
+                          <span className="font-medium text-gray-900">{item.question}</span>
+                          {openFaq === idx && (
+                            <p className="text-sm text-gray-500 mt-4 leading-relaxed">{item.answer}</p>
+                          )}
+                        </div>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Right column */}
+              <div className="flex-1 flex flex-col gap-4">
+                {faqItems.filter((_, idx) => idx % 2 === 1).map((item) => {
+                  const idx = faqItems.indexOf(item);
+                  return (
+                    <div
+                      key={idx}
+                      className={`bg-white rounded-2xl transition-all shadow-sm ${
+                        openFaq === idx ? "ring-2 ring-primary" : ""
+                      }`}
+                    >
+                      <button
+                        onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                        className="w-full p-5 flex items-start gap-4 text-left"
+                      >
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                          openFaq === idx ? "bg-primary text-white" : "bg-gray-100 text-gray-400"
+                        }`}>
+                          {openFaq === idx ? (
+                            <Minus className="w-4 h-4" />
+                          ) : (
+                            <Plus className="w-4 h-4" />
+                          )}
+                        </div>
+                        <div className="flex-1 pt-1">
+                          <span className="font-medium text-gray-900">{item.question}</span>
+                          {openFaq === idx && (
+                            <p className="text-sm text-gray-500 mt-4 leading-relaxed">{item.answer}</p>
+                          )}
+                        </div>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Contact Form Section */}
+        <section className="py-16 lg:py-24 bg-[#F5ECE4]">
+          <div className="container mx-auto px-4 lg:px-8">
+            <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
               {/* Left - Contact Info & Map */}
               <div>
-                <p className="text-xs text-muted-foreground mb-4 uppercase tracking-wide">
-                  ЗАПИШИТЕ ЗВОНОК ЧТОБЫ УЗНАТЬ ПОДРОБНУЮ ИНФОРМАЦИЮ ПО ВСЕМ ВОПРОСАМ.
-                  МЕНЕДЖЕР НАШЕГО ОТДЕЛА ПРОДАЖ СВЯЖЕТСЯ С ВАМИ.
+                <p className="text-xs text-gray-500 mb-6 uppercase tracking-wide leading-relaxed">
+                  ВОПРОСЫ, КОММЕНТАРИИ ИЛИ ПРЕДЛОЖЕНИЯ?<br />
+                  ПРОСТО ЗАПОЛНИТЕ ФОРМУ, И МЫ СКОРО С ВАМИ СВЯЖЕМСЯ.
                 </p>
 
-                <div className="space-y-2 mb-5">
-                  <div className="flex items-center gap-2">
+                <div className="space-y-3 mb-8">
+                  <div className="flex items-center gap-3">
                     <MapPin className="w-4 h-4 text-primary" />
-                    <span className="text-sm">Город Ташкент Мирзо Улугбек район</span>
+                    <span className="text-sm text-gray-700 underline">Город Ташкент, Улица Богича, Дом №1</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <Phone className="w-4 h-4 text-primary" />
-                    <span className="text-sm">+998 90 070 09 98</span>
+                    <span className="text-sm text-gray-700 underline">+998 99 999-99-99</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <Mail className="w-4 h-4 text-primary" />
-                    <span className="text-sm">info@emanriverside.uz</span>
+                    <span className="text-sm text-gray-700 underline">Emanriverside@gmail.com</span>
                   </div>
                 </div>
 
                 {/* Map */}
-                <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-200">
-                  <Image
-                    src="/images/hero/1.png"
-                    alt="Карта"
-                    fill
-                    className="object-cover"
+                <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-muted shadow-lg">
+                  <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d47980.98675893856!2d69.21992457431642!3d41.31147339999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38ae8b0cc379e9c3%3A0xa5a9323b4aa5cb98!2sTashkent%2C%20Uzbekistan!5e0!3m2!1sen!2s!4v1703955000000!5m2!1sen!2s"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="absolute inset-0"
                   />
-                </div>
-
-                {/* Apartment Info Card */}
-                <div className="mt-6 p-4 bg-white rounded-lg border">
-                  <p className="text-xs text-gray-500 mb-2">Выбранная квартира:</p>
-                  <div className="flex gap-4">
-                    <div className="relative w-20 h-20 bg-gray-100 rounded overflow-hidden shrink-0">
+                  {/* Map Pin Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="bg-primary p-3 rounded-lg shadow-lg">
                       <Image
-                        src={apartment.image}
-                        alt={apartment.name}
-                        fill
-                        className="object-contain p-1"
+                        src="/logo.svg"
+                        alt="EMAN RIVERSIDE"
+                        width={60}
+                        height={30}
+                        className="h-6 w-auto brightness-0 invert"
                       />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">{apartment.name}</h4>
-                      <p className="text-xs text-gray-500">
-                        {apartment.rooms} комн. • {apartment.area} м² • {apartment.floor} этаж
-                      </p>
-                      <p className="text-primary font-bold mt-1">
-                        ${apartment.price.toLocaleString()}
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -242,107 +506,54 @@ export default function ApartmentRequestPage() {
 
               {/* Right - Contact Form */}
               <div>
-                <h3 className="text-xl font-serif mb-1 uppercase">
-                  НАЙДИТЕ СЕБЕ КВАРТИРУ МЕЧТЫ
+                <h3 className="text-2xl lg:text-3xl font-serif mb-2">
+                  НАЙДИТЕ СЕБЕ КВАРТИРУ МЕЧТЫ!
                 </h3>
-                <p className="text-xs text-muted-foreground mb-5">
-                  Заполните форму и наш менеджер свяжется с вами
+                <p className="text-xs text-gray-500 mb-8 uppercase tracking-wide">
+                  ЗАПОЛНИТЕ ФОРМУ И НАШИ МЕНЕДЖЕРЫ СВЯЖУТСЯ С ВАМИ
                 </p>
 
-                <form onSubmit={handleSubmit} className="space-y-3">
-                  <Input
-                    type="text"
-                    placeholder="Ваше Имя"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                    className="bg-white border-gray-200 h-10"
-                  />
-                  <Input
-                    type="tel"
-                    placeholder="Номер телефона"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    required
-                    className="bg-white border-gray-200 h-10"
-                  />
-                  <Button
-                    type="submit"
-                    className="w-full bg-primary hover:bg-primary/90 h-10"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Отправка..." : "ОТПРАВИТЬ"}
-                  </Button>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Input
+                        type="text"
+                        placeholder="ИМЯ"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                        className="bg-transparent border-0 border-b border-gray-300 rounded-none px-0 h-12 placeholder:text-gray-400 placeholder:text-xs focus-visible:ring-0 focus-visible:border-primary"
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        type="tel"
+                        placeholder="НОМЕР ТЕЛЕФОНА"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        required
+                        className="bg-transparent border-0 border-b border-gray-300 rounded-none px-0 h-12 placeholder:text-gray-400 placeholder:text-xs focus-visible:ring-0 focus-visible:border-primary"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Textarea
+                      placeholder="КОММЕНТАРИИ"
+                      value={formData.comment}
+                      onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
+                      className="bg-transparent border-0 border-b border-gray-300 rounded-none px-0 min-h-[80px] placeholder:text-gray-400 placeholder:text-xs focus-visible:ring-0 focus-visible:border-primary resize-none"
+                    />
+                  </div>
+                  <div className="pt-4">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="text-sm font-medium text-gray-900 underline underline-offset-4 hover:text-primary transition-colors disabled:opacity-50"
+                    >
+                      {isSubmitting ? "ОТПРАВКА..." : "ОТПРАВИТЬ"}
+                    </button>
+                  </div>
                 </form>
-
-                <div className="mt-6">
-                  <Link
-                    href={`/catalog/${apartment.id}`}
-                    className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-primary transition-colors"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                    Вернуться к квартире
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Footer Info */}
-        <section className="py-10 lg:py-14 bg-beige border-t border-gray-200">
-          <div className="container mx-auto px-4 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-              <div>
-                <Image
-                  src="/logo.svg"
-                  alt="EMAN RIVERSIDE"
-                  width={100}
-                  height={50}
-                  className="h-10 w-auto mb-4"
-                />
-                <div className="flex gap-3 mt-4">
-                  <a href="#" className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
-                  </a>
-                  <a href="#" className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                  </a>
-                  <a href="#" className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                  </a>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-8">
-                <div>
-                  <h4 className="text-xs text-gray-400 uppercase tracking-wide mb-3">
-                    О проекте
-                  </h4>
-                  <ul className="space-y-2">
-                    {footerLinks.about.map((link, idx) => (
-                      <li key={idx}>
-                        <Link href={link.href} className="text-sm text-gray-600 hover:text-primary transition-colors">
-                          {link.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="text-xs text-gray-400 uppercase tracking-wide mb-3">
-                    Покупателям
-                  </h4>
-                  <ul className="space-y-2">
-                    {footerLinks.buyers.map((link, idx) => (
-                      <li key={idx}>
-                        <Link href={link.href} className="text-sm text-gray-600 hover:text-primary transition-colors">
-                          {link.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
               </div>
             </div>
           </div>

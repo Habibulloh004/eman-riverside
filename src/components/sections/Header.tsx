@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 const headerNavLinks = [
   { href: "/about", label: "О ПРОЕКТЕ" },
   { href: "/catalog", label: "КАТАЛОГ" },
-  { href: "/#gallery", label: "ГАЛЕРЕЯ" },
+  { href: "/gallery", label: "ГАЛЕРЕЯ" },
   { href: "/contacts", label: "КОНТАКТЫ" },
 ];
 

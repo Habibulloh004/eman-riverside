@@ -2,145 +2,91 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useState } from "react";
 import { Header, Footer } from "@/components/sections";
 import { PageHero } from "@/components/shared";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Check } from "lucide-react";
-import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 
-// Apartment data (same as catalog)
-const apartments = [
+// Infrastructure categories
+const infrastructureCategories = [
   {
-    id: 1,
-    name: "Люкс Экстра",
-    rooms: 3,
-    area: 150,
-    floor: 2,
-    price: 45545,
-    type: "Люкс",
-    image: "/images/hero/planirovka1.png",
-    images: ["/images/hero/planirovka1.png", "/images/hero/1.png"],
-    description: "Просторная 3-комнатная квартира класса Люкс с панорамными окнами и высокими потолками. Идеально подходит для большой семьи."
+    id: "education",
+    title: "ОБРАЗОВАТЕЛЬНЫЕ ОБЪЕКТЫ",
+    count: 12,
+    isOpen: true,
+    subcategories: [
+      {
+        title: "ДЕТСКИЕ САДЫ",
+        count: 47,
+        items: ["ДЕТСКИЙ САД № 161", "ДЕТСКИЙ САД № 161", "ДЕТСКИЙ САД № 161", "ДЕТСКИЙ САД № 161"],
+      },
+    ],
   },
   {
-    id: 2,
-    name: "Люкс Экстра",
-    rooms: 3,
-    area: 150,
-    floor: 3,
-    price: 46500,
-    type: "Люкс",
-    image: "/images/hero/planirovka1.png",
-    images: ["/images/hero/planirovka1.png", "/images/hero/1.png"],
-    description: "Просторная 3-комнатная квартира класса Люкс с панорамными окнами и высокими потолками."
+    id: "recreation",
+    title: "ЗОНЫ ОТДЫХА",
+    count: 18,
+    isOpen: false,
+    subcategories: [],
   },
   {
-    id: 3,
-    name: "Стандарт Плюс",
-    rooms: 2,
-    area: 85,
-    floor: 4,
-    price: 32000,
-    type: "Стандарт",
-    image: "/images/hero/planirovka1.png",
-    images: ["/images/hero/planirovka1.png", "/images/hero/1.png"],
-    description: "Уютная 2-комнатная квартира с продуманной планировкой и качественной отделкой."
-  },
-  {
-    id: 4,
-    name: "Эконом",
-    rooms: 1,
-    area: 45,
-    floor: 5,
-    price: 22000,
-    type: "Эконом",
-    image: "/images/hero/planirovka1.png",
-    images: ["/images/hero/planirovka1.png", "/images/hero/1.png"],
-    description: "Компактная 1-комнатная квартира - отличный выбор для молодой семьи или инвестиции."
-  },
-  {
-    id: 5,
-    name: "Люкс Экстра",
-    rooms: 4,
-    area: 180,
-    floor: 6,
-    price: 58000,
-    type: "Люкс",
-    image: "/images/hero/planirovka1.png",
-    images: ["/images/hero/planirovka1.png", "/images/hero/1.png"],
-    description: "Роскошная 4-комнатная квартира с террасой и видом на реку."
-  },
-  {
-    id: 6,
-    name: "Стандарт",
-    rooms: 2,
-    area: 75,
-    floor: 2,
-    price: 28000,
-    type: "Стандарт",
-    image: "/images/hero/planirovka1.png",
-    images: ["/images/hero/planirovka1.png", "/images/hero/1.png"],
-    description: "Удобная 2-комнатная квартира с балконом и современной планировкой."
+    id: "transport",
+    title: "ТРАНСПОРТНАЯ ДОСТУПНОСТЬ",
+    count: 24,
+    isOpen: false,
+    subcategories: [],
   },
 ];
 
-// Features list
-const features = [
-  "Панорамные окна",
-  "Высокие потолки 3.2м",
-  "Качественная отделка",
-  "Современная планировка",
-  "Балкон/лоджия",
-  "Подземная парковка",
+// Gallery images for infrastructure
+const galleryImages = [
+  "/images/hero/1.png",
+  "/images/hero/1.png",
+  "/images/hero/1.png",
+  "/images/hero/1.png",
+  "/images/hero/1.png",
+  "/images/hero/1.png",
+];
+
+// District advantages
+const districtAdvantages = [
+  "Супермаркет Korzinka",
+  "Team University",
+  "Парк Дустлик",
+  "Национальный детский медицинский центр",
+  "Городская клиническая больница №4",
+  "Школы и детские сады",
 ];
 
 // Footer links
 const footerLinks = {
   about: [
-    { label: "О Комплексе", href: "/about" },
-    { label: "Локация", href: "/location" },
-    { label: "Галерея", href: "/#gallery" },
-  ],
-  buyers: [
-    { label: "Каталог", href: "/catalog" },
-    { label: "Условия покупки", href: "/payment" },
-    { label: "Ход строительства", href: "/construction" },
+    { label: "О нас", href: "/about" },
+    { label: "Агенты", href: "/agents" },
+    { label: "Блог", href: "/blog" },
+    { label: "Медиа", href: "/media" },
+    { label: "Связаться с нами", href: "/contacts" },
   ],
 };
 
-export default function ApartmentDetailPage() {
-  const params = useParams();
-  const apartmentId = Number(params.id);
-  const apartment = apartments.find((a) => a.id === apartmentId);
+export default function CatalogDetailPage() {
+  const [openCategory, setOpenCategory] = useState<string>("education");
+  const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
+  const [email, setEmail] = useState("");
 
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  if (!apartment) {
-    return (
-      <>
-        <Header />
-        <main className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-serif mb-4">Квартира не найдена</h1>
-            <Button asChild>
-              <Link href="/catalog">Вернуться в каталог</Link>
-            </Button>
-          </div>
-        </main>
-        <Footer />
-      </>
-    );
-  }
-
-  const images = apartment.images || [apartment.image];
-
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  const nextSlide = () => {
+    setCurrentGalleryIndex((prev) => (prev + 1) % galleryImages.length);
   };
 
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  const prevSlide = () => {
+    setCurrentGalleryIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
+  };
+
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Newsletter subscription:", email);
+    setEmail("");
   };
 
   return (
@@ -148,199 +94,262 @@ export default function ApartmentDetailPage() {
       <Header />
       <main>
         <PageHero
-          title={apartment.name}
-          subtitle={`${apartment.rooms}-КОМНАТНАЯ КВАРТИРА`}
+          title="Локация и инфраструктура"
+          subtitle="ИНФРАСТРУКТУРА EMAN RIVERSIDE"
           image="/images/hero/1.png"
         />
 
-        {/* Apartment Details */}
-        <section className="py-10 lg:py-14">
-          <div className="container mx-auto px-4 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-              {/* Left - Image Gallery */}
-              <div>
-                <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
+        {/* Interactive Map Section */}
+        <section className="relative py-12 lg:py-20 overflow-hidden">
+          {/* Background image */}
+          <div className="absolute inset-0 z-0">
+            <Image
+              src="/images/hero/1.png"
+              alt=""
+              fill
+              className="object-cover opacity-[0.03]"
+            />
+          </div>
+
+          <div className="container mx-auto px-4 lg:px-8 relative z-10">
+            <div className="mb-8">
+              <h2 className="text-3xl lg:text-4xl font-serif text-primary mb-3">
+                Интерактивная карта
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-md">
+                Локация сочетает природу и городскую инфраструктуру — идеальный баланс
+              </p>
+            </div>
+
+            {/* Real Map with Google Maps */}
+            <div className="relative aspect-video lg:aspect-[21/9] rounded-lg overflow-hidden bg-muted">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d47980.98675893856!2d69.21992457431642!3d41.31147339999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38ae8b0cc379e9c3%3A0xa5a9323b4aa5cb98!2sTashkent%2C%20Uzbekistan!5e0!3m2!1sen!2s!4v1703955000000!5m2!1sen!2s"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="absolute inset-0"
+              />
+              {/* Map Pin Overlay with Logo */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="bg-primary p-3 rounded-lg shadow-lg">
                   <Image
-                    src={images[currentImageIndex]}
-                    alt={apartment.name}
-                    fill
-                    className="object-contain p-4"
+                    src="/logo.svg"
+                    alt="EMAN RIVERSIDE"
+                    width={60}
+                    height={30}
+                    className="h-8 w-auto brightness-0 invert"
                   />
-
-                  {images.length > 1 && (
-                    <>
-                      <button
-                        onClick={prevImage}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors shadow"
-                      >
-                        <ChevronLeft className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={nextImage}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors shadow"
-                      >
-                        <ChevronRight className="w-5 h-5" />
-                      </button>
-                    </>
-                  )}
-                </div>
-
-                {/* Thumbnails */}
-                {images.length > 1 && (
-                  <div className="flex gap-2">
-                    {images.map((img, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setCurrentImageIndex(idx)}
-                        className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
-                          idx === currentImageIndex ? "border-primary" : "border-transparent"
-                        }`}
-                      >
-                        <Image
-                          src={img}
-                          alt={`${apartment.name} ${idx + 1}`}
-                          fill
-                          className="object-cover"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Right - Details */}
-              <div>
-                <div className="mb-2">
-                  <span className="text-xs text-primary font-medium uppercase tracking-wide">
-                    {apartment.type}
-                  </span>
-                </div>
-                <h1 className="text-3xl lg:text-4xl font-serif italic mb-4">
-                  {apartment.name}
-                </h1>
-
-                <p className="text-gray-600 mb-6">
-                  {apartment.description}
-                </p>
-
-                {/* Specs */}
-                <div className="grid grid-cols-3 gap-4 mb-6 p-5 bg-beige rounded-lg">
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-primary">{apartment.rooms}</p>
-                    <p className="text-xs text-gray-500">Комнат</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-primary">{apartment.area}</p>
-                    <p className="text-xs text-gray-500">м²</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-primary">{apartment.floor}</p>
-                    <p className="text-xs text-gray-500">Этаж</p>
-                  </div>
-                </div>
-
-                {/* Price */}
-                <div className="mb-6">
-                  <p className="text-sm text-gray-500 mb-1">Стоимость от</p>
-                  <p className="text-4xl font-bold text-primary">
-                    ${apartment.price.toLocaleString()}
-                  </p>
-                </div>
-
-                {/* Features */}
-                <div className="mb-8">
-                  <h3 className="font-semibold mb-3">Особенности:</h3>
-                  <ul className="grid grid-cols-2 gap-2">
-                    {features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center gap-2 text-sm">
-                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                          <Check className="w-3 h-3 text-primary" />
-                        </div>
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-4">
-                  <Button
-                    className="flex-1 bg-primary hover:bg-primary/90"
-                    asChild
-                  >
-                    <Link href={`/catalog/${apartment.id}/request`}>
-                      Оставить заявку
-                    </Link>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1 border-primary text-primary hover:bg-primary hover:text-white"
-                    asChild
-                  >
-                    <a href="tel:+998901234567">
-                      Позвонить
-                    </a>
-                  </Button>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Back to catalog */}
-        <section className="py-6 border-t">
-          <div className="container mx-auto px-4 lg:px-8">
-            <Link
-              href="/catalog"
-              className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-primary transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Вернуться в каталог
-            </Link>
+        {/* Environment Section - ОКРУЖЕНИЕ НАШЕГО ЖК */}
+        <section className="relative py-12 lg:py-20 bg-beige overflow-hidden">
+          {/* Background image */}
+          <div className="absolute inset-0 z-0">
+            <Image
+              src="/images/hero/1.png"
+              alt=""
+              fill
+              className="object-cover opacity-[0.03]"
+            />
+          </div>
+
+          <div className="container mx-auto px-4 lg:px-8 relative z-10">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-10 lg:gap-20">
+              {/* Left side - Title and Accordion */}
+              <div className="lg:w-1/2">
+                <div className="flex items-center gap-4 mb-8">
+                  <h2 className="text-xl lg:text-2xl font-semibold uppercase tracking-wide">
+                    ОКРУЖЕНИЕ НАШЕГО ЖК
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <Image
+                      src="/logo.svg"
+                      alt="EMAN RIVERSIDE"
+                      width={120}
+                      height={60}
+                      className="h-14 w-auto"
+                    />
+                  </div>
+                </div>
+
+                {/* Accordion Categories */}
+                <div className="space-y-0">
+                  {infrastructureCategories.map((category) => (
+                    <div key={category.id} className="border-b border-gray-300 last:border-b-0">
+                      <button
+                        onClick={() => setOpenCategory(openCategory === category.id ? "" : category.id)}
+                        className="w-full py-4 flex items-center justify-between text-left group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm uppercase tracking-wide text-gray-700 group-hover:text-primary transition-colors">
+                            {category.title}
+                          </span>
+                          <span className="text-xs text-primary align-super">{category.count}</span>
+                        </div>
+                      </button>
+
+                      {/* Subcategories */}
+                      {openCategory === category.id && category.subcategories.length > 0 && (
+                        <div className="pb-6">
+                          {category.subcategories.map((sub, idx) => (
+                            <div key={idx} className="flex flex-col lg:flex-row lg:items-start gap-4 lg:gap-12">
+                              <div className="flex items-center gap-2 border-b-2 border-primary pb-1">
+                                <span className="text-sm font-medium text-gray-900 uppercase">{sub.title}</span>
+                                <span className="text-xs text-primary align-super">{sub.count}</span>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                {sub.items.map((item, itemIdx) => (
+                                  <p key={itemIdx} className="text-sm text-gray-600">
+                                    {item}
+                                  </p>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right side - Image */}
+              <div className="lg:w-1/2">
+                <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden shadow-lg">
+                  <Image
+                    src="/images/hero/1.png"
+                    alt="Инфраструктура"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* Footer Info */}
-        <section className="py-10 lg:py-14 bg-beige">
-          <div className="container mx-auto px-4 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-              <div>
-                <Image
-                  src="/logo.svg"
-                  alt="EMAN RIVERSIDE"
-                  width={100}
-                  height={50}
-                  className="h-10 w-auto mb-4"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-8">
-                <div>
-                  <h4 className="text-xs text-gray-400 uppercase tracking-wide mb-3">
-                    О проекте
-                  </h4>
-                  <ul className="space-y-2">
-                    {footerLinks.about.map((link, idx) => (
-                      <li key={idx}>
-                        <Link href={link.href} className="text-sm text-gray-600 hover:text-primary transition-colors">
-                          {link.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+        {/* Infrastructure Gallery - Full Width */}
+        <section className="relative overflow-hidden">
+          {/* Background image */}
+          <div className="absolute inset-0 z-0">
+            <Image
+              src="/images/hero/1.png"
+              alt=""
+              fill
+              className="object-cover opacity-[0.03]"
+            />
+          </div>
+
+          {/* Title bar */}
+          <div className="relative z-10 bg-beige/80 py-6">
+            <div className="container mx-auto px-4 lg:px-8">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl lg:text-2xl font-serif">
+                  Галерея инфраструктурных объектов
+                </h2>
+                <div className="flex gap-2">
+                  <button
+                    onClick={prevSlide}
+                    className="w-10 h-10 rounded-full border border-gray-400 flex items-center justify-center hover:bg-white hover:border-primary transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={nextSlide}
+                    className="w-10 h-10 rounded-full border border-gray-400 flex items-center justify-center hover:bg-white hover:border-primary transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
                 </div>
-                <div>
-                  <h4 className="text-xs text-gray-400 uppercase tracking-wide mb-3">
-                    Покупателям
-                  </h4>
-                  <ul className="space-y-2">
-                    {footerLinks.buyers.map((link, idx) => (
-                      <li key={idx}>
-                        <Link href={link.href} className="text-sm text-gray-600 hover:text-primary transition-colors">
-                          {link.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Full width gallery slider */}
+          <div className="relative z-10 overflow-hidden">
+            <div
+              className="flex transition-transform duration-500 ease-out"
+              style={{ transform: `translateX(-${currentGalleryIndex * 100}%)` }}
+            >
+              {galleryImages.map((img, idx) => (
+                <div
+                  key={idx}
+                  className="shrink-0 w-full"
+                >
+                  <div className="relative aspect-[21/9] bg-gray-100">
+                    <Image
+                      src={img}
+                      alt={`Инфраструктура ${idx + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* District Advantages with Map */}
+        <section className="relative py-12 lg:py-20 bg-beige overflow-hidden">
+          {/* Background image */}
+          <div className="absolute inset-0 z-0">
+            <Image
+              src="/images/hero/1.png"
+              alt=""
+              fill
+              className="object-cover opacity-[0.03]"
+            />
+          </div>
+
+          <div className="container mx-auto px-4 lg:px-8 relative z-10">
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+              {/* Left - Title and List */}
+              <div>
+                <h2 className="text-2xl lg:text-3xl font-serif mb-8">
+                  Преимущества района
+                </h2>
+                <ul className="space-y-4">
+                  {districtAdvantages.map((advantage, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <span className="text-primary mt-1">•</span>
+                      <span className="text-gray-700">{advantage}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Right - Map */}
+              <div className="relative aspect-square lg:aspect-[4/3] rounded-lg overflow-hidden bg-muted shadow-lg">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d47980.98675893856!2d69.21992457431642!3d41.31147339999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38ae8b0cc379e9c3%3A0xa5a9323b4aa5cb98!2sTashkent%2C%20Uzbekistan!5e0!3m2!1sen!2s!4v1703955000000!5m2!1sen!2s"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="absolute inset-0"
+                />
+                {/* Map Pin Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="bg-primary p-3 rounded-lg shadow-lg">
+                    <Image
+                      src="/logo.svg"
+                      alt="EMAN RIVERSIDE"
+                      width={60}
+                      height={30}
+                      className="h-6 w-auto brightness-0 invert"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
