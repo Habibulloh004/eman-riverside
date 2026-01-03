@@ -4,17 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
-
-const footerLinks = {
-  main: [
-    { href: "#about", label: "О проекте" },
-    { href: "#", label: "О нас" },
-    { href: "#", label: "Агенты" },
-    { href: "#", label: "Блог" },
-    { href: "#", label: "Медиа" },
-    { href: "#contact", label: "Связаться с нами" },
-  ],
-};
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const socialLinks = [
   {
@@ -56,12 +46,26 @@ const socialLinks = [
 ];
 
 export default function Footer() {
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const currentYear = new Date().getFullYear();
 
+  const footerLinks = {
+    navigation: [
+      { href: "#about", label: t.footer.aboutProject },
+      { href: "#", label: t.footer.aboutUs },
+      { href: "#", label: t.footer.agents },
+    ],
+    info: [
+      { href: "#", label: t.footer.blog },
+      { href: "#", label: t.footer.media },
+      { href: "#contact", label: t.footer.contactUs },
+    ],
+  };
+
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Спасибо за подписку!");
+    alert(t.footer.thankYou);
     setEmail("");
   };
 
@@ -83,7 +87,7 @@ export default function Footer() {
             </Link>
 
             <p className="text-xs text-muted-foreground mb-4 leading-relaxed max-w-[240px]">
-              Жилой комплекс нового уровня в экологичном районе Ташкента.
+              {t.footer.description}
             </p>
 
             {/* Social Links */}
@@ -105,9 +109,9 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-xs font-semibold text-foreground mb-3">Навигация</h3>
+            <h3 className="text-xs font-semibold text-foreground mb-3">{t.footer.navigation}</h3>
             <ul className="space-y-2">
-              {footerLinks.main.slice(0, 3).map((link) => (
+              {footerLinks.navigation.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
@@ -122,9 +126,9 @@ export default function Footer() {
 
           {/* More Links */}
           <div>
-            <h3 className="text-xs font-semibold text-foreground mb-3">Информация</h3>
+            <h3 className="text-xs font-semibold text-foreground mb-3">{t.footer.info}</h3>
             <ul className="space-y-2">
-              {footerLinks.main.slice(3).map((link) => (
+              {footerLinks.info.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
@@ -139,9 +143,9 @@ export default function Footer() {
 
           {/* Newsletter */}
           <div>
-            <h3 className="text-xs font-semibold text-foreground mb-3">Подписаться</h3>
+            <h3 className="text-xs font-semibold text-foreground mb-3">{t.footer.subscribe}</h3>
             <p className="text-[10px] text-muted-foreground mb-3">
-              Получайте новости о проекте
+              {t.footer.subscribeDesc}
             </p>
 
             <form onSubmit={handleSubscribe} className="flex">
@@ -149,7 +153,7 @@ export default function Footer() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email..."
+                placeholder={t.footer.emailPlaceholder}
                 required
                 className="flex-1 px-2 py-1.5 text-xs bg-white border border-border rounded-l-md focus:outline-none focus:border-primary min-w-0"
               />
@@ -166,7 +170,7 @@ export default function Footer() {
         {/* Bottom */}
         <div className="mt-8 pt-6 border-t border-border">
           <p className="text-[10px] text-muted-foreground">
-            &copy; {currentYear} EMAN RIVERSIDE. Все права защищены.
+            &copy; {currentYear} EMAN RIVERSIDE. {t.footer.copyright}.
           </p>
         </div>
       </div>

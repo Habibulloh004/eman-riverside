@@ -1,6 +1,11 @@
+"use client";
+
 import Image from "next/image";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Gallery() {
+  const { t } = useLanguage();
+
   return (
     <section id="gallery" className="relative py-16 lg:py-24 overflow-hidden">
       {/* Background image with low opacity */}
@@ -20,49 +25,46 @@ export default function Gallery() {
             {/* Title Section */}
             <div className="mb-4">
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif mb-4">
-                ГАЛЕРЕЯ
+                {t.gallerySection.title}
               </h2>
               <p className="text-muted-foreground text-sm uppercase tracking-wider max-w-md">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                Nunc odio in et, lectus sit lorem id integer.Lorem ipsum
-                dolor sit amet, consectetur adipiscing elit. Nunc odio
-                in et, lectus sit lorem id integer.
+                {t.gallerySection.description}
               </p>
             </div>
 
             {/* 2x2 Grid */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="relative aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer">
+              <div className="relative aspect-4/3 rounded-lg overflow-hidden group cursor-pointer">
                 <Image
                   src="/images/hero/1.png"
-                  alt="Галерея 1"
+                  alt={t.gallerySection.title}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 768px) 50vw, 20vw"
                 />
               </div>
-              <div className="relative aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer">
+              <div className="relative aspect-4/3 rounded-lg overflow-hidden group cursor-pointer">
                 <Image
                   src="/images/hero/1.png"
-                  alt="Галерея 2"
+                  alt={t.gallerySection.title}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 768px) 50vw, 20vw"
                 />
               </div>
-              <div className="relative aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer">
+              <div className="relative aspect-4/3 rounded-lg overflow-hidden group cursor-pointer">
                 <Image
                   src="/images/hero/1.png"
-                  alt="Галерея 3"
+                  alt={t.gallerySection.title}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 768px) 50vw, 20vw"
                 />
               </div>
-              <div className="relative aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer">
+              <div className="relative aspect-4/3 rounded-lg overflow-hidden group cursor-pointer">
                 <Image
                   src="/images/hero/1.png"
-                  alt="Галерея 4"
+                  alt={t.gallerySection.title}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 768px) 50vw, 20vw"
@@ -73,19 +75,19 @@ export default function Gallery() {
 
           {/* Middle Column - 2 tall images */}
           <div className="lg:col-span-3 flex flex-col gap-4">
-            <div className="relative aspect-[3/4] rounded-lg overflow-hidden group cursor-pointer">
+            <div className="relative aspect-3/4 rounded-lg overflow-hidden group cursor-pointer">
               <Image
                 src="/images/hero/1.png"
-                alt="Галерея 5"
+                alt={t.gallerySection.title}
                 fill
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
                 sizes="(max-width: 768px) 100vw, 25vw"
               />
             </div>
-            <div className="relative aspect-[3/4] rounded-lg overflow-hidden group cursor-pointer">
+            <div className="relative aspect-3/4 rounded-lg overflow-hidden group cursor-pointer">
               <Image
                 src="/images/hero/1.png"
-                alt="Галерея 6"
+                alt={t.gallerySection.title}
                 fill
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
                 sizes="(max-width: 768px) 100vw, 25vw"
@@ -100,7 +102,7 @@ export default function Gallery() {
               <div className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer">
                 <Image
                   src="/images/hero/1.png"
-                  alt="Галерея 7"
+                  alt={t.gallerySection.title}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 768px) 50vw, 15vw"
@@ -109,7 +111,7 @@ export default function Gallery() {
               <div className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer">
                 <Image
                   src="/images/hero/1.png"
-                  alt="Галерея 8"
+                  alt={t.gallerySection.title}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 768px) 50vw, 15vw"
@@ -118,10 +120,10 @@ export default function Gallery() {
             </div>
 
             {/* Middle - Large image */}
-            <div className="relative aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer">
+            <div className="relative aspect-4/3 rounded-lg overflow-hidden group cursor-pointer">
               <Image
                 src="/images/hero/1.png"
-                alt="Галерея 9"
+                alt={t.gallerySection.title}
                 fill
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
                 sizes="(max-width: 768px) 100vw, 30vw"
@@ -130,19 +132,19 @@ export default function Gallery() {
 
             {/* Bottom row - 2 images */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="relative aspect-[3/4] rounded-lg overflow-hidden group cursor-pointer">
+              <div className="relative aspect-3/4 rounded-lg overflow-hidden group cursor-pointer">
                 <Image
                   src="/images/hero/1.png"
-                  alt="Галерея 10"
+                  alt={t.gallerySection.title}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 768px) 50vw, 15vw"
                 />
               </div>
-              <div className="relative aspect-[3/4] rounded-lg overflow-hidden group cursor-pointer">
+              <div className="relative aspect-3/4 rounded-lg overflow-hidden group cursor-pointer">
                 <Image
                   src="/images/hero/1.png"
-                  alt="Галерея 11"
+                  alt={t.gallerySection.title}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 768px) 50vw, 15vw"

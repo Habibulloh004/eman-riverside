@@ -5,18 +5,19 @@ import Link from "next/link";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const headerNavLinks = [
-  { href: "/about", label: "О ПРОЕКТЕ" },
-  { href: "/catalog", label: "КАТАЛОГ" },
-  { href: "/gallery", label: "ГАЛЕРЕЯ" },
-  { href: "/contacts", label: "КОНТАКТЫ" },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [lang, setLang] = useState<"ru" | "uz">("ru");
+  const { language, setLanguage, t } = useLanguage();
+
+  const headerNavLinks = [
+    { href: "/about", label: t.nav.about },
+    { href: "/catalog", label: t.nav.catalog },
+    { href: "/gallery", label: t.nav.gallery },
+    { href: "/contacts", label: t.nav.contacts },
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,6 +26,10 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const toggleLanguage = () => {
+    setLanguage(language === "ru" ? "uz" : "ru");
+  };
 
   return (
     <header
@@ -61,10 +66,10 @@ export default function Header() {
             ))}
             {/* Language Switcher */}
             <button
-              onClick={() => setLang(lang === "ru" ? "uz" : "ru")}
+              onClick={toggleLanguage}
               className="text-sm font-medium tracking-wide text-foreground hover:text-primary/70 transition-colors"
             >
-              {lang === "ru" ? "РУС/УЗБ" : "UZB/RUS"}
+              {language === "ru" ? "РУС" : "UZB"}/{language === "ru" ? "УЗБ" : "RUS"}
             </button>
           </nav>
 
@@ -74,7 +79,7 @@ export default function Header() {
               className="rounded-full px-6 bg-primary text-white hover:bg-primary/90"
               asChild
             >
-              <a href="tel:+998901234567">ПОЗВОНИТЬ</a>
+              <a href="tel:+998901234567">{t.nav.call}</a>
             </Button>
           </div>
 
@@ -109,13 +114,13 @@ export default function Header() {
               </Link>
             ))}
             <button
-              onClick={() => setLang(lang === "ru" ? "uz" : "ru")}
+              onClick={toggleLanguage}
               className={`px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-lg transition-all duration-300 text-left ${
                 isOpen ? "translate-x-0 opacity-100" : "-translate-x-4 opacity-0"
               }`}
               style={{ transitionDelay: isOpen ? `${headerNavLinks.length * 50}ms` : "0ms" }}
             >
-              {lang === "ru" ? "РУС/УЗБ" : "UZB/RUS"}
+              {language === "ru" ? "РУС" : "UZB"}/{language === "ru" ? "УЗБ" : "RUS"}
             </button>
             <div
               className={`mt-4 px-4 transition-all duration-300 ${
@@ -128,7 +133,7 @@ export default function Header() {
                 className="w-full border-primary text-primary hover:bg-primary hover:text-white rounded-full"
                 asChild
               >
-                <a href="tel:+998901234567">ПОЗВОНИТЬ</a>
+                <a href="tel:+998901234567">{t.nav.call}</a>
               </Button>
             </div>
           </div>

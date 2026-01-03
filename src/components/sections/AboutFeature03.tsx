@@ -1,6 +1,11 @@
+"use client";
+
 import Image from "next/image";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function AboutFeature03() {
+  const { t } = useLanguage();
+
   return (
     <section id="feature-03" className="relative py-24 lg:py-32 scroll-mt-20 bg-[#F9EFE7] overflow-hidden">
       {/* Background image with low opacity */}
@@ -25,36 +30,25 @@ export default function AboutFeature03() {
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-8 h-px bg-primary" />
                 <span className="text-xs text-primary font-medium uppercase tracking-[0.2em]">
-                  ВАША КВАРТИРА
+                  {t.feature03.label}
                 </span>
               </div>
 
               <h3 className="text-2xl lg:text-4xl font-serif mb-8">
-                Ваша<br />квартира
+                {t.feature03.title}<br />{t.feature03.titleLine2}
               </h3>
 
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Продуманные планировки квартир с панорамными окнами.
-                  Высота потолков 3 метра. Готовая отделка white box.
+                  {t.feature03.description}
                 </p>
                 <ul className="space-y-2">
-                  <li className="text-sm text-muted-foreground flex items-start gap-2">
-                    <span className="text-primary mt-1">•</span>
-                    Панорамные окна
-                  </li>
-                  <li className="text-sm text-muted-foreground flex items-start gap-2">
-                    <span className="text-primary mt-1">•</span>
-                    Высота потолков 3 метра
-                  </li>
-                  <li className="text-sm text-muted-foreground flex items-start gap-2">
-                    <span className="text-primary mt-1">•</span>
-                    Отделка white box
-                  </li>
-                  <li className="text-sm text-muted-foreground flex items-start gap-2">
-                    <span className="text-primary mt-1">•</span>
-                    Продуманные планировки
-                  </li>
+                  {t.feature03.features.map((item) => (
+                    <li key={item} className="text-sm text-muted-foreground flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      {item}
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>
@@ -64,7 +58,7 @@ export default function AboutFeature03() {
           <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-muted">
             <Image
               src="/images/hero/1.png"
-              alt="Интерьер квартиры"
+              alt={t.feature03.title}
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"

@@ -1,87 +1,34 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Header, Footer } from "@/components/sections";
 import { PageHero } from "@/components/shared";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { siteConfig } from "@/lib/constants";
-import { Phone, Mail, MapPin, Clock, Send, MessageCircle } from "lucide-react";
+import { Phone, MapPin } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-const contactInfo = [
-  {
-    icon: Phone,
-    label: "Телефон",
-    value: siteConfig.phone,
-    href: `tel:${siteConfig.phone.replace(/\s/g, "")}`,
-  },
-  {
-    icon: Mail,
-    label: "Email",
-    value: siteConfig.email,
-    href: `mailto:${siteConfig.email}`,
-  },
-  {
-    icon: MapPin,
-    label: "Адрес",
-    value: "г. Ташкент, Сергелийский район, ул. Янги Сергели, 15",
-    href: "#map",
-  },
-  {
-    icon: Clock,
-    label: "Режим работы",
-    value: siteConfig.workHours,
-    href: null,
-  },
-];
-
-const socialLinks = [
-  {
-    name: "Telegram",
-    href: siteConfig.social.telegram,
-    icon: (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z" />
-      </svg>
-    ),
-  },
-  {
-    name: "Instagram",
-    href: siteConfig.social.instagram,
-    icon: (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-      </svg>
-    ),
-  },
-  {
-    name: "Facebook",
-    href: siteConfig.social.facebook,
-    icon: (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-      </svg>
-    ),
-  },
-];
+// Kontakt ma'lumotlari
+const contactInfo = {
+  address: "Город Ташкент, Улица Богишев, Дом М71",
+  phone: siteConfig.phone,
+  email: siteConfig.email,
+};
 
 export default function ContactsPage() {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     message: "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    alert("Спасибо! Мы свяжемся с вами в ближайшее время.");
+    alert(t.common.thankYou);
     setFormData({ name: "", phone: "", message: "" });
-    setIsSubmitting(false);
   };
 
   return (
@@ -89,251 +36,217 @@ export default function ContactsPage() {
       <Header />
       <main>
         <PageHero
-          title="Контакты"
-          subtitle="СВЯЖИТЕСЬ С НАМИ"
+          title={t.contacts.heroTitle}
+          subtitle={t.contacts.heroSubtitle}
           image="/images/hero/1.png"
         />
 
-        {/* Contact Section */}
-        <section className="py-16">
+        {/* Наши контакты Section */}
+        <section className="py-12 lg:py-16 bg-[#F5ECE4]">
           <div className="container mx-auto px-4 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-12">
-              {/* Contact Form */}
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+              {/* Left - Contact Info */}
               <div>
-                <div className="mb-8">
-                  <p className="text-sm text-primary font-medium uppercase tracking-wider mb-2">
-                    Обратная связь
-                  </p>
-                  <h2 className="text-3xl md:text-4xl font-serif font-bold">
-                    Оставьте заявку
-                  </h2>
-                  <p className="text-muted-foreground mt-4">
-                    Заполните форму и наш менеджер свяжется с вами в ближайшее время
-                  </p>
+                <h2 className="text-2xl lg:text-3xl font-serif mb-4">
+                  {t.contacts.ourContacts}
+                </h2>
+                <p className="text-sm text-gray-600 mb-6 max-w-sm">
+                  {t.contacts.ourContactsDesc}
+                </p>
+
+                {/* Contact details */}
+                <div className="space-y-3 mb-8">
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    <span>{contactInfo.address}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="w-4 h-4 text-primary" />
+                    <a href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}>
+                      {contactInfo.phone}
+                    </a>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                    </svg>
+                    <a href={`mailto:${contactInfo.email}`}>
+                      {contactInfo.email}
+                    </a>
+                  </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Action Buttons */}
+                <div className="space-y-3">
+                  <a
+                    href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
+                    className="flex items-center gap-3 bg-primary text-white px-5 py-3 rounded-md hover:bg-primary/90 transition-colors w-fit"
+                  >
+                    <Phone className="w-4 h-4" />
+                    <span className="text-sm">{t.contacts.callBtn}</span>
+                  </a>
+                  <a
+                    href={`https://wa.me/${contactInfo.phone.replace(/\D/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 bg-primary text-white px-5 py-3 rounded-md hover:bg-primary/90 transition-colors w-fit"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    </svg>
+                    <span className="text-sm">{t.contacts.whatsappBtn}</span>
+                  </a>
+                  <a
+                    href={siteConfig.social.telegram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 bg-primary text-white px-5 py-3 rounded-md hover:bg-primary/90 transition-colors w-fit"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                    </svg>
+                    <span className="text-sm">{t.contacts.telegramBtn}</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Right - Map */}
+              <div className="relative h-[300px] lg:h-[400px] rounded-lg overflow-hidden">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2996.5234567890123!2d69.2401!3d41.3111!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDHCsDE4JzQwLjAiTiA2OcKwMTQnMjQuNCJF!5e0!3m2!1sen!2s!4v1234567890123"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="absolute inset-0"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* НАЙДИТЕ СЕБЕ КВАРТИРУ МЕЧТЫ Section */}
+        <section className="py-12 lg:py-16 bg-[#F5ECE4]">
+          <div className="container mx-auto px-4 lg:px-8">
+            <div className="max-w-2xl">
+              <h2 className="text-2xl lg:text-3xl font-serif mb-2">
+                {t.contacts.findApartment}<br />{t.contacts.dream}
+              </h2>
+              <p className="text-sm text-gray-600 mb-8">
+                {t.contacts.formDesc}
+              </p>
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label
-                      htmlFor="name"
-                      className="block text-sm font-medium mb-2"
-                    >
-                      Ваше имя
-                    </label>
                     <Input
-                      id="name"
                       type="text"
-                      placeholder="Введите ваше имя"
+                      placeholder={t.contacts.name}
                       value={formData.name}
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
                       }
                       required
-                      className="bg-cream border-0"
+                      className="bg-transparent border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-primary focus:ring-0 placeholder:text-gray-400 placeholder:text-sm"
                     />
                   </div>
-
                   <div>
-                    <label
-                      htmlFor="phone"
-                      className="block text-sm font-medium mb-2"
-                    >
-                      Телефон
-                    </label>
                     <Input
-                      id="phone"
                       type="tel"
-                      placeholder="+998 __ ___ __ __"
+                      placeholder={t.contacts.phone}
                       value={formData.phone}
                       onChange={(e) =>
                         setFormData({ ...formData, phone: e.target.value })
                       }
                       required
-                      className="bg-cream border-0"
+                      className="bg-transparent border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-primary focus:ring-0 placeholder:text-gray-400 placeholder:text-sm"
                     />
                   </div>
-
-                  <div>
-                    <label
-                      htmlFor="message"
-                      className="block text-sm font-medium mb-2"
-                    >
-                      Сообщение
-                    </label>
-                    <Textarea
-                      id="message"
-                      placeholder="Напишите ваш вопрос или пожелание..."
-                      rows={4}
-                      value={formData.message}
-                      onChange={(e) =>
-                        setFormData({ ...formData, message: e.target.value })
-                      }
-                      className="bg-cream border-0 resize-none"
-                    />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full bg-primary hover:bg-primary/90"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      "Отправка..."
-                    ) : (
-                      <>
-                        <Send className="w-5 h-5 mr-2" />
-                        Отправить заявку
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </div>
-
-              {/* Contact Info */}
-              <div>
-                <div className="bg-cream rounded-lg p-8">
-                  <h3 className="text-xl font-serif font-bold mb-6">
-                    Контактная информация
-                  </h3>
-
-                  <div className="space-y-6">
-                    {contactInfo.map((item, index) => (
-                      <div key={index} className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shrink-0">
-                          <item.icon className="w-6 h-6 text-primary" />
-                        </div>
-                        <div>
-                          <div className="text-sm text-muted-foreground mb-1">
-                            {item.label}
-                          </div>
-                          {item.href ? (
-                            <a
-                              href={item.href}
-                              className="font-medium hover:text-primary transition-colors"
-                            >
-                              {item.value}
-                            </a>
-                          ) : (
-                            <span className="font-medium">{item.value}</span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Social Links */}
-                  <div className="mt-8 pt-8 border-t">
-                    <h4 className="text-sm font-medium mb-4">Мы в соцсетях</h4>
-                    <div className="flex gap-3">
-                      {socialLinks.map((social, index) => (
-                        <a
-                          key={index}
-                          href={social.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-12 h-12 bg-white rounded-lg flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
-                          aria-label={social.name}
-                        >
-                          {social.icon}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
                 </div>
-
-                {/* Quick Contact */}
-                <div className="mt-6 p-6 bg-primary text-white rounded-lg">
-                  <div className="flex items-center gap-3 mb-4">
-                    <MessageCircle className="w-8 h-8" />
-                    <div>
-                      <h4 className="font-semibold">Быстрый ответ</h4>
-                      <p className="text-sm text-white/80">
-                        Напишите нам в Telegram
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="secondary"
-                    className="w-full bg-white text-primary hover:bg-white/90"
-                    asChild
-                  >
-                    <a
-                      href={siteConfig.social.telegram}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Открыть Telegram
-                    </a>
-                  </Button>
+                <div>
+                  <Textarea
+                    placeholder={t.contacts.comments}
+                    rows={3}
+                    value={formData.message}
+                    onChange={(e) =>
+                      setFormData({ ...formData, message: e.target.value })
+                    }
+                    className="bg-transparent border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-primary focus:ring-0 resize-none placeholder:text-gray-400 placeholder:text-sm"
+                  />
                 </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Map Section */}
-        <section id="map" className="py-16 bg-beige">
-          <div className="container mx-auto px-4 lg:px-8">
-            <div className="text-center mb-12">
-              <p className="text-sm text-primary font-medium uppercase tracking-wider mb-2">
-                Карта
-              </p>
-              <h2 className="text-3xl md:text-4xl font-serif font-bold">
-                Как нас найти
-              </h2>
-            </div>
-
-            <div className="relative aspect-[2/1] min-h-[400px] bg-muted rounded-lg overflow-hidden">
-              {/* Map Placeholder */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
-                <div className="text-center">
-                  <MapPin className="w-16 h-16 mx-auto mb-4 text-primary/30" />
-                  <p className="text-primary/50 font-medium text-lg">
-                    Карта расположения
-                  </p>
-                  <p className="text-muted-foreground mt-2">
-                    г. Ташкент, Сергелийский район, ул. Янги Сергели, 15
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 text-center">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-primary text-primary hover:bg-primary hover:text-white"
-                asChild
-              >
-                <a
-                  href="https://yandex.uz/maps/-/CDwBzZ~w"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="submit"
+                  className="text-sm font-medium text-gray-800 underline underline-offset-4 hover:text-primary transition-colors"
                 >
-                  <MapPin className="w-5 h-5 mr-2" />
-                  Открыть в Яндекс.Картах
-                </a>
-              </Button>
+                  {t.contacts.send}
+                </button>
+              </form>
             </div>
           </div>
         </section>
 
-        {/* Office Hours */}
-        <section className="py-16">
+        {/* Где мы находимся Section */}
+        <section className="relative py-12 lg:py-16 bg-[#F5ECE4] overflow-hidden">
+          {/* Decorative curved line */}
+          <div className="absolute left-0 top-0 bottom-0 w-32 pointer-events-none opacity-30">
+            <svg viewBox="0 0 100 400" className="h-full" preserveAspectRatio="none">
+              <path
+                d="M50,0 Q0,100 50,200 T50,400"
+                stroke="#3F704D"
+                strokeWidth="1"
+                fill="none"
+              />
+            </svg>
+          </div>
+
           <div className="container mx-auto px-4 lg:px-8">
-            <div className="max-w-2xl mx-auto text-center">
-              <Clock className="w-12 h-12 mx-auto mb-6 text-primary" />
-              <h2 className="text-2xl md:text-3xl font-serif font-bold mb-4">
-                Офис продаж
-              </h2>
-              <p className="text-muted-foreground mb-6">
-                Приглашаем вас посетить наш офис продаж для получения подробной
-                консультации и осмотра демо-квартиры
-              </p>
-              <div className="inline-flex items-center gap-2 px-6 py-3 bg-cream rounded-lg">
-                <Clock className="w-5 h-5 text-primary" />
-                <span className="font-medium">{siteConfig.workHours}</span>
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+              {/* Left - Content */}
+              <div className="relative z-10">
+                <h2 className="text-3xl lg:text-4xl xl:text-5xl font-serif italic mb-6">
+                  {t.contacts.whereWeAre}
+                </h2>
+                <p className="text-sm text-gray-600 mb-8 max-w-md">
+                  {t.contacts.locationDesc}
+                </p>
+
+                {/* Location items */}
+                <ul className="space-y-3">
+                  {t.contacts.locationItems.map((item, index) => (
+                    <li key={index} className="flex items-center gap-3 text-sm">
+                      <span className="text-primary">•</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Right - Map */}
+              <div className="relative h-[350px] lg:h-[450px] rounded-lg overflow-hidden shadow-lg">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2996.5234567890123!2d69.2401!3d41.3111!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDHCsDE4JzQwLjAiTiA2OcKwMTQnMjQuNCJF!5e0!3m2!1sen!2s!4v1234567890123"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="absolute inset-0"
+                />
+                {/* Location marker overlay */}
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                  <div className="relative">
+                    <Image
+                      src="/logo.svg"
+                      alt="EMAN RIVERSIDE"
+                      width={40}
+                      height={40}
+                      className="bg-white p-2 rounded shadow-lg"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

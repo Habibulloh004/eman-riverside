@@ -3,8 +3,10 @@
 import Image from "next/image";
 import { Search } from "lucide-react";
 import { useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Hero() {
+  const { t } = useLanguage();
   const [selectedDom, setSelectedDom] = useState("");
   const [selectedFloor, setSelectedFloor] = useState("");
   const [selectedApartment, setSelectedApartment] = useState("");
@@ -14,7 +16,7 @@ export default function Hero() {
       {/* Left Side Social Links - Desktop only */}
       <div className="absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20 hidden lg:flex flex-col items-center gap-4">
         <span className="text-xs text-muted-foreground tracking-widest rotate-180" style={{ writingMode: "vertical-rl" }}>
-          Соц.сеть
+          {t.hero.socialLinks}
         </span>
         <div className="w-px h-8 bg-border" />
         <div className="flex flex-col gap-3">
@@ -39,35 +41,35 @@ export default function Hero() {
           <div className="bg-primary p-5 sm:p-6 lg:p-14 text-white lg:w-[42%] flex flex-col justify-between min-h-[320px] sm:min-h-[380px] lg:min-h-[500px]">
             <div>
               <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-serif font-light mb-1 sm:mb-3">
-                Tez Kunda
+                {t.hero.comingSoonUz}
               </h1>
               <h2 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-serif font-light mb-4 sm:mb-8">
-                Скоро
+                {t.hero.comingSoon}
               </h2>
               <p className="text-white/80 text-sm sm:text-base lg:text-xl">
-                Жилой комплекс нового<br />уровня
+                {t.hero.subtitle}
               </p>
             </div>
 
             {/* Search Form inside green box */}
             <div className="bg-white rounded-lg p-3 sm:p-4 lg:p-5 mt-4 lg:mt-0">
               <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-2 sm:mb-4">
-                ВЫБРАТЬ КВАРТИРУ
+                {t.hero.selectApartment}
               </p>
               <div className="grid grid-cols-4 gap-1.5 sm:gap-3 items-end">
                 {/* Дом */}
                 <div>
-                  <label className="text-[10px] sm:text-xs font-medium text-foreground mb-1 block">Дом</label>
+                  <label className="text-[10px] sm:text-xs font-medium text-foreground mb-1 block">{t.hero.building}</label>
                   <div className="relative">
                     <select
                       value={selectedDom}
                       onChange={(e) => setSelectedDom(e.target.value)}
                       className="w-full h-7 sm:h-9 px-1 sm:px-2 pr-5 sm:pr-6 text-[10px] sm:text-xs border-b border-border bg-transparent appearance-none cursor-pointer focus:outline-none focus:border-primary text-muted-foreground"
                     >
-                      <option value="">Вы</option>
-                      <option value="1">Дом 1</option>
-                      <option value="2">Дом 2</option>
-                      <option value="3">Дом 3</option>
+                      <option value="">{t.hero.select}</option>
+                      <option value="1">{t.hero.building} 1</option>
+                      <option value="2">{t.hero.building} 2</option>
+                      <option value="3">{t.hero.building} 3</option>
                     </select>
                     <div className="absolute right-0.5 sm:right-1 top-1/2 -translate-y-1/2 pointer-events-none">
                       <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,14 +82,14 @@ export default function Hero() {
 
                 {/* Этаж */}
                 <div>
-                  <label className="text-[10px] sm:text-xs font-medium text-foreground mb-1 block">Этаж</label>
+                  <label className="text-[10px] sm:text-xs font-medium text-foreground mb-1 block">{t.hero.floor}</label>
                   <div className="relative">
                     <select
                       value={selectedFloor}
                       onChange={(e) => setSelectedFloor(e.target.value)}
                       className="w-full h-7 sm:h-9 px-1 sm:px-2 pr-5 sm:pr-6 text-[10px] sm:text-xs border-b border-border bg-transparent appearance-none cursor-pointer focus:outline-none focus:border-primary text-muted-foreground"
                     >
-                      <option value="">Вы</option>
+                      <option value="">{t.hero.select}</option>
                       {[...Array(15)].map((_, i) => (
                         <option key={i + 1} value={i + 1}>{i + 1}</option>
                       ))}
@@ -102,17 +104,17 @@ export default function Hero() {
 
                 {/* Квартира */}
                 <div>
-                  <label className="text-[10px] sm:text-xs font-medium text-foreground mb-1 block">Квартира</label>
+                  <label className="text-[10px] sm:text-xs font-medium text-foreground mb-1 block">{t.hero.apartment}</label>
                   <div className="relative">
                     <select
                       value={selectedApartment}
                       onChange={(e) => setSelectedApartment(e.target.value)}
                       className="w-full h-7 sm:h-9 px-1 sm:px-2 pr-5 sm:pr-6 text-[10px] sm:text-xs border-b border-border bg-transparent appearance-none cursor-pointer focus:outline-none focus:border-primary text-muted-foreground"
                     >
-                      <option value="">Вы</option>
-                      <option value="1">1-к</option>
-                      <option value="2">2-к</option>
-                      <option value="3">3-к</option>
+                      <option value="">{t.hero.select}</option>
+                      <option value="1">1-x</option>
+                      <option value="2">2-x</option>
+                      <option value="3">3-x</option>
                     </select>
                     <div className="absolute right-0.5 sm:right-1 top-1/2 -translate-y-1/2 pointer-events-none">
                       <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">

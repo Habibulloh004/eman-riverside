@@ -3,8 +3,10 @@
 import { useState } from "react";
 import Image from "next/image";
 import { MapPin, Phone, Mail } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Contact() {
+  const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -15,7 +17,7 @@ export default function Contact() {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     setIsSubmitting(false);
-    alert("Ваша заявка отправлена! Мы свяжемся с вами в ближайшее время.");
+    alert(t.contactSection.successMessage);
     (e.target as HTMLFormElement).reset();
   };
 
@@ -27,11 +29,11 @@ export default function Contact() {
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-px bg-primary" />
             <span className="text-xs text-primary font-medium uppercase tracking-[0.2em]">
-              КАК СНАМИ СВЯЗАТЬСЯ
+              {t.contactSection.label}
             </span>
           </div>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif text-primary">
-            Контакты
+            {t.contactSection.title}
           </h2>
         </div>
 
@@ -39,15 +41,14 @@ export default function Contact() {
           {/* Left Side - Contact Info */}
           <div>
             <p className="text-sm text-muted-foreground uppercase tracking-wider mb-8">
-              ВОПРОСЫ, КОММЕНТАРИИ ИЛИ ПРЕДЛОЖЕНИЯ? ПРОСТО ЗАПОЛНИТЕ
-              ФОРМУ, И МЫ СКОРО С ВАМИ СВЯЖЕМСЯ.
+              {t.contactSection.description}
             </p>
 
             {/* Contact Details */}
             <div className="space-y-4 mb-8">
               <div className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                <span className="text-foreground">Город Ташкент, Улица Боткина, Дом №1</span>
+                <span className="text-foreground">{t.contactSection.address}</span>
               </div>
               <div className="flex items-start gap-3">
                 <Phone className="h-5 w-5 text-primary mt-0.5 shrink-0" />
@@ -94,10 +95,10 @@ export default function Contact() {
           {/* Right Side - Form */}
           <div>
             <h3 className="text-2xl lg:text-3xl font-serif mb-2">
-              НАЙДИТЕ СЕБЕ КВАРТИРУ<br />МЕЧТЫ!
+              {t.contactSection.findApartment}<br />{t.contactSection.dream}
             </h3>
             <p className="text-sm text-muted-foreground uppercase tracking-wider mb-8">
-              ЗАПОЛНИТЕ ФОРМУ И НАШИ МЕНЕДЖЕРЫ СВЯЖУТСЯ С ВАМИ!
+              {t.contactSection.formDesc}
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -105,7 +106,7 @@ export default function Contact() {
                 <input
                   name="name"
                   type="text"
-                  placeholder="ИМЯ"
+                  placeholder={t.contactSection.name}
                   required
                   className="w-full px-0 py-3 text-sm bg-transparent border-b border-border placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
                 />
@@ -114,7 +115,7 @@ export default function Contact() {
                 <input
                   name="phone"
                   type="tel"
-                  placeholder="НОМЕР ТЕЛЕФОНА"
+                  placeholder={t.contactSection.phone}
                   required
                   className="w-full px-0 py-3 text-sm bg-transparent border-b border-border placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
                 />
@@ -122,7 +123,7 @@ export default function Contact() {
               <div>
                 <textarea
                   name="comment"
-                  placeholder="КОММЕНТАРИИ"
+                  placeholder={t.contactSection.comments}
                   rows={3}
                   className="w-full px-0 py-3 text-sm bg-transparent border-b border-border placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors resize-none"
                 />
@@ -134,7 +135,7 @@ export default function Contact() {
                   disabled={isSubmitting}
                   className="text-sm font-medium text-foreground border-b-2 border-primary pb-1 hover:text-primary transition-colors disabled:opacity-50"
                 >
-                  {isSubmitting ? "ОТПРАВКА..." : "ОТПРАВИТЬ"}
+                  {isSubmitting ? t.contactSection.sending : t.contactSection.send}
                 </button>
               </div>
             </form>

@@ -1,21 +1,11 @@
-import Image from "next/image";
+"use client";
 
-const feature01Details = {
-  facades: [
-    "Декоративная покраска",
-    "Фрезерованный металл",
-    "Металл под покраску",
-    "Природные оттенки",
-    "Современные формы",
-  ],
-  commonAreas: [
-    "Керамогранит",
-    "Травертин",
-    "Устойчивые материалы",
-  ],
-};
+import Image from "next/image";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function AboutFeature01() {
+  const { t } = useLanguage();
+
   return (
     <div id="feature-01" className="scroll-mt-20 pb-24 lg:pb-32 pt-20">
       <div className="container mx-auto px-4 lg:px-8">
@@ -31,19 +21,19 @@ export default function AboutFeature01() {
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-8 h-px bg-primary" />
                 <span className="text-xs text-primary font-medium uppercase tracking-[0.2em]">
-                  АРХИТЕКТУРА И МАТЕРИАЛЫ
+                  {t.feature01.label}
                 </span>
               </div>
 
               <h3 className="text-2xl lg:text-4xl font-serif mb-8">
-                Архитектура и<br />материалы
+                {t.feature01.title}<br />{t.feature01.titleLine2}
               </h3>
 
               <div className="grid grid-cols-2 gap-8">
                 <div>
-                  <h4 className="text-sm font-medium text-foreground mb-3">Фасады</h4>
+                  <h4 className="text-sm font-medium text-foreground mb-3">{t.feature01.facades}</h4>
                   <ul className="space-y-1.5">
-                    {feature01Details.facades.map((item) => (
+                    {t.feature01.facadesList.map((item) => (
                       <li key={item} className="text-sm text-muted-foreground flex items-start gap-2">
                         <span className="text-primary mt-1">•</span>
                         {item}
@@ -52,9 +42,9 @@ export default function AboutFeature01() {
                   </ul>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-foreground mb-3">Общие зоны</h4>
+                  <h4 className="text-sm font-medium text-foreground mb-3">{t.feature01.commonAreas}</h4>
                   <ul className="space-y-1.5">
-                    {feature01Details.commonAreas.map((item) => (
+                    {t.feature01.commonAreasList.map((item) => (
                       <li key={item} className="text-sm text-muted-foreground flex items-start gap-2">
                         <span className="text-primary mt-1">•</span>
                         {item}
@@ -71,7 +61,7 @@ export default function AboutFeature01() {
             <div className="relative aspect-[16/10] rounded-lg overflow-hidden bg-muted">
               <Image
                 src="/images/hero/1.png"
-                alt="Архитектура здания"
+                alt={t.feature01.title}
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
