@@ -4,6 +4,9 @@ import "./globals.css";
 import { siteConfig } from "@/lib/constants";
 import { ScrollToTop } from "@/components/shared";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { SettingsProvider } from "@/contexts/SettingsContext";
+import { QueryProvider } from "@/lib/query-provider";
+import { Toaster } from "sonner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -98,10 +101,24 @@ export default function RootLayout({
   return (
     <html lang="ru" className="scroll-smooth" suppressHydrationWarning>
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased`}>
-        <LanguageProvider>
-          <ScrollToTop />
-          {children}
-        </LanguageProvider>
+        <QueryProvider>
+          <SettingsProvider>
+            <LanguageProvider>
+              <ScrollToTop />
+              {children}
+              <Toaster
+                position="top-center"
+                toastOptions={{
+                  style: {
+                    background: "#3F704D",
+                    color: "#fff",
+                    border: "none",
+                  },
+                }}
+              />
+            </LanguageProvider>
+          </SettingsProvider>
+        </QueryProvider>
       </body>
     </html>
   );

@@ -6,29 +6,46 @@ import { Header, Footer } from "@/components/sections";
 import { PageHero } from "@/components/shared";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { siteConfig } from "@/lib/constants";
 import { Phone, MapPin } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-
-// Kontakt ma'lumotlari
-const contactInfo = {
-  address: "Город Ташкент, Улица Богишев, Дом М71",
-  phone: siteConfig.phone,
-  email: siteConfig.email,
-};
+import { useSiteSettings } from "@/contexts/SettingsContext";
+import { submissionsApi } from "@/lib/api/submissions";
+import { toast } from "sonner";
 
 export default function ContactsPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { settings } = useSiteSettings();
+
+  // Dynamic contact info from settings
+  const address = language === "uz" ? settings.contact.address_uz : settings.contact.address;
+  const phoneHref = `tel:${settings.contact.phone.replace(/\s/g, "")}`;
+  const whatsappHref = `https://wa.me/${settings.social.whatsapp.replace(/\D/g, "")}`;
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     message: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(t.common.thankYou);
-    setFormData({ name: "", phone: "", message: "" });
+    setIsSubmitting(true);
+
+    try {
+      await submissionsApi.create({
+        name: formData.name,
+        phone: formData.phone,
+        message: formData.message,
+        source: "contact_page",
+      });
+      toast.success(t.common.thankYou);
+      setFormData({ name: "", phone: "", message: "" });
+    } catch (error) {
+      console.error("Failed to submit:", error);
+      toast.error("Xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -58,20 +75,20 @@ export default function ContactsPage() {
                 <div className="space-y-3 mb-8">
                   <div className="flex items-center gap-2 text-sm">
                     <MapPin className="w-4 h-4 text-primary" />
-                    <span>{contactInfo.address}</span>
+                    <span>{address}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Phone className="w-4 h-4 text-primary" />
-                    <a href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}>
-                      {contactInfo.phone}
+                    <a href={phoneHref}>
+                      {settings.contact.phone}
                     </a>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
                     </svg>
-                    <a href={`mailto:${contactInfo.email}`}>
-                      {contactInfo.email}
+                    <a href={`mailto:${settings.contact.email}`}>
+                      {settings.contact.email}
                     </a>
                   </div>
                 </div>
@@ -79,14 +96,14 @@ export default function ContactsPage() {
                 {/* Action Buttons */}
                 <div className="space-y-3">
                   <a
-                    href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
+                    href={phoneHref}
                     className="flex items-center gap-3 bg-primary text-white px-5 py-3 rounded-md hover:bg-primary/90 transition-colors w-fit"
                   >
                     <Phone className="w-4 h-4" />
                     <span className="text-sm">{t.contacts.callBtn}</span>
                   </a>
                   <a
-                    href={`https://wa.me/${contactInfo.phone.replace(/\D/g, "")}`}
+                    href={whatsappHref}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 bg-primary text-white px-5 py-3 rounded-md hover:bg-primary/90 transition-colors w-fit"
@@ -97,7 +114,7 @@ export default function ContactsPage() {
                     <span className="text-sm">{t.contacts.whatsappBtn}</span>
                   </a>
                   <a
-                    href={siteConfig.social.telegram}
+                    href={settings.social.telegram}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 bg-primary text-white px-5 py-3 rounded-md hover:bg-primary/90 transition-colors w-fit"
@@ -178,9 +195,10 @@ export default function ContactsPage() {
                 </div>
                 <button
                   type="submit"
-                  className="text-sm font-medium text-gray-800 underline underline-offset-4 hover:text-primary transition-colors"
+                  disabled={isSubmitting}
+                  className="text-sm font-medium text-gray-800 underline underline-offset-4 hover:text-primary transition-colors disabled:opacity-50"
                 >
-                  {t.contacts.send}
+                  {isSubmitting ? "Yuborilmoqda..." : t.contacts.send}
                 </button>
               </form>
             </div>

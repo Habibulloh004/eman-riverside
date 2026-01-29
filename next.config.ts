@@ -9,6 +9,28 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60 * 60 * 24 * 365, // 1 yil
+    remotePatterns: [
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "8080",
+        pathname: "/uploads/**",
+      },
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
+        port: "8080",
+        pathname: "/uploads/**",
+      },
+      {
+        hostname: "localhost",
+        port: "8080",
+      },
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+    ],
   },
 
   // Cache headers

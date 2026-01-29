@@ -3,9 +3,7 @@ import {
   Header,
   Hero,
   AboutHeader,
-  AboutFeature01,
-  AboutFeature02,
-  AboutFeature03,
+  AboutFeatures,
   Location,
   Gallery,
   FloorPlans,
@@ -20,7 +18,7 @@ export default function Home() {
       <Header />
       <SideNav />
       <main>
-        {/* Hero + AboutHeader + AboutFeature01 with shared background */}
+        {/* Hero + AboutHeader with shared background */}
         <div className="relative">
           {/* Background Images - Left and Right buildings */}
           <div className="absolute inset-0 z-0 overflow-hidden">
@@ -59,13 +57,11 @@ export default function Home() {
           <div className="relative z-10">
             <Hero />
             <AboutHeader />
-            <AboutFeature01 />
           </div>
         </div>
 
-        {/* Feature 02 and 03 with beige background */}
-        <AboutFeature02 />
-        <AboutFeature03 />
+        {/* About Features - dynamically loaded from API */}
+        <AboutFeatures />
 
         <Location />
         <Gallery />

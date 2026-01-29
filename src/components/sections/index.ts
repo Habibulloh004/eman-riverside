@@ -5,6 +5,7 @@ export { default as AboutHeader } from "./AboutHeader";
 export { default as AboutFeature01 } from "./AboutFeature01";
 export { default as AboutFeature02 } from "./AboutFeature02";
 export { default as AboutFeature03 } from "./AboutFeature03";
+export { default as AboutFeatures } from "./AboutFeatures";
 export { default as Location } from "./Location";
 export { default as Gallery } from "./Gallery";
 export { default as FloorPlans } from "./FloorPlans";

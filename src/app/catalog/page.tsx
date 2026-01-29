@@ -2,109 +2,37 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PageHero } from "@/components/shared";
 import { Header, Footer } from "@/components/sections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronUp, ChevronDown, SlidersHorizontal, X, Download } from "lucide-react";
-
-// Apartment type
-interface Apartment {
-  id: number;
-  name: string;
-  rooms: number;
-  area: number;
-  floor: number;
-  price: number;
-  type: string;
-  image: string;
-  images?: string[];
-  description?: string;
-}
-
-// Apartment data
-const apartments: Apartment[] = [
-  {
-    id: 1,
-    name: "Люкс Экстра",
-    rooms: 3,
-    area: 150,
-    floor: 2,
-    price: 45545,
-    type: "Люкс",
-    image: "/images/hero/planirovka1.png",
-    images: ["/images/hero/planirovka1.png", "/images/hero/1.png"],
-    description: "Просторная 3-комнатная квартира класса Люкс с панорамными окнами и высокими потолками. Идеально подходит для большой семьи."
-  },
-  {
-    id: 2,
-    name: "Люкс Экстра",
-    rooms: 3,
-    area: 150,
-    floor: 3,
-    price: 46500,
-    type: "Люкс",
-    image: "/images/hero/planirovka1.png",
-    images: ["/images/hero/planirovka1.png", "/images/hero/1.png"],
-    description: "Просторная 3-комнатная квартира класса Люкс с панорамными окнами и высокими потолками."
-  },
-  {
-    id: 3,
-    name: "Стандарт Плюс",
-    rooms: 2,
-    area: 85,
-    floor: 4,
-    price: 32000,
-    type: "Стандарт",
-    image: "/images/hero/planirovka1.png",
-    images: ["/images/hero/planirovka1.png", "/images/hero/1.png"],
-    description: "Уютная 2-комнатная квартира с продуманной планировкой и качественной отделкой."
-  },
-  {
-    id: 4,
-    name: "Эконом",
-    rooms: 1,
-    area: 45,
-    floor: 5,
-    price: 22000,
-    type: "Эконом",
-    image: "/images/hero/planirovka1.png",
-    images: ["/images/hero/planirovka1.png", "/images/hero/1.png"],
-    description: "Компактная 1-комнатная квартира - отличный выбор для молодой семьи или инвестиции."
-  },
-  {
-    id: 5,
-    name: "Люкс Экстра",
-    rooms: 4,
-    area: 180,
-    floor: 6,
-    price: 58000,
-    type: "Люкс",
-    image: "/images/hero/planirovka1.png",
-    images: ["/images/hero/planirovka1.png", "/images/hero/1.png"],
-    description: "Роскошная 4-комнатная квартира с террасой и видом на реку."
-  },
-  {
-    id: 6,
-    name: "Стандарт",
-    rooms: 2,
-    area: 75,
-    floor: 2,
-    price: 28000,
-    type: "Стандарт",
-    image: "/images/hero/planirovka1.png",
-    images: ["/images/hero/planirovka1.png", "/images/hero/1.png"],
-    description: "Удобная 2-комнатная квартира с балконом и современной планировкой."
-  },
-];
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  ChevronDown,
+  SlidersHorizontal,
+  X,
+  FileDown
+} from "lucide-react";
+import { useEstates } from "@/hooks/useEstates";
+import { Estate } from "@/lib/api/estates";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Filter options
-const floorOptions = [1, 2, 3, 4, 5, 6];
+const floorOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 const roomOptions = [1, 2, 3, 4, 5];
-const areaOptions = [50, 100, 150, 200];
-const typeOptions = ["Люкс", "Эконом", "Стандарт"];
+const areaOptions = [
+  { label: "< 50", min: 0, max: 50 },
+  { label: "50-80", min: 50, max: 80 },
+  { label: "80-100", min: 80, max: 100 },
+  { label: "> 100", min: 100, max: 999 },
+];
+const typeOptions = ["Все", "Эконом", "Стандарт"];
+
+const ITEMS_PER_PAGE = 10;
 
 interface FilterSectionProps {
   title: string;
@@ -115,7 +43,7 @@ interface FilterSectionProps {
 
 function FilterSection({ title, isOpen, onToggle, children }: FilterSectionProps) {
   return (
-    <div className="border-b border-gray-200 py-4">
+    <div className="border-b border-gray-200 py-3">
       <button
         onClick={onToggle}
         className="flex items-center justify-between w-full text-left"
@@ -127,21 +55,29 @@ function FilterSection({ title, isOpen, onToggle, children }: FilterSectionProps
           <ChevronDown className="w-4 h-4 text-gray-500" />
         )}
       </button>
-      {isOpen && <div className="mt-4">{children}</div>}
+      {isOpen && <div className="mt-3">{children}</div>}
     </div>
   );
 }
 
 export default function CatalogPage() {
+  const { t } = useLanguage();
+
+  // React Query - get all data once with caching
+  const { data: allApartments = [], isLoading } = useEstates({ type: "living" });
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+
   // Filter states
-  const [priceFrom, setPriceFrom] = useState("20,000");
-  const [priceTo, setPriceTo] = useState("60,000");
+  const [priceFrom, setPriceFrom] = useState("");
+  const [priceTo, setPriceTo] = useState("");
   const [selectedFloors, setSelectedFloors] = useState<number[]>([]);
   const [selectedRooms, setSelectedRooms] = useState<number[]>([]);
-  const [selectedAreas, setSelectedAreas] = useState<number[]>([]);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
+  const [selectedType, setSelectedType] = useState("Все");
 
-  // Section open states
+  // Section states
   const [openSections, setOpenSections] = useState({
     price: true,
     floor: true,
@@ -149,103 +85,159 @@ export default function CatalogPage() {
     area: true,
     type: true,
   });
-
-  // Mobile filter drawer
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-  const toggleSection = (section: keyof typeof openSections) => {
-    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  // Memoized filtered apartments (frontend filtering)
+  const filteredApartments = useMemo(() => {
+    if (allApartments.length === 0) return [];
+
+    let filtered = [...allApartments];
+
+    // Room filter
+    if (selectedRooms.length > 0) {
+      filtered = filtered.filter(a => selectedRooms.includes(a.estate_rooms));
+    }
+
+    // Price filter
+    if (priceFrom) {
+      const min = parseInt(priceFrom.replace(/\D/g, "")) || 0;
+      filtered = filtered.filter(a => a.estate_price >= min);
+    }
+    if (priceTo) {
+      const max = parseInt(priceTo.replace(/\D/g, "")) || Infinity;
+      filtered = filtered.filter(a => a.estate_price <= max);
+    }
+
+    // Area filter
+    if (selectedAreas.length > 0) {
+      filtered = filtered.filter(a => {
+        return selectedAreas.some(areaLabel => {
+          const option = areaOptions.find(o => o.label === areaLabel);
+          if (!option) return false;
+          return a.estate_area >= option.min && a.estate_area < option.max;
+        });
+      });
+    }
+
+    // Floor filter
+    if (selectedFloors.length > 0) {
+      filtered = filtered.filter(a => selectedFloors.includes(a.estate_floor));
+    }
+
+    return filtered;
+  }, [allApartments, selectedRooms, priceFrom, priceTo, selectedAreas, selectedFloors]);
+
+  const resetFilters = () => {
+    setPriceFrom("");
+    setPriceTo("");
+    setSelectedFloors([]);
+    setSelectedRooms([]);
+    setSelectedAreas([]);
+    setSelectedType("Все");
+    setCurrentPage(1);
   };
 
-  const toggleFilter = <T,>(
-    value: T,
-    selected: T[],
-    setSelected: React.Dispatch<React.SetStateAction<T[]>>
-  ) => {
+  // Pagination - slice from filtered results
+  const totalPages = Math.ceil(filteredApartments.length / ITEMS_PER_PAGE);
+  const paginatedApartments = filteredApartments.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) {
+        pages.push(1, 2, 3, 4, '...', totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+      }
+    }
+    return pages;
+  };
+
+  const toggleSection = (section: keyof typeof openSections) => {
+    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const toggleFilter = <T,>(value: T, selected: T[], setSelected: React.Dispatch<React.SetStateAction<T[]>>) => {
     if (selected.includes(value)) {
-      setSelected(selected.filter((v) => v !== value));
+      setSelected(selected.filter(v => v !== value));
     } else {
       setSelected([...selected, value]);
     }
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
-  // Filter apartments
-  const filteredApartments = apartments.filter((apt) => {
-    // Filter by type
-    if (selectedTypes.length > 0 && !selectedTypes.includes(apt.type)) {
-      return false;
+  const formatPrice = (price: number) => {
+    if (price >= 1000000000) {
+      return `${(price / 1000000000).toFixed(1)} млрд`;
     }
-    // Filter by rooms
-    if (selectedRooms.length > 0 && !selectedRooms.includes(apt.rooms)) {
-      return false;
+    if (price >= 1000000) {
+      return `${(price / 1000000).toFixed(0)} млн`;
     }
-    // Filter by floor
-    if (selectedFloors.length > 0 && !selectedFloors.includes(apt.floor)) {
-      return false;
-    }
-    // Filter by area
-    if (selectedAreas.length > 0) {
-      const matchesArea = selectedAreas.some((maxArea) => apt.area <= maxArea);
-      if (!matchesArea) return false;
-    }
-    return true;
-  });
+    return new Intl.NumberFormat("ru-RU").format(price);
+  };
+
+  const getApartmentImage = (apartment: Estate): string => {
+    if (apartment.plan_image) return apartment.plan_image;
+    if (apartment.title_image) return apartment.title_image;
+    return "/images/hero/planirovka1.png";
+  };
 
   const filterContent = (
     <>
       {/* Price Filter */}
       <FilterSection
-        title="Цена"
+        title={t.catalog.price}
         isOpen={openSections.price}
         onToggle={() => toggleSection("price")}
       >
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 flex-1">
-            <span className="text-xs text-gray-500">$</span>
-            <Input
-              type="text"
-              value={priceFrom}
-              onChange={(e) => setPriceFrom(e.target.value)}
-              className="h-8 text-xs bg-white border-gray-300"
-            />
-          </div>
-          <span className="text-gray-400 text-xs">To</span>
-          <div className="flex items-center gap-1 flex-1">
-            <span className="text-xs text-gray-500">$</span>
-            <Input
-              type="text"
-              value={priceTo}
-              onChange={(e) => setPriceTo(e.target.value)}
-              className="h-8 text-xs bg-white border-gray-300"
-            />
-          </div>
-        </div>
-        <div className="mt-3">
-          <input
-            type="range"
-            min="0"
-            max="100000"
-            className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+          <Input
+            type="text"
+            value={priceFrom}
+            onChange={(e) => { setPriceFrom(e.target.value); setCurrentPage(1); }}
+            placeholder={t.catalog.from}
+            className="h-8 text-xs bg-white border-gray-300"
+          />
+          <span className="text-gray-400 text-xs">—</span>
+          <Input
+            type="text"
+            value={priceTo}
+            onChange={(e) => { setPriceTo(e.target.value); setCurrentPage(1); }}
+            placeholder={t.catalog.priceTo}
+            className="h-8 text-xs bg-white border-gray-300"
           />
         </div>
       </FilterSection>
 
       {/* Floor Filter */}
       <FilterSection
-        title="Этаж"
+        title={t.catalog.floorFilter}
         isOpen={openSections.floor}
         onToggle={() => toggleSection("floor")}
       >
-        <div className="space-y-2">
+        <div className="grid grid-cols-4 gap-1">
           {floorOptions.map((floor) => (
-            <label key={floor} className="flex items-center gap-3 cursor-pointer">
+            <label key={floor} className="flex items-center gap-1.5 cursor-pointer">
               <Checkbox
                 checked={selectedFloors.includes(floor)}
-                onCheckedChange={() =>
-                  toggleFilter(floor, selectedFloors, setSelectedFloors)
-                }
+                onCheckedChange={() => toggleFilter(floor, selectedFloors, setSelectedFloors)}
+                className="w-4 h-4"
               />
-              <span className="text-sm text-gray-700">{floor}</span>
+              <span className="text-xs text-gray-700">{floor}</span>
             </label>
           ))}
         </div>
@@ -253,20 +245,19 @@ export default function CatalogPage() {
 
       {/* Rooms Filter */}
       <FilterSection
-        title="Количество комнат"
+        title={t.catalog.roomsFilter}
         isOpen={openSections.rooms}
         onToggle={() => toggleSection("rooms")}
       >
-        <div className="space-y-2">
+        <div className="space-y-1">
           {roomOptions.map((room) => (
-            <label key={room} className="flex items-center gap-3 cursor-pointer">
+            <label key={room} className="flex items-center gap-2 cursor-pointer">
               <Checkbox
                 checked={selectedRooms.includes(room)}
-                onCheckedChange={() =>
-                  toggleFilter(room, selectedRooms, setSelectedRooms)
-                }
+                onCheckedChange={() => toggleFilter(room, selectedRooms, setSelectedRooms)}
+                className="w-4 h-4"
               />
-              <span className="text-sm text-gray-700">{room}</span>
+              <span className="text-xs text-gray-700">{room}</span>
             </label>
           ))}
         </div>
@@ -274,20 +265,19 @@ export default function CatalogPage() {
 
       {/* Area Filter */}
       <FilterSection
-        title="Площадь"
+        title={t.catalog.areaFilter}
         isOpen={openSections.area}
         onToggle={() => toggleSection("area")}
       >
-        <div className="space-y-2">
-          {areaOptions.map((area) => (
-            <label key={area} className="flex items-center gap-3 cursor-pointer">
+        <div className="space-y-1">
+          {areaOptions.map((option) => (
+            <label key={option.label} className="flex items-center gap-2 cursor-pointer">
               <Checkbox
-                checked={selectedAreas.includes(area)}
-                onCheckedChange={() =>
-                  toggleFilter(area, selectedAreas, setSelectedAreas)
-                }
+                checked={selectedAreas.includes(option.label)}
+                onCheckedChange={() => toggleFilter(option.label, selectedAreas, setSelectedAreas)}
+                className="w-4 h-4"
               />
-              <span className="text-sm text-gray-700">до {area} м²</span>
+              <span className="text-xs text-gray-700">{option.label} {t.catalog.sqm}</span>
             </label>
           ))}
         </div>
@@ -295,33 +285,32 @@ export default function CatalogPage() {
 
       {/* Type Filter */}
       <FilterSection
-        title="Тип"
+        title={t.catalog.typeFilter}
         isOpen={openSections.type}
         onToggle={() => toggleSection("type")}
       >
-        <div className="space-y-2">
+        <div className="space-y-1">
           {typeOptions.map((type) => (
-            <label key={type} className="flex items-center gap-3 cursor-pointer">
+            <label key={type} className="flex items-center gap-2 cursor-pointer">
               <Checkbox
-                checked={selectedTypes.includes(type)}
-                onCheckedChange={() =>
-                  toggleFilter(type, selectedTypes, setSelectedTypes)
-                }
+                checked={selectedType === type}
+                onCheckedChange={() => setSelectedType(type)}
+                className="w-4 h-4"
               />
-              <span className="text-sm text-gray-700">{type}</span>
+              <span className="text-xs text-gray-700">{type}</span>
             </label>
           ))}
         </div>
       </FilterSection>
 
-      {/* Download PDF Button */}
-      <div className="pt-6">
-        <Button
-          variant="outline"
-          className="w-full border-primary text-primary hover:bg-primary hover:text-white"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Скачать PDF-каталог
+      {/* Reset Filters */}
+      <div className="pt-4 space-y-2">
+        <Button variant="outline" className="w-full text-xs" onClick={resetFilters}>
+          {t.catalog.resetFilters}
+        </Button>
+        <Button variant="outline" className="w-full text-xs" onClick={() => {}}>
+          <FileDown className="w-4 h-4 mr-2" />
+          PDF
         </Button>
       </div>
     </>
@@ -332,16 +321,16 @@ export default function CatalogPage() {
       <Header />
       <main>
         <PageHero
-          title="Каталог"
-          subtitle="ВЫБЕРИТЕ СВОЮ КВАРТИРУ"
+          title={t.catalog.heroTitle}
+          subtitle={t.catalog.heroSubtitle}
           image="/images/hero/1.png"
         />
 
-        <section className="py-8 lg:py-12 bg-beige min-h-screen">
+        <section className="py-6 lg:py-10 bg-beige min-h-screen">
           <div className="container mx-auto px-4 lg:px-8">
-            <div className="flex gap-8">
+            <div className="flex gap-6">
               {/* Desktop Sidebar Filters */}
-              <aside className="hidden lg:block w-60 shrink-0">
+              <aside className="hidden lg:block w-64 shrink-0">
                 <div className="bg-white rounded-lg p-5 sticky top-24">
                   {filterContent}
                 </div>
@@ -354,7 +343,7 @@ export default function CatalogPage() {
                   className="rounded-full shadow-lg px-6"
                 >
                   <SlidersHorizontal className="w-4 h-4 mr-2" />
-                  Фильтры
+                  {t.catalog.filter}
                 </Button>
               </div>
 
@@ -367,7 +356,7 @@ export default function CatalogPage() {
                   />
                   <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[85vh] overflow-y-auto">
                     <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between">
-                      <h3 className="font-semibold">Фильтры</h3>
+                      <h3 className="font-semibold">{t.catalog.filter}</h3>
                       <button
                         onClick={() => setIsMobileFilterOpen(false)}
                         className="p-2 hover:bg-gray-100 rounded-full"
@@ -375,123 +364,148 @@ export default function CatalogPage() {
                         <X className="w-5 h-5" />
                       </button>
                     </div>
-                    <div className="p-4">
-                      {filterContent}
-                    </div>
-                    <div className="sticky bottom-0 bg-white border-t p-4">
-                      <Button
-                        className="w-full"
-                        onClick={() => setIsMobileFilterOpen(false)}
-                      >
-                        Показать {filteredApartments.length} квартир
-                      </Button>
-                    </div>
+                    <div className="p-4">{filterContent}</div>
                   </div>
                 </div>
               )}
 
-              {/* Apartment Cards */}
+              {/* Apartments List */}
               <div className="flex-1">
-                {/* Results count */}
-                <p className="text-sm text-gray-500 mb-4">
-                  Найдено: {filteredApartments.length} квартир
-                </p>
-
-                <div className="space-y-4">
-                  {filteredApartments.map((apt) => (
-                    <div
-                      key={apt.id}
-                      className="bg-white rounded-lg p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:gap-6"
-                    >
-                      {/* Image */}
-                      <Link
-                        href={`/catalog/${apt.id}`}
-                        className="relative w-full sm:w-50 h-45 sm:h-35 shrink-0 rounded-lg overflow-hidden bg-gray-100 cursor-pointer block"
-                      >
-                        <Image
-                          src={apt.image}
-                          alt={apt.name}
-                          fill
-                          className="object-contain p-2"
-                        />
-                      </Link>
-
-                      {/* Content */}
-                      <div className="flex-1 flex flex-col justify-between">
-                        {/* Title */}
-                        <Link href={`/catalog/${apt.id}`}>
-                          <h3 className="text-xl sm:text-2xl font-serif italic text-gray-900 mb-3 cursor-pointer hover:text-primary transition-colors">
-                            {apt.name}
-                          </h3>
-                        </Link>
-
-                        {/* Info Grid */}
-                        <div className="grid grid-cols-3 gap-4 mb-4">
-                          <div>
-                            <p className="text-xs text-gray-500">{apt.rooms} комнатная</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500">{apt.area} м²</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500">{apt.floor} Этаж</p>
-                          </div>
+                {isLoading ? (
+                  <div className="space-y-4">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="bg-white rounded-lg p-4 flex items-center gap-5 animate-pulse">
+                        <div className="w-40 h-28 shrink-0 rounded-lg bg-gray-200" />
+                        <div className="flex-1 space-y-3">
+                          <div className="h-4 bg-gray-200 rounded w-32" />
+                          <div className="h-3 bg-gray-200 rounded w-24" />
+                          <div className="h-3 bg-gray-200 rounded w-28" />
                         </div>
-
-                        {/* Price and Buttons */}
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-                          <p className="text-sm text-gray-600">
-                            от <span className="font-semibold">${apt.price.toLocaleString()}</span>
-                          </p>
-                          <div className="flex gap-3 flex-1 sm:justify-end">
-                            <Button
-                              size="sm"
-                              className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-white px-6"
-                              asChild
-                            >
-                              <Link href={`/catalog/${apt.id}/request`}>
-                                Заявка
-                              </Link>
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="flex-1 sm:flex-none border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
-                              asChild
-                            >
-                              <Link href={`/catalog/${apt.id}`}>
-                                Подробнее
-                              </Link>
-                            </Button>
-                          </div>
+                        <div className="hidden sm:block">
+                          <div className="h-4 bg-gray-200 rounded w-16" />
+                        </div>
+                        <div className="hidden sm:block">
+                          <div className="h-4 bg-gray-200 rounded w-16" />
+                        </div>
+                        <div className="flex gap-3 shrink-0">
+                          <div className="h-10 bg-gray-200 rounded w-20" />
+                          <div className="h-10 bg-gray-200 rounded w-24" />
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {paginatedApartments.map((apartment, index) => (
+                      <div
+                        key={`${apartment.id}-${index}`}
+                        className="bg-white rounded-lg p-4 flex items-center gap-5"
+                      >
+                        {/* Image */}
+                        <Link
+                          href={`/catalog/${apartment.id}`}
+                          className="relative w-40 h-28 shrink-0 rounded-lg overflow-hidden bg-gray-100"
+                        >
+                          <Image
+                            src={getApartmentImage(apartment)}
+                            alt={`${apartment.estate_rooms}-комнатная квартира`}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        </Link>
 
-                {filteredApartments.length === 0 && (
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <Link href={`/catalog/${apartment.id}`}>
+                            <h3 className="text-base font-semibold text-gray-900 hover:text-primary transition-colors line-clamp-2">
+                              {apartment.title || "Люкс Экстра"}
+                            </h3>
+                          </Link>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {apartment.estate_rooms}-{t.catalog.rooms}
+                          </p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {t.catalog.from} {formatPrice(apartment.estate_price)}
+                          </p>
+                        </div>
+
+                        {/* Area */}
+                        <div className="hidden sm:block text-center px-6">
+                          <p className="text-base font-medium">{apartment.estate_area} {t.catalog.sqm}</p>
+                        </div>
+
+                        {/* Floor */}
+                        <div className="hidden sm:block text-center px-6">
+                          <p className="text-base font-medium">{apartment.estate_floor} {t.catalog.floor}</p>
+                        </div>
+
+                        {/* Buttons */}
+                        <div className="flex gap-3 shrink-0">
+                          <Button className="px-5 bg-primary hover:bg-primary/90" asChild>
+                            <Link href={`/catalog/${apartment.id}/request`}>
+                              {t.catalog.request}
+                            </Link>
+                          </Button>
+                          <Button variant="outline" className="px-5" asChild>
+                            <Link href={`/catalog/${apartment.id}`}>
+                              {t.catalog.details}
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {paginatedApartments.length === 0 && !isLoading && (
                   <div className="text-center py-12">
-                    <p className="text-gray-500 mb-4">По вашим критериям квартиры не найдены</p>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setSelectedFloors([]);
-                        setSelectedRooms([]);
-                        setSelectedAreas([]);
-                        setSelectedTypes([]);
-                      }}
-                    >
-                      Сбросить фильтры
+                    <p className="text-gray-500 mb-4">{t.catalog.noResults}</p>
+                    <Button variant="outline" onClick={resetFilters}>
+                      {t.catalog.resetFilters}
                     </Button>
                   </div>
                 )}
 
-                {/* Load More */}
-                {filteredApartments.length > 0 && (
-                  <div className="mt-8 text-center">
-                    <Button variant="outline" className="px-8">
-                      Показать ещё
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="mt-6 flex items-center justify-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => goToPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-3 text-xs"
+                    >
+                      <ChevronLeft className="w-4 h-4 mr-1" />
+                      {t.common.back}
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {getPageNumbers().map((page, index) =>
+                        page === '...' ? (
+                          <span key={`ellipsis-${index}`} className="px-2 text-gray-400 text-xs">...</span>
+                        ) : (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => goToPage(page as number)}
+                            className={`w-8 h-8 text-xs ${currentPage === page ? 'bg-primary text-white' : ''}`}
+                          >
+                            {page}
+                          </Button>
+                        )
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => goToPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-3 text-xs"
+                    >
+                      {t.common.next}
+                      <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </div>
                 )}

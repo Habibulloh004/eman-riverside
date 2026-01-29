@@ -5,9 +5,7 @@ import {
   Header,
   Footer,
   SideNav,
-  AboutFeature01,
-  AboutFeature02,
-  AboutFeature03,
+  AboutFeatures,
   Location,
   FloorPlans,
 } from "@/components/sections";
@@ -60,12 +58,10 @@ export default function AboutPage() {
 
           {/* Content */}
           <div className="relative z-10">
-            <AboutFeature01 />
+            <AboutFeatures />
           </div>
         </div>
 
-        <AboutFeature02 />
-        <AboutFeature03 />
         <Location />
         <FloorPlans />
       </main>

@@ -6,11 +6,16 @@ import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSiteSettings } from "@/contexts/SettingsContext";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { language, setLanguage, t } = useLanguage();
+  const { settings } = useSiteSettings();
+
+  // Format phone for tel: href
+  const phoneHref = `tel:${settings.contact.phone.replace(/\s/g, "")}`;
 
   const headerNavLinks = [
     { href: "/about", label: t.nav.about },
@@ -79,7 +84,7 @@ export default function Header() {
               className="rounded-full px-6 bg-primary text-white hover:bg-primary/90"
               asChild
             >
-              <a href="tel:+998901234567">{t.nav.call}</a>
+              <a href={phoneHref}>{t.nav.call}</a>
             </Button>
           </div>
 
@@ -133,7 +138,7 @@ export default function Header() {
                 className="w-full border-primary text-primary hover:bg-primary hover:text-white rounded-full"
                 asChild
               >
-                <a href="tel:+998901234567">{t.nav.call}</a>
+                <a href={phoneHref}>{t.nav.call}</a>
               </Button>
             </div>
           </div>

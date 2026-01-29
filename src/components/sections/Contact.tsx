@@ -4,21 +4,44 @@ import { useState } from "react";
 import Image from "next/image";
 import { MapPin, Phone, Mail } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSiteSettings } from "@/contexts/SettingsContext";
+import { submissionsApi } from "@/lib/api/submissions";
+import { toast } from "sonner";
 
 export default function Contact() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { settings } = useSiteSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    message: "",
+  });
+
+  // Get address based on current language
+  const address = language === "uz" ? settings.contact.address_uz : settings.contact.address;
+  const phoneHref = `tel:${settings.contact.phone.replace(/\s/g, "")}`;
+  const emailHref = `mailto:${settings.contact.email}`;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Form submission logic here
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    setIsSubmitting(false);
-    alert(t.contactSection.successMessage);
-    (e.target as HTMLFormElement).reset();
+    try {
+      await submissionsApi.create({
+        name: formData.name,
+        phone: formData.phone,
+        message: formData.message,
+        source: "home_page",
+      });
+      toast.success(t.contactSection.successMessage);
+      setFormData({ name: "", phone: "", message: "" });
+    } catch (error) {
+      console.error("Failed to submit:", error);
+      toast.error("Xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -48,18 +71,18 @@ export default function Contact() {
             <div className="space-y-4 mb-8">
               <div className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                <span className="text-foreground">{t.contactSection.address}</span>
+                <span className="text-foreground">{address || t.contactSection.address}</span>
               </div>
               <div className="flex items-start gap-3">
                 <Phone className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                <a href="tel:+998909999999" className="text-foreground hover:text-primary transition-colors">
-                  +998 90 999-99-99
+                <a href={phoneHref} className="text-foreground hover:text-primary transition-colors">
+                  {settings.contact.phone}
                 </a>
               </div>
               <div className="flex items-start gap-3">
                 <Mail className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                <a href="mailto:Emanriverside@gmail.com" className="text-foreground hover:text-primary transition-colors">
-                  Emanriverside@gmail.com
+                <a href={emailHref} className="text-foreground hover:text-primary transition-colors">
+                  {settings.contact.email}
                 </a>
               </div>
             </div>
@@ -107,6 +130,8 @@ export default function Contact() {
                   name="name"
                   type="text"
                   placeholder={t.contactSection.name}
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
                   className="w-full px-0 py-3 text-sm bg-transparent border-b border-border placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
                 />
@@ -116,6 +141,8 @@ export default function Contact() {
                   name="phone"
                   type="tel"
                   placeholder={t.contactSection.phone}
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   required
                   className="w-full px-0 py-3 text-sm bg-transparent border-b border-border placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
                 />
@@ -124,6 +151,8 @@ export default function Contact() {
                 <textarea
                   name="comment"
                   placeholder={t.contactSection.comments}
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   rows={3}
                   className="w-full px-0 py-3 text-sm bg-transparent border-b border-border placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors resize-none"
                 />

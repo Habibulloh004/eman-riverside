@@ -1,25 +1,80 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Header, Footer } from "@/components/sections";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { galleryApi, GalleryItem } from "@/lib/api/gallery";
+import { HeroVideoDialog } from "@/components/ui/hero-video-dialog";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+
+// Default gallery items if API returns empty
+const defaultGalleryItems = {
+  ru: [
+    { image: "/images/hero/1.png", title: "Фасад здания", description: "Современный дизайн фасада с использованием премиальных материалов" },
+    { image: "/images/hero/1.png", title: "Входная группа", description: "Просторный холл с дизайнерской отделкой" },
+    { image: "/images/hero/1.png", title: "Территория", description: "Благоустроенная территория с зонами отдыха" },
+    { image: "/images/hero/1.png", title: "Детская площадка", description: "Безопасная игровая зона для детей" },
+    { image: "/images/hero/1.png", title: "Паркинг", description: "Подземный паркинг с видеонаблюдением" },
+  ],
+  uz: [
+    { image: "/images/hero/1.png", title: "Bino fasadi", description: "Premium materiallar bilan zamonaviy fasad dizayni" },
+    { image: "/images/hero/1.png", title: "Kirish guruhi", description: "Dizayner pardozli keng zal" },
+    { image: "/images/hero/1.png", title: "Hudud", description: "Dam olish zonalari bilan obodonlashtirilgan hudud" },
+    { image: "/images/hero/1.png", title: "Bolalar maydoni", description: "Bolalar uchun xavfsiz o'yin zonasi" },
+    { image: "/images/hero/1.png", title: "Avtoturargoh", description: "Videokuzatuvli yer osti avtoturargoh" },
+  ],
+};
 
 export default function GalleryPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const [galleryItems, setGalleryItems] = useState<Array<{ image: string; title: string; description: string }>>([]);
+  const [videoItems, setVideoItems] = useState<Array<{ url: string; thumbnail: string; title: string }>>([]);
+  const [activeVideoIndex, setActiveVideoIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Gallery items with descriptions
-  const galleryItems = [
-    { image: "/images/hero/1.png", title: t.gallery.photo, description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer." },
-    { image: "/images/hero/1.png", title: t.gallery.photo, description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer." },
-    { image: "/images/hero/1.png", title: t.gallery.photo, description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer." },
-    { image: "/images/hero/1.png", title: t.gallery.photo, description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer." },
-    { image: "/images/hero/1.png", title: t.gallery.photo, description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer." },
-  ];
+  useEffect(() => {
+    const loadGallery = async () => {
+      try {
+        // Load images
+        const imageData = await galleryApi.listPublic({ type: "image" });
+        if (imageData.items && imageData.items.length > 0) {
+          const items = imageData.items.map((item: GalleryItem) => ({
+            image: item.url.startsWith("http") ? item.url : `${API_URL}${item.url}`,
+            title: language === "uz" ? (item.title_uz || item.title) : item.title,
+            description: language === "uz" ? (item.description_uz || item.description) : item.description,
+          }));
+          setGalleryItems(items);
+        } else {
+          setGalleryItems(language === "uz" ? defaultGalleryItems.uz : defaultGalleryItems.ru);
+        }
+
+        // Load all videos
+        const videoData = await galleryApi.listPublic({ type: "video" });
+        if (videoData.items && videoData.items.length > 0) {
+          const videos = videoData.items.map((video: GalleryItem) => ({
+            url: video.url.startsWith("http") ? video.url : `${API_URL}${video.url}`,
+            thumbnail: video.thumbnail ? (video.thumbnail.startsWith("http") ? video.thumbnail : `${API_URL}${video.thumbnail}`) : "",
+            title: language === "uz" ? (video.title_uz || video.title) : video.title,
+          }));
+          setVideoItems(videos);
+        }
+      } catch (error) {
+        console.error("Failed to load gallery:", error);
+        setGalleryItems(language === "uz" ? defaultGalleryItems.uz : defaultGalleryItems.ru);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadGallery();
+  }, [language]);
 
   return (
     <>
       <Header />
-      <main>
+      <main className="pt-20 lg:pt-24 bg-[#F5ECE4]">
         {/* Hero Section */}
         <section className="relative h-screen bg-[#F5ECE4] overflow-hidden">
           {/* Left side - Large Vertical text */}
@@ -33,7 +88,7 @@ export default function GalleryPage() {
           </div>
 
           {/* Logo - positioned right of vertical text, near top */}
-          <div className="absolute left-24 sm:left-32 lg:left-44 top-28 lg:top-32 z-10">
+          <div className="absolute max-md:hidden left-24 sm:left-32 lg:left-44 top-28 lg:top-32 z-10">
             <Image
               src="/logo.svg"
               alt="EMAN RIVERSIDE"
@@ -51,7 +106,7 @@ export default function GalleryPage() {
             }}
           >
             <Image
-              src="/images/hero/1.png"
+              src="/images/03.webp"
               alt="EMAN RIVERSIDE Building"
               fill
               className="object-cover"
@@ -61,17 +116,17 @@ export default function GalleryPage() {
         </section>
 
         {/* Construction Progress Section */}
-        <section className="relative py-20 lg:py-32 bg-[#F5ECE4] overflow-hidden">
+        <section className="relative py-12 lg:py-32 bg-[#F5ECE4] overflow-hidden">
           <div className="container mx-auto px-4 lg:px-8">
             {/* Section title - Very large */}
-            <h2 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-serif mb-16 lg:mb-24 leading-tight">
+            <h2 className="text-3xl sm:text-6xl lg:text-7xl xl:text-8xl font-serif mb-8 lg:mb-24 leading-tight">
               {t.gallery.constructionTitle}<br />
               EMAN RIVERSIDE
             </h2>
 
             <div className="grid lg:grid-cols-12 gap-8 lg:gap-16 items-start">
               {/* Left - Construction steps text (narrow) */}
-              <div className="lg:col-span-3 space-y-8 lg:space-y-12">
+              <div className="lg:col-span-3 space-y-6 lg:space-y-12">
                 {/* First step */}
                 <div className="relative">
                   <h3 className="text-base lg:text-lg font-medium mb-3 text-[#1a1a1a]">
@@ -83,20 +138,13 @@ export default function GalleryPage() {
                 </div>
 
                 {/* Decorative Arc lines between steps */}
-                <div className="relative py-4">
+                <div className="hidden lg:block absolute top-[40%] left-1/5 py-4">
                   <Image
-                    src="/images/catalog/Arc 1.svg"
+                    src="/images/galeryCrcle.svg"
                     alt=""
                     width={340}
                     height={30}
-                    className="w-full max-w-[280px] opacity-70"
-                  />
-                  <Image
-                    src="/images/catalog/Arc 2.svg"
-                    alt=""
-                    width={340}
-                    height={30}
-                    className="w-full max-w-[280px] opacity-70 mt-1"
+                    className="w-full max-w-[400px] opacity-70"
                   />
                 </div>
 
@@ -112,15 +160,15 @@ export default function GalleryPage() {
               </div>
 
               {/* Right - 3 overlapping tilted images */}
-              <div className="lg:col-span-9 relative h-125 lg:h-150">
+              <div className="lg:col-span-9 relative h-80 lg:h-150">
                 {/* Image 1 - Left bottom, with green/primary border */}
                 <div
-                  className="absolute bottom-0 left-0 w-[40%] lg:w-[35%] z-20"
+                  className="absolute max-sm:bottom-20 bottom-0 lg:bottom-[25%] xl:bottom-20 left-0 w-[45%] lg:w-[35%] z-30"
                   style={{ transform: "rotate(-2deg)" }}
                 >
-                  <div className="relative aspect-3/4 rounded-lg overflow-hidden shadow-2xl ring-4 ring-primary">
+                  <div className="relative aspect-square rounded-lg overflow-hidden shadow-2xl">
                     <Image
-                      src="/images/hero/1.png"
+                      src="/images/02.3.webp"
                       alt="Construction 1"
                       fill
                       className="object-cover"
@@ -130,12 +178,12 @@ export default function GalleryPage() {
 
                 {/* Image 2 - Center top */}
                 <div
-                  className="absolute top-0 left-[25%] w-[40%] lg:w-[35%] z-30"
+                  className="absolute top-0 left-[30%] lg:left-[25%] w-[45%] lg:w-[35%] z-20"
                   style={{ transform: "rotate(1deg)" }}
                 >
-                  <div className="relative aspect-3/4 rounded-lg overflow-hidden shadow-2xl">
+                  <div className="relative aspect-square rounded-lg overflow-hidden shadow-2xl">
                     <Image
-                      src="/images/hero/1.png"
+                      src="/images/02.2.webp"
                       alt="Construction 2"
                       fill
                       className="object-cover"
@@ -145,12 +193,12 @@ export default function GalleryPage() {
 
                 {/* Image 3 - Right */}
                 <div
-                  className="absolute top-[5%] right-0 w-[40%] lg:w-[35%] z-10"
-                  style={{ transform: "rotate(2deg)" }}
+                  className="absolute top-[25%] lg:top-[20%] right-0 lg:right-12 w-[45%] lg:w-[35%] z-10"
+                  style={{ transform: "rotate(10deg)" }}
                 >
-                  <div className="relative aspect-3/4 rounded-lg overflow-hidden shadow-2xl">
+                  <div className="relative aspect-square rounded-lg overflow-hidden shadow-2xl">
                     <Image
-                      src="/images/hero/1.png"
+                      src="/images/02.1.webp"
                       alt="Construction 3"
                       fill
                       className="object-cover"
@@ -163,40 +211,55 @@ export default function GalleryPage() {
         </section>
 
         {/* Gallery Section - Green background */}
-        <section className="relative py-16 lg:py-24 bg-primary overflow-hidden">
+        <section className="relative py-12 lg:py-24 bg-primary overflow-hidden">
           {/* Background text */}
           <div className="absolute inset-0 flex items-start justify-center pt-8 pointer-events-none">
-            <span className="text-[120px] lg:text-[200px] font-serif text-white/5 whitespace-nowrap">
+            <span className="text-[80px] lg:text-[200px] font-serif text-white/5 whitespace-nowrap">
               {t.gallery.galleryTitle}
             </span>
           </div>
 
           <div className="container mx-auto px-4 lg:px-8 relative z-10">
             {/* Section title */}
-            <h2 className="text-3xl lg:text-4xl xl:text-5xl font-serif text-white text-center mb-12 lg:mb-16">
+            <h2 className="text-2xl lg:text-4xl xl:text-5xl font-serif text-white text-center mb-8 lg:mb-16">
               {t.gallery.galleryTitle}
             </h2>
 
-            {/* Gallery grid - 5 columns */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6">
-              {galleryItems.map((item, idx) => (
-                <div key={idx} className="flex flex-col">
-                  <div className="relative aspect-[3/4] rounded-sm overflow-hidden mb-4">
-                    <Image
-                      src={item.image}
-                      alt={item.title}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <h3 className="text-white text-sm font-medium mb-2">{item.title}</h3>
-                  <p className="text-white/60 text-xs leading-relaxed">{item.description}</p>
+            {/* Gallery carousel */}
+            {isLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+              </div>
+            ) : (
+              <div>
+                <div
+                  className="flex gap-4 lg:gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4 -mx-4 px-4 lg:-mx-8 lg:px-8"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                  {galleryItems.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex-shrink-0 w-[70%] sm:w-[45%] lg:w-[280px] snap-center flex flex-col"
+                    >
+                      <div className="relative aspect-[3/4] rounded-sm overflow-hidden mb-3 lg:mb-4">
+                        <Image
+                          src={item.image}
+                          alt={item.title}
+                          fill
+                          className="object-cover"
+                          unoptimized={item.image.startsWith("http")}
+                        />
+                      </div>
+                      <h3 className="text-white text-sm font-medium mb-1 lg:mb-2 line-clamp-1">{item.title}</h3>
+                      <p className="text-white/60 text-xs leading-relaxed line-clamp-3">{item.description}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
 
             {/* Decorative ellipse */}
-            <div className="flex justify-center mt-12 lg:mt-16">
+            <div className="flex justify-center mt-8 lg:mt-16">
               <svg width="120" height="40" viewBox="0 0 120 40" fill="none">
                 <ellipse cx="60" cy="20" rx="58" ry="18" stroke="white" strokeWidth="1" fill="none" opacity="0.3" />
               </svg>
@@ -218,7 +281,7 @@ export default function GalleryPage() {
                     style={{ borderRadius: "0 0 45% 0" }}
                   >
                     <Image
-                      src="/images/hero/1.png"
+                      src="/images/05.jpg"
                       alt={t.gallery.interiorTitle}
                       fill
                       className="object-cover"
@@ -251,7 +314,7 @@ export default function GalleryPage() {
               <div className="lg:col-span-4 relative h-72 lg:h-80">
                 <div className="absolute inset-0 overflow-hidden">
                   <Image
-                    src="/images/hero/1.png"
+                    src="/images/01.webp"
                     alt={t.gallery.interiorTitle}
                     fill
                     className="object-cover"
@@ -280,7 +343,7 @@ export default function GalleryPage() {
                   style={{ borderRadius: "60% 40% 55% 45% / 55% 45% 55% 45%" }}
                 >
                   <Image
-                    src="/images/hero/1.png"
+                    src="/images/04.webp"
                     alt={t.gallery.exteriorTitle}
                     fill
                     className="object-cover"
@@ -312,10 +375,10 @@ export default function GalleryPage() {
         </section>
 
         {/* Video Section - Green background */}
-        <section className="relative py-16 lg:py-24 bg-primary overflow-hidden">
+        <section className="relative py-12 lg:py-16 bg-primary overflow-hidden">
           {/* Decorative curved line on left */}
           <svg
-            className="absolute left-8 top-24 w-8 h-32 opacity-60"
+            className="absolute left-8 top-24 w-8 h-32 opacity-60 hidden lg:block"
             viewBox="0 0 30 100"
             fill="none"
           >
@@ -329,27 +392,88 @@ export default function GalleryPage() {
 
           <div className="container mx-auto px-4 lg:px-8">
             {/* Section title */}
-            <h2 className="text-4xl lg:text-5xl xl:text-6xl font-serif text-white mb-8 lg:mb-12">
+            <h2 className="text-2xl lg:text-4xl xl:text-5xl font-serif text-white mb-6 lg:mb-8">
               {t.gallery.videoTitle}
             </h2>
 
-            {/* Video container */}
-            <div className="relative aspect-video lg:aspect-[21/10] rounded-lg overflow-hidden">
-              <Image
-                src="/images/hero/1.png"
-                alt={t.gallery.videoTitle}
-                fill
-                className="object-cover"
-              />
-              {/* Optional play button overlay */}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/20 transition-colors cursor-pointer">
-                <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-white/90 flex items-center justify-center">
-                  <svg className="w-6 h-6 lg:w-8 lg:h-8 text-primary ml-1" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
+            {/* Video carousel */}
+            {videoItems.length > 0 ? (
+              <div className="relative">
+                {/* Single video or carousel */}
+                {videoItems.length === 1 ? (
+                  <div>
+                    <HeroVideoDialog
+                      animationStyle="from-center"
+                      videoSrc={videoItems[0].url}
+                      thumbnailSrc={videoItems[0].thumbnail || "/images/hero/1.png"}
+                      thumbnailAlt={videoItems[0].title || t.gallery.videoTitle}
+                    />
+                    {videoItems[0].title && (
+                      <p className="text-white/80 text-sm lg:text-base mt-4 text-center">
+                        {videoItems[0].title}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {/* Video carousel container */}
+                    <div className="relative">
+                      <HeroVideoDialog
+                        animationStyle="from-center"
+                        videoSrc={videoItems[activeVideoIndex].url}
+                        thumbnailSrc={videoItems[activeVideoIndex].thumbnail || "/images/hero/1.png"}
+                        thumbnailAlt={videoItems[activeVideoIndex].title || t.gallery.videoTitle}
+                      />
+                    </div>
+                    {/* Navigation arrows */}
+                    <button
+                      onClick={() => setActiveVideoIndex((prev) => (prev === 0 ? videoItems.length - 1 : prev - 1))}
+                      className="absolute left-2 lg:left-4 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors z-10"
+                    >
+                      <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => setActiveVideoIndex((prev) => (prev === videoItems.length - 1 ? 0 : prev + 1))}
+                      className="absolute right-2 lg:right-4 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors z-10"
+                    >
+                      <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+
+                    {/* Dots indicator */}
+                    <div className="flex justify-center gap-2 mt-4">
+                      {videoItems.map((_, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setActiveVideoIndex(idx)}
+                          className={`w-2.5 h-2.5 rounded-full transition-colors ${idx === activeVideoIndex ? "bg-white" : "bg-white/30 hover:bg-white/50"
+                            }`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="relative aspect-video rounded-lg overflow-hidden">
+                <Image
+                  src="/images/hero/1.png"
+                  alt={t.gallery.videoTitle}
+                  fill
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                  <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-white/90 flex items-center justify-center">
+                    <svg className="w-6 h-6 lg:w-8 lg:h-8 text-primary ml-1" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </section>
       </main>
