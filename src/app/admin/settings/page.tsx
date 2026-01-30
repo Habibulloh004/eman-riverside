@@ -25,6 +25,7 @@ import {
   GripVertical,
   Layers,
 } from "lucide-react";
+import { useAdminLanguage } from "@/contexts/AdminLanguageContext";
 
 interface PaymentPlan {
   title: string;
@@ -62,6 +63,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<"contact" | "social" | "pricing" | "faq" | "projects">("contact");
   const [activeLang, setActiveLang] = useState<"ru" | "uz">("ru");
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const { t } = useAdminLanguage();
 
   // Form states
   const [contactForm, setContactForm] = useState({
@@ -147,7 +149,7 @@ export default function SettingsPage() {
 
       } catch (err) {
       console.error("Failed to load settings:", err);
-      showNotification("error", "Sozlamalarni yuklashda xatolik");
+      showNotification("error", t.settings.loadError);
     } finally {
       setIsLoading(false);
     }
@@ -174,10 +176,10 @@ export default function SettingsPage() {
         { key: "working_hours_uz", value: contactForm.working_hours_uz },
       ];
       await settingsApi.bulkUpdate(updates);
-      showNotification("success", "Kontakt ma'lumotlari saqlandi");
+      showNotification("success", t.settings.contactSaved);
     } catch (err) {
       console.error("Failed to save:", err);
-      showNotification("error", "Saqlashda xatolik");
+      showNotification("error", t.settings.saveError);
     } finally {
       setIsSaving(false);
     }
@@ -194,10 +196,10 @@ export default function SettingsPage() {
         { key: "whatsapp", value: socialForm.whatsapp },
       ];
       await settingsApi.bulkUpdate(updates);
-      showNotification("success", "Ijtimoiy tarmoqlar saqlandi");
+      showNotification("success", t.settings.socialSaved);
     } catch (err) {
       console.error("Failed to save:", err);
-      showNotification("error", "Saqlashda xatolik");
+      showNotification("error", t.settings.saveError);
     } finally {
       setIsSaving(false);
     }
@@ -211,10 +213,10 @@ export default function SettingsPage() {
         { key: "payment_plans_uz", value: JSON.stringify(paymentPlansUz) },
       ];
       await settingsApi.bulkUpdate(updates);
-      showNotification("success", "To'lov rejalari saqlandi");
+      showNotification("success", t.settings.pricingSaved);
     } catch (err) {
       console.error("Failed to save:", err);
-      showNotification("error", "Saqlashda xatolik");
+      showNotification("error", t.settings.saveError);
     } finally {
       setIsSaving(false);
     }
@@ -228,10 +230,10 @@ export default function SettingsPage() {
         { key: "faq_items_uz", value: JSON.stringify(faqItemsUz) },
       ];
       await settingsApi.bulkUpdate(updates);
-      showNotification("success", "FAQ saqlandi");
+      showNotification("success", t.settings.faqSaved);
     } catch (err) {
       console.error("Failed to save:", err);
-      showNotification("error", "Saqlashda xatolik");
+      showNotification("error", t.settings.saveError);
     } finally {
       setIsSaving(false);
     }
@@ -245,10 +247,10 @@ export default function SettingsPage() {
         { key: "projects_uz", value: JSON.stringify(projectsUz) },
       ];
       await settingsApi.bulkUpdate(updates);
-      showNotification("success", "Loyihalar saqlandi");
+      showNotification("success", t.settings.projectsSaved);
     } catch (err) {
       console.error("Failed to save:", err);
-      showNotification("error", "Saqlashda xatolik");
+      showNotification("error", t.settings.saveError);
     } finally {
       setIsSaving(false);
     }
@@ -382,9 +384,9 @@ export default function SettingsPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
           <Settings className="w-7 h-7" />
-          Sayt Sozlamalari
+          {t.settings.title}
         </h1>
-        <p className="text-gray-500 mt-1">Barcha sozlamalarni bir joydan boshqaring</p>
+        <p className="text-gray-500 mt-1">{t.settings.subtitle}</p>
       </div>
 
       {/* Main Tabs */}
@@ -400,7 +402,7 @@ export default function SettingsPage() {
             }`}
           >
             <Phone className="w-4 h-4" />
-            Kontaktlar
+            {t.settings.contacts}
           </button>
           <button
             onClick={() => setActiveTab("social")}
@@ -411,7 +413,7 @@ export default function SettingsPage() {
             }`}
           >
             <MessageCircle className="w-4 h-4" />
-            Ijtimoiy Tarmoqlar
+            {t.settings.socialNetworks}
           </button>
           <button
             onClick={() => setActiveTab("pricing")}
@@ -422,7 +424,7 @@ export default function SettingsPage() {
             }`}
           >
             <CreditCard className="w-4 h-4" />
-            To&apos;lov Rejalari
+            {t.settings.paymentPlans}
           </button>
           <button
             onClick={() => setActiveTab("faq")}
@@ -444,7 +446,7 @@ export default function SettingsPage() {
             }`}
           >
             <Layers className="w-4 h-4" />
-            Loyihalar
+            {t.settings.projectsTab}
           </button>
         </div>
 
@@ -479,7 +481,7 @@ export default function SettingsPage() {
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                     <Phone className="w-4 h-4 text-gray-400" />
-                    Telefon raqami
+                    {t.settings.phoneLabel}
                   </label>
                   <input
                     type="text"
@@ -507,7 +509,7 @@ export default function SettingsPage() {
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                     <MapPin className="w-4 h-4 text-gray-400" />
-                    Manzil {activeLang === "ru" ? "(Русский)" : "(O'zbek)"}
+                    {t.settings.addressLabel} {activeLang === "ru" ? t.settings.addressLangRu : t.settings.addressLangUz}
                   </label>
                   <textarea
                     value={activeLang === "ru" ? contactForm.address : contactForm.address_uz}
@@ -524,7 +526,7 @@ export default function SettingsPage() {
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                     <Clock className="w-4 h-4 text-gray-400" />
-                    Ish vaqti {activeLang === "ru" ? "(Русский)" : "(O'zbek)"}
+                    {t.settings.workingHoursLabel} {activeLang === "ru" ? t.settings.addressLangRu : t.settings.addressLangUz}
                   </label>
                   <input
                     type="text"
@@ -546,7 +548,7 @@ export default function SettingsPage() {
                   className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
                 >
                   {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                  Saqlash
+                  {t.settings.save}
                 </button>
               </div>
             </div>
@@ -556,7 +558,7 @@ export default function SettingsPage() {
           {activeTab === "social" && (
             <div>
               <p className="text-sm text-gray-500 mb-6">
-                Ijtimoiy tarmoq havolalarini kiriting. Bo&apos;sh maydonlar saytda ko&apos;rsatilmaydi.
+                {t.settings.socialHint}
               </p>
 
               <div className="space-y-5">
@@ -638,7 +640,7 @@ export default function SettingsPage() {
                   className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
                 >
                   {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                  Saqlash
+                  {t.settings.save}
                 </button>
               </div>
             </div>
@@ -657,7 +659,7 @@ export default function SettingsPage() {
                     }`}
                   >
                     <Globe className="w-4 h-4" />
-                    Русский
+                    {t.settings.russian}
                   </button>
                   <button
                     onClick={() => setActiveLang("uz")}
@@ -666,7 +668,7 @@ export default function SettingsPage() {
                     }`}
                   >
                     <Globe className="w-4 h-4" />
-                    O&apos;zbek
+                    {t.settings.uzbek}
                   </button>
                 </div>
                 <button
@@ -674,7 +676,7 @@ export default function SettingsPage() {
                   className="flex items-center gap-2 px-4 py-2 text-green-600 border border-green-200 rounded-lg hover:bg-green-50 transition-colors text-sm font-medium"
                 >
                   <Plus className="w-4 h-4" />
-                  Reja qo&apos;shish
+                  {t.settings.addPlan}
                 </button>
               </div>
 
@@ -683,12 +685,12 @@ export default function SettingsPage() {
                 {currentPlans.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-xl">
                     <CreditCard className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                    <p className="text-gray-500">To&apos;lov rejalari yo&apos;q</p>
+                    <p className="text-gray-500">{t.settings.noPlans}</p>
                     <button
                       onClick={addPaymentPlan}
                       className="mt-3 text-green-600 text-sm font-medium hover:underline"
                     >
-                      Birinchi rejani qo&apos;shing
+                      {t.settings.addFirstPlan}
                     </button>
                   </div>
                 ) : (
@@ -698,7 +700,7 @@ export default function SettingsPage() {
                         <GripVertical className="w-5 h-5 text-gray-400 mt-1 cursor-grab" />
                         <div className="flex-1 grid grid-cols-2 gap-4">
                           <div>
-                            <label className="text-xs font-medium text-gray-500 mb-1 block">Nomi</label>
+                            <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.planName}</label>
                             <input
                               type="text"
                               value={plan.title}
@@ -708,7 +710,7 @@ export default function SettingsPage() {
                             />
                           </div>
                           <div>
-                            <label className="text-xs font-medium text-gray-500 mb-1 block">Narxi</label>
+                            <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.planPrice}</label>
                             <input
                               type="text"
                               value={plan.price}
@@ -718,7 +720,7 @@ export default function SettingsPage() {
                             />
                           </div>
                           <div>
-                            <label className="text-xs font-medium text-gray-500 mb-1 block">Davri</label>
+                            <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.planPeriod}</label>
                             <input
                               type="text"
                               value={plan.period}
@@ -728,7 +730,7 @@ export default function SettingsPage() {
                             />
                           </div>
                           <div>
-                            <label className="text-xs font-medium text-gray-500 mb-1 block">Tavsif</label>
+                            <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.planDescription}</label>
                             <input
                               type="text"
                               value={plan.description}
@@ -747,7 +749,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label className="text-xs font-medium text-gray-500 mb-1 block">
-                          Xususiyatlar (har bir qator alohida xususiyat)
+                          {t.settings.planFeatures}
                         </label>
                         <textarea
                           value={plan.features.join("\n")}
@@ -771,7 +773,7 @@ export default function SettingsPage() {
                   className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
                 >
                   {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                  Saqlash
+                  {t.settings.save}
                 </button>
               </div>
             </div>
@@ -790,7 +792,7 @@ export default function SettingsPage() {
                     }`}
                   >
                     <Globe className="w-4 h-4" />
-                    Русский
+                    {t.settings.russian}
                   </button>
                   <button
                     onClick={() => setActiveLang("uz")}
@@ -799,7 +801,7 @@ export default function SettingsPage() {
                     }`}
                   >
                     <Globe className="w-4 h-4" />
-                    O&apos;zbek
+                    {t.settings.uzbek}
                   </button>
                 </div>
                 <button
@@ -807,7 +809,7 @@ export default function SettingsPage() {
                   className="flex items-center gap-2 px-4 py-2 text-green-600 border border-green-200 rounded-lg hover:bg-green-50 transition-colors text-sm font-medium"
                 >
                   <Plus className="w-4 h-4" />
-                  Savol qo&apos;shish
+                  {t.settings.addQuestion}
                 </button>
               </div>
 
@@ -816,12 +818,12 @@ export default function SettingsPage() {
                 {currentFaq.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-xl">
                     <HelpCircle className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                    <p className="text-gray-500">FAQ savollar yo&apos;q</p>
+                    <p className="text-gray-500">{t.settings.noFaq}</p>
                     <button
                       onClick={addFaqItem}
                       className="mt-3 text-green-600 text-sm font-medium hover:underline"
                     >
-                      Birinchi savolni qo&apos;shing
+                      {t.settings.addFirstQuestion}
                     </button>
                   </div>
                 ) : (
@@ -833,7 +835,7 @@ export default function SettingsPage() {
                         </div>
                         <div className="flex-1 space-y-3">
                           <div>
-                            <label className="text-xs font-medium text-gray-500 mb-1 block">Savol</label>
+                            <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.questionLabel}</label>
                             <input
                               type="text"
                               value={item.question}
@@ -843,7 +845,7 @@ export default function SettingsPage() {
                             />
                           </div>
                           <div>
-                            <label className="text-xs font-medium text-gray-500 mb-1 block">Javob</label>
+                            <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.answerLabel}</label>
                             <textarea
                               value={item.answer}
                               onChange={(e) => updateFaqItem(index, "answer", e.target.value)}
@@ -872,7 +874,7 @@ export default function SettingsPage() {
                   className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
                 >
                   {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                  Saqlash
+                  {t.settings.save}
                 </button>
               </div>
             </div>
@@ -891,7 +893,7 @@ export default function SettingsPage() {
                     }`}
                   >
                     <Globe className="w-4 h-4" />
-                    Русский
+                    {t.settings.russian}
                   </button>
                   <button
                     onClick={() => setActiveLang("uz")}
@@ -900,7 +902,7 @@ export default function SettingsPage() {
                     }`}
                   >
                     <Globe className="w-4 h-4" />
-                    O&apos;zbek
+                    {t.settings.uzbek}
                   </button>
                 </div>
                 <button
@@ -908,7 +910,7 @@ export default function SettingsPage() {
                   className="flex items-center gap-2 px-4 py-2 text-green-600 border border-green-200 rounded-lg hover:bg-green-50 transition-colors text-sm font-medium"
                 >
                   <Plus className="w-4 h-4" />
-                  Loyiha qo&apos;shish
+                  {t.settings.addProjectSetting}
                 </button>
               </div>
 
@@ -917,12 +919,12 @@ export default function SettingsPage() {
                 {currentProjects.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-xl">
                     <Layers className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                    <p className="text-gray-500">Loyihalar yo&apos;q</p>
+                    <p className="text-gray-500">{t.settings.noProjectsSetting}</p>
                     <button
                       onClick={addProject}
                       className="mt-3 text-green-600 text-sm font-medium hover:underline"
                     >
-                      Birinchi loyihani qo&apos;shing
+                      {t.settings.addFirstProject}
                     </button>
                   </div>
                 ) : (
@@ -934,8 +936,8 @@ export default function SettingsPage() {
                             {project.number}
                           </span>
                           <div>
-                            <h4 className="font-medium text-gray-900">{project.title || "Yangi loyiha"}</h4>
-                            <p className="text-sm text-gray-500">{project.label || "Label kiritilmagan"}</p>
+                            <h4 className="font-medium text-gray-900">{project.title || t.settings.newProject}</h4>
+                            <p className="text-sm text-gray-500">{project.label || t.settings.noLabel}</p>
                           </div>
                         </div>
                         <button
@@ -948,7 +950,7 @@ export default function SettingsPage() {
 
                       <div className="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                          <label className="text-xs font-medium text-gray-500 mb-1 block">Raqam</label>
+                          <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.numberLabel}</label>
                           <input
                             type="text"
                             value={project.number}
@@ -958,7 +960,7 @@ export default function SettingsPage() {
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-medium text-gray-500 mb-1 block">Label</label>
+                          <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.labelField}</label>
                           <input
                             type="text"
                             value={project.label}
@@ -968,7 +970,7 @@ export default function SettingsPage() {
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-medium text-gray-500 mb-1 block">Sarlavha (1-qator)</label>
+                          <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.titleLine1}</label>
                           <input
                             type="text"
                             value={project.title}
@@ -978,7 +980,7 @@ export default function SettingsPage() {
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-medium text-gray-500 mb-1 block">Sarlavha (2-qator)</label>
+                          <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.titleLine2}</label>
                           <input
                             type="text"
                             value={project.titleLine2}
@@ -988,7 +990,7 @@ export default function SettingsPage() {
                           />
                         </div>
                         <div className="col-span-2">
-                          <label className="text-xs font-medium text-gray-500 mb-1 block">Rasm URL</label>
+                          <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.imageUrl}</label>
                           <input
                             type="text"
                             value={project.image}
@@ -1000,7 +1002,7 @@ export default function SettingsPage() {
                       </div>
 
                       <div className="mb-4">
-                        <label className="text-xs font-medium text-gray-500 mb-1 block">Tavsif (ixtiyoriy)</label>
+                        <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.descriptionOptional}</label>
                         <textarea
                           value={project.description || ""}
                           onChange={(e) => updateProject(index, "description", e.target.value)}
@@ -1012,7 +1014,7 @@ export default function SettingsPage() {
 
                       <div>
                         <label className="text-xs font-medium text-gray-500 mb-1 block">
-                          Xususiyatlar (har bir qator alohida, ixtiyoriy)
+                          {t.settings.featuresOptional}
                         </label>
                         <textarea
                           value={(project.features || []).join("\n")}
@@ -1036,7 +1038,7 @@ export default function SettingsPage() {
                   className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
                 >
                   {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                  Saqlash
+                  {t.settings.save}
                 </button>
               </div>
             </div>

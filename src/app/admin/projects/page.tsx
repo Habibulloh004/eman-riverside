@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { projectsApi, Project, CreateProjectRequest } from "@/lib/api/projects";
+import { useAdminLanguage } from "@/contexts/AdminLanguageContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -13,6 +14,7 @@ export default function ProjectsPage() {
   const [editingItem, setEditingItem] = useState<Project | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { t } = useAdminLanguage();
 
   const [formData, setFormData] = useState<CreateProjectRequest>({
     type_ru: "",
@@ -61,32 +63,32 @@ export default function ProjectsPage() {
     e.preventDefault();
 
     if (!formData.type_ru.trim()) {
-      alert("Iltimos turi (RU) kiriting");
+      alert(t.projects.typeRuRequired);
       return;
     }
 
     if (!formData.type_uz.trim()) {
-      alert("Iltimos turi (UZ) kiriting");
+      alert(t.projects.typeUzRequired);
       return;
     }
 
     if (!formData.area_ru.trim()) {
-      alert("Iltimos maydoni (RU) kiriting");
+      alert(t.projects.areaRuRequired);
       return;
     }
 
     if (!formData.area_uz.trim()) {
-      alert("Iltimos maydoni (UZ) kiriting");
+      alert(t.projects.areaUzRequired);
       return;
     }
 
     if (!formData.description_ru.trim()) {
-      alert("Iltimos tavsif (RU) kiriting");
+      alert(t.projects.descRuRequired);
       return;
     }
 
     if (!formData.description_uz.trim()) {
-      alert("Iltimos tavsif (UZ) kiriting");
+      alert(t.projects.descUzRequired);
       return;
     }
 
@@ -125,7 +127,7 @@ export default function ProjectsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Rostdan o'chirmoqchimisiz?")) return;
+    if (!confirm(t.projects.confirmDelete)) return;
 
     try {
       await projectsApi.delete(id);
@@ -165,8 +167,8 @@ export default function ProjectsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Loyihalar (Planlar)</h1>
-          <p className="text-gray-500 text-sm mt-1">Bu bo&apos;lim saytdagi &quot;Planlar&quot; bo&apos;limida ko&apos;rsatiladi</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t.projects.title}</h1>
+          <p className="text-gray-500 text-sm mt-1">{t.projects.subtitle}</p>
         </div>
         <button
           onClick={openNewModal}
@@ -175,7 +177,7 @@ export default function ProjectsPage() {
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Loyiha qo&apos;shish
+          {t.projects.addProject}
         </button>
       </div>
 
@@ -189,17 +191,17 @@ export default function ProjectsPage() {
           <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
-          <p className="text-gray-500 mb-4">Hozircha loyihalar yo&apos;q</p>
+          <p className="text-gray-500 mb-4">{t.projects.noProjects}</p>
           <button
             onClick={openNewModal}
             className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
           >
-            Birinchi loyihani qo&apos;shing
+            {t.projects.addFirst}
           </button>
         </div>
       ) : (
         <>
-          <p className="text-sm text-gray-500 mb-4">Jami: {items.length} ta loyiha</p>
+          <p className="text-sm text-gray-500 mb-4">{t.projects.total}: {items.length} {t.projects.projectCount}</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {items.map((item) => (
               <div key={item.id} className="bg-white rounded-lg shadow overflow-hidden">
@@ -214,7 +216,7 @@ export default function ProjectsPage() {
                     />
                     {!item.is_published && (
                       <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded">
-                        Draft
+                        {t.projects.draft}
                       </div>
                     )}
                   </div>
@@ -229,7 +231,7 @@ export default function ProjectsPage() {
                       onClick={() => handleEdit(item)}
                       className="flex-1 px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
                     >
-                      Tahrirlash
+                      {t.projects.edit}
                     </button>
                     <button
                       onClick={() => handleDelete(item.id)}
@@ -263,7 +265,7 @@ export default function ProjectsPage() {
           >
             <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold">
-                {editingItem ? "Loyihani tahrirlash" : "Yangi loyiha qo'shish"}
+                {editingItem ? t.projects.editProject : t.projects.addNew}
               </h2>
               <button
                 onClick={closeModal}
@@ -278,7 +280,7 @@ export default function ProjectsPage() {
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {/* Preview Box */}
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <p className="text-xs text-amber-700 font-medium mb-2">SAYTDA KO&apos;RINISHI:</p>
+                <p className="text-xs text-amber-700 font-medium mb-2">{t.projects.previewLabel}</p>
                 <div className="flex gap-4 items-start">
                   <div className="w-24 h-20 bg-white rounded flex items-center justify-center text-gray-400 text-xs shrink-0">
                     {formData.image ? (
@@ -291,7 +293,7 @@ export default function ProjectsPage() {
                         unoptimized
                       />
                     ) : (
-                      "Rasm"
+                      t.projects.imageLabel
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -306,7 +308,7 @@ export default function ProjectsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Xona turi (RU) *
+                    {t.projects.roomTypeRu}
                   </label>
                   <input
                     type="text"
@@ -316,11 +318,11 @@ export default function ProjectsPage() {
                     placeholder="3-комнатные"
                     required
                   />
-                  <p className="text-xs text-gray-400 mt-1">Saytda katta sarlavha sifatida chiqadi</p>
+                  <p className="text-xs text-gray-400 mt-1">{t.projects.roomTypeHint}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Xona turi (UZ) *
+                    {t.projects.roomTypeUz}
                   </label>
                   <input
                     type="text"
@@ -337,7 +339,7 @@ export default function ProjectsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Maydon (RU) *
+                    {t.projects.areaRu}
                   </label>
                   <input
                     type="text"
@@ -347,11 +349,11 @@ export default function ProjectsPage() {
                     placeholder="от 56.79 до 61 м²"
                     required
                   />
-                  <p className="text-xs text-gray-400 mt-1">Kvartira maydoni diapazoni</p>
+                  <p className="text-xs text-gray-400 mt-1">{t.projects.areaHint}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Maydon (UZ) *
+                    {t.projects.areaUz}
                   </label>
                   <input
                     type="text"
@@ -368,7 +370,7 @@ export default function ProjectsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tavsif (RU) *
+                    {t.projects.descriptionRu}
                   </label>
                   <textarea
                     value={formData.description_ru}
@@ -378,11 +380,11 @@ export default function ProjectsPage() {
                     rows={2}
                     required
                   />
-                  <p className="text-xs text-gray-400 mt-1">Qisqa tavsif (kursiv bilan chiqadi)</p>
+                  <p className="text-xs text-gray-400 mt-1">{t.projects.descHint}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tavsif (UZ) *
+                    {t.projects.descriptionUz}
                   </label>
                   <textarea
                     value={formData.description_uz}
@@ -398,7 +400,7 @@ export default function ProjectsPage() {
               {/* Image Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Rasm (planirovka)
+                  {t.projects.imageUpload}
                 </label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-green-500 transition-colors">
                   <input
@@ -413,22 +415,22 @@ export default function ProjectsPage() {
                     {isUploading ? (
                       <div className="flex items-center justify-center gap-2">
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600"></div>
-                        <span>Yuklanmoqda...</span>
+                        <span>{t.projects.uploading}</span>
                       </div>
                     ) : formData.image ? (
                       <div className="text-green-600">
                         <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
-                        <p>Rasm yuklandi</p>
-                        <p className="text-sm text-gray-500 mt-1">Boshqa rasm tanlash uchun bosing</p>
+                        <p>{t.projects.imageUploaded}</p>
+                        <p className="text-sm text-gray-500 mt-1">{t.projects.selectAnother}</p>
                       </div>
                     ) : (
                       <div className="text-gray-500">
                         <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
-                        <p>Rasm yuklash uchun bosing</p>
+                        <p>{t.projects.clickToUpload}</p>
                         <p className="text-sm mt-1">PNG, JPG, WEBP</p>
                       </div>
                     )}
@@ -446,7 +448,7 @@ export default function ProjectsPage() {
                   className="w-4 h-4 rounded text-green-600 focus:ring-green-500"
                 />
                 <label htmlFor="is_published" className="text-sm text-gray-700">
-                  Saytda ko&apos;rsatish (nashr qilish)
+                  {t.projects.publishLabel}
                 </label>
               </div>
 
@@ -457,14 +459,14 @@ export default function ProjectsPage() {
                   disabled={isSaving || isUploading}
                   className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {isSaving ? "Saqlanmoqda..." : "Saqlash"}
+                  {isSaving ? t.projects.saving : t.projects.saveBtn}
                 </button>
                 <button
                   type="button"
                   onClick={closeModal}
                   className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
                 >
-                  Bekor qilish
+                  {t.projects.cancel}
                 </button>
               </div>
             </form>

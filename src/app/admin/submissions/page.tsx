@@ -1,26 +1,40 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { submissionsApi, Submission } from "@/lib/api/submissions";
 import { useWebSocket } from "@/contexts/WebSocketContext";
-
-const statusLabels: Record<string, { label: string; color: string }> = {
-  new: { label: "Yangi", color: "bg-green-100 text-green-800" },
-  contacted: { label: "Bog'lanildi", color: "bg-yellow-100 text-yellow-800" },
-  closed: { label: "Yopildi", color: "bg-gray-100 text-gray-800" },
-};
-
-const sourceLabels: Record<string, string> = {
-  contact_page: "Kontakt sahifasi",
-  catalog_request: "Katalog so'rovi",
-  callback: "Qo'ng'iroq so'rovi",
-};
+import { useAdminLanguage } from "@/contexts/AdminLanguageContext";
 
 export default function SubmissionsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      </div>
+    }>
+      <SubmissionsContent />
+    </Suspense>
+  );
+}
+
+function SubmissionsContent() {
   const searchParams = useSearchParams();
   const initialStatus = searchParams.get("status") || "";
   const { lastSubmission, clearNewSubmissionsCount } = useWebSocket();
+  const { t } = useAdminLanguage();
+
+  const statusLabels: Record<string, { label: string; color: string }> = {
+    new: { label: t.submissions.new, color: "bg-green-100 text-green-800" },
+    contacted: { label: t.submissions.contactedStatus, color: "bg-yellow-100 text-yellow-800" },
+    closed: { label: t.submissions.closed, color: "bg-gray-100 text-gray-800" },
+  };
+
+  const sourceLabels: Record<string, string> = {
+    contact_page: t.submissions.sources.contact_page,
+    catalog_request: t.submissions.sources.catalog_request,
+    callback: t.submissions.sources.callback,
+  };
 
   const [items, setItems] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,7 +104,7 @@ export default function SubmissionsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Rostdan o'chirmoqchimisiz?")) return;
+    if (!confirm(t.submissions.confirmDelete)) return;
 
     try {
       await submissionsApi.delete(id);
@@ -123,7 +137,7 @@ export default function SubmissionsPage() {
       {/* List */}
       <div className={`flex-1 ${selectedItem ? "hidden lg:block" : ""}`}>
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Zayavkalar</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.submissions.title}</h1>
           <select
             value={statusFilter}
             onChange={(e) => {
@@ -132,10 +146,10 @@ export default function SubmissionsPage() {
             }}
             className="px-3 py-2 border rounded-md"
           >
-            <option value="">Barchasi</option>
-            <option value="new">Yangi</option>
-            <option value="contacted">Bog&apos;lanildi</option>
-            <option value="closed">Yopildi</option>
+            <option value="">{t.submissions.all}</option>
+            <option value="new">{t.submissions.new}</option>
+            <option value="contacted">{t.submissions.contactedStatus}</option>
+            <option value="closed">{t.submissions.closed}</option>
           </select>
         </div>
 
@@ -145,7 +159,7 @@ export default function SubmissionsPage() {
           </div>
         ) : items.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-500">Zayavkalar topilmadi</p>
+            <p className="text-gray-500">{t.submissions.notFound}</p>
           </div>
         ) : (
           <>
@@ -153,11 +167,11 @@ export default function SubmissionsPage() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Ism</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Telefon</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Manba</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Sana</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">{t.submissions.name}</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">{t.submissions.phone}</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">{t.submissions.source}</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">{t.submissions.status}</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">{t.submissions.date}</th>
                     <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
@@ -203,7 +217,7 @@ export default function SubmissionsPage() {
             {/* Pagination */}
             <div className="flex justify-between items-center mt-4">
               <p className="text-sm text-gray-500">
-                Jami: {total} ta
+                {t.submissions.total}: {total} {t.submissions.items}
               </p>
               <div className="flex gap-2">
                 <button
@@ -211,7 +225,7 @@ export default function SubmissionsPage() {
                   disabled={page === 1}
                   className="px-3 py-1 border rounded disabled:opacity-50"
                 >
-                  Oldingi
+                  {t.submissions.previous}
                 </button>
                 <span className="px-3 py-1">{page}</span>
                 <button
@@ -219,7 +233,7 @@ export default function SubmissionsPage() {
                   disabled={items.length < 20}
                   className="px-3 py-1 border rounded disabled:opacity-50"
                 >
-                  Keyingi
+                  {t.submissions.next}
                 </button>
               </div>
             </div>
@@ -231,7 +245,7 @@ export default function SubmissionsPage() {
       {selectedItem && (
         <div className="w-full lg:w-96 bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-start mb-6">
-            <h2 className="text-lg font-semibold">Zayavka #{selectedItem.id}</h2>
+            <h2 className="text-lg font-semibold">{t.submissions.submission} #{selectedItem.id}</h2>
             <button
               onClick={() => setSelectedItem(null)}
               className="text-gray-400 hover:text-gray-600"
@@ -244,12 +258,12 @@ export default function SubmissionsPage() {
 
           <div className="space-y-4">
             <div>
-              <p className="text-sm text-gray-500">Ism</p>
+              <p className="text-sm text-gray-500">{t.submissions.name}</p>
               <p className="font-medium">{selectedItem.name}</p>
             </div>
 
             <div>
-              <p className="text-sm text-gray-500">Telefon</p>
+              <p className="text-sm text-gray-500">{t.submissions.phone}</p>
               <a href={`tel:${selectedItem.phone}`} className="font-medium text-green-600 hover:underline">
                 {selectedItem.phone}
               </a>
@@ -257,7 +271,7 @@ export default function SubmissionsPage() {
 
             {selectedItem.email && (
               <div>
-                <p className="text-sm text-gray-500">Email</p>
+                <p className="text-sm text-gray-500">{t.submissions.email}</p>
                 <a href={`mailto:${selectedItem.email}`} className="font-medium text-green-600 hover:underline">
                   {selectedItem.email}
                 </a>
@@ -266,7 +280,7 @@ export default function SubmissionsPage() {
 
             {selectedItem.estate_id && (
               <div>
-                <p className="text-sm text-gray-500">Kvartira ID</p>
+                <p className="text-sm text-gray-500">{t.submissions.apartmentId}</p>
                 <a
                   href={`/catalog/${selectedItem.estate_id}`}
                   target="_blank"
@@ -280,7 +294,7 @@ export default function SubmissionsPage() {
 
             {selectedItem.payment_plan && (
               <div>
-                <p className="text-sm text-gray-500">To&apos;lov rejasi</p>
+                <p className="text-sm text-gray-500">{t.submissions.paymentPlan}</p>
                 <span className="inline-block px-2 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">
                   {selectedItem.payment_plan}
                 </span>
@@ -289,23 +303,23 @@ export default function SubmissionsPage() {
 
             {selectedItem.message && (
               <div>
-                <p className="text-sm text-gray-500">Xabar</p>
+                <p className="text-sm text-gray-500">{t.submissions.message}</p>
                 <p className="text-gray-900 whitespace-pre-wrap">{selectedItem.message}</p>
               </div>
             )}
 
             <div>
-              <p className="text-sm text-gray-500">Manba</p>
+              <p className="text-sm text-gray-500">{t.submissions.source}</p>
               <p>{sourceLabels[selectedItem.source] || selectedItem.source}</p>
             </div>
 
             <div>
-              <p className="text-sm text-gray-500">Sana</p>
+              <p className="text-sm text-gray-500">{t.submissions.date}</p>
               <p>{formatDate(selectedItem.created_at)}</p>
             </div>
 
             <div>
-              <p className="text-sm text-gray-500 mb-2">Status</p>
+              <p className="text-sm text-gray-500 mb-2">{t.submissions.status}</p>
               <div className="flex gap-2">
                 {Object.entries(statusLabels).map(([value, { label, color }]) => (
                   <button
@@ -324,18 +338,18 @@ export default function SubmissionsPage() {
             </div>
 
             <div>
-              <p className="text-sm text-gray-500 mb-2">Izohlar</p>
+              <p className="text-sm text-gray-500 mb-2">{t.submissions.notes}</p>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Izoh qo'shing..."
+                placeholder={t.submissions.notesPlaceholder}
                 className="w-full px-3 py-2 border rounded-md h-24 resize-none"
               />
               <button
                 onClick={handleSaveNotes}
                 className="mt-2 px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
               >
-                Saqlash
+                {t.submissions.save}
               </button>
             </div>
           </div>

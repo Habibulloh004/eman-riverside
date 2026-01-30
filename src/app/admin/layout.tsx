@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { WebSocketProvider } from "@/contexts/WebSocketContext";
+import { AdminLanguageProvider } from "@/contexts/AdminLanguageContext";
 import Sidebar from "@/components/admin/Sidebar";
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
@@ -52,7 +53,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <AuthProvider>
       <WebSocketProvider>
-        <AdminLayoutContent>{children}</AdminLayoutContent>
+        <AdminLanguageProvider>
+          <AdminLayoutContent>{children}</AdminLayoutContent>
+        </AdminLanguageProvider>
       </WebSocketProvider>
     </AuthProvider>
   );

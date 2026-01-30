@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { submissionsApi } from "@/lib/api/submissions";
 import { galleryApi } from "@/lib/api/gallery";
+import { useAdminLanguage } from "@/contexts/AdminLanguageContext";
 
 interface Stats {
   submissions: {
@@ -20,6 +21,7 @@ interface Stats {
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useAdminLanguage();
 
   useEffect(() => {
     async function loadStats() {
@@ -53,14 +55,14 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Dashboard</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-8">{t.dashboard.title}</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* New Submissions */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Yangi zayavkalar</p>
+              <p className="text-sm text-gray-500">{t.dashboard.newSubmissions}</p>
               <p className="text-3xl font-bold text-green-600">{stats?.submissions.new || 0}</p>
             </div>
             <div className="bg-green-100 p-3 rounded-full">
@@ -70,7 +72,7 @@ export default function AdminDashboard() {
             </div>
           </div>
           <Link href="/admin/submissions?status=new" className="text-sm text-green-600 hover:underline mt-4 inline-block">
-            Ko&apos;rish →
+            {t.dashboard.view}
           </Link>
         </div>
 
@@ -78,7 +80,7 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Jami zayavkalar</p>
+              <p className="text-sm text-gray-500">{t.dashboard.totalSubmissions}</p>
               <p className="text-3xl font-bold text-gray-900">{stats?.submissions.total || 0}</p>
             </div>
             <div className="bg-gray-100 p-3 rounded-full">
@@ -88,7 +90,7 @@ export default function AdminDashboard() {
             </div>
           </div>
           <Link href="/admin/submissions" className="text-sm text-gray-600 hover:underline mt-4 inline-block">
-            Barchasini ko&apos;rish →
+            {t.dashboard.viewAll}
           </Link>
         </div>
 
@@ -96,7 +98,7 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Gallery elementlari</p>
+              <p className="text-sm text-gray-500">{t.dashboard.galleryItems}</p>
               <p className="text-3xl font-bold text-gray-900">{stats?.gallery.total || 0}</p>
             </div>
             <div className="bg-blue-100 p-3 rounded-full">
@@ -106,7 +108,7 @@ export default function AdminDashboard() {
             </div>
           </div>
           <Link href="/admin/gallery" className="text-sm text-blue-600 hover:underline mt-4 inline-block">
-            Boshqarish →
+            {t.dashboard.manage}
           </Link>
         </div>
 
@@ -114,7 +116,7 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Bog&apos;lanilgan</p>
+              <p className="text-sm text-gray-500">{t.dashboard.contacted}</p>
               <p className="text-3xl font-bold text-yellow-600">{stats?.submissions.contacted || 0}</p>
             </div>
             <div className="bg-yellow-100 p-3 rounded-full">
@@ -124,14 +126,14 @@ export default function AdminDashboard() {
             </div>
           </div>
           <Link href="/admin/submissions?status=contacted" className="text-sm text-yellow-600 hover:underline mt-4 inline-block">
-            Ko&apos;rish →
+            {t.dashboard.view}
           </Link>
         </div>
       </div>
 
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Tezkor amallar</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">{t.dashboard.quickActions}</h2>
         <div className="flex gap-4">
           <Link
             href="/admin/gallery"
@@ -140,7 +142,7 @@ export default function AdminDashboard() {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Rasm qo&apos;shish
+            {t.dashboard.addImage}
           </Link>
           <Link
             href="/admin/submissions"
@@ -149,7 +151,7 @@ export default function AdminDashboard() {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            Zayavkalarni ko&apos;rish
+            {t.dashboard.viewSubmissions}
           </Link>
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { PageHero } from "@/components/shared";
 import { Header, Footer } from "@/components/sections";
@@ -68,6 +68,18 @@ function FilterSection({ title, isOpen, onToggle, children }: FilterSectionProps
 }
 
 export default function CatalogPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <CatalogContent />
+    </Suspense>
+  );
+}
+
+function CatalogContent() {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
 
