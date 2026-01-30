@@ -15,7 +15,7 @@ export const siteConfig = {
 };
 
 export const navLinks = [
-  { href: "/about", label: "О проекте" },
+  { href: "/projects", label: "О проекте" },
   { href: "/catalog", label: "Каталог квартир" },
   { href: "/location", label: "Локация" },
   { href: "/payment", label: "Схема покупки" },

@@ -5,12 +5,17 @@ import Link from "next/link";
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { Header, Footer } from "@/components/sections";
-import { PageHero } from "@/components/shared";
+import { PageHero, RequestModal } from "@/components/shared";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Phone, MapPin, Home, Maximize, Building2, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Home, Maximize, Building2, Calendar, Layers, BadgeCheck, DollarSign, Ruler, Phone, Mail, MapPin, ArrowRight } from "lucide-react";
 import { useEstate } from "@/hooks/useEstates";
 import { Estate, EstateImage } from "@/lib/api/estates";
 import { useLanguage } from "@/contexts/LanguageContext";
+
+// Default contact info when API doesn't provide it
+const DEFAULT_PHONE = "+998 78 777 77 77";
+const DEFAULT_EMAIL = "info@eman.uz";
+const DEFAULT_ADDRESS = "Toshkent sh., Yashnobod tumani, Qadriyat MFY";
 
 // Helper to generate apartment info categories from API data
 const getApartmentCategories = (apartment: Estate | null, t: ReturnType<typeof useLanguage>["t"]) => {
@@ -31,8 +36,8 @@ const getApartmentCategories = (apartment: Estate | null, t: ReturnType<typeof u
       id: "location",
       title: t.catalogDetail.locationTitle,
       items: [
-        apartment.address || null,
-        apartment.company_name ? `${t.catalogDetail.developer}: ${apartment.company_name}` : null,
+        apartment.address || DEFAULT_ADDRESS,
+        `${t.catalogDetail.developer}: ${apartment.company_name || "Eman Development"}`,
         apartment.estate_inServiceDate_human ? `${t.catalogDetail.deliveryDate}: ${apartment.estate_inServiceDate_human}` : null,
       ].filter(Boolean) as string[],
     },
@@ -97,6 +102,7 @@ export default function ApartmentDetailPage() {
   const [openCategory, setOpenCategory] = useState<string>("details");
   const [infrastructureIndex, setInfrastructureIndex] = useState(0);
   const [isGalleryLightboxOpen, setIsGalleryLightboxOpen] = useState(false);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 
   const getPlanImages = (): EstateImage[] => {
     if (!apartment?.images) return [];
@@ -130,27 +136,19 @@ export default function ApartmentDetailPage() {
 
   const infrastructureGallery = getAllImages();
 
-  // Get hero image from apartment data
+  // Get hero image: prefer 3rd image from all images, fallback to first or title_image
   const getHeroImage = (): string => {
-    if (apartment?.title_image) {
-      return apartment.title_image;
+    if (apartment?.images) {
+      const allImgs: string[] = [];
+      apartment.images.forEach(group => {
+        group.images.forEach(img => {
+          if (img.file_url) allImgs.push(img.file_url);
+        });
+      });
+      if (allImgs.length >= 3) return allImgs[2];
+      if (allImgs.length > 0) return allImgs[0];
     }
-    const galleryImages = getGalleryImages();
-    if (galleryImages.length > 0) {
-      return galleryImages[0].file_url;
-    }
-    return "/images/hero/1.png";
-  };
-
-  // Get side image for infrastructure section
-  const getSideImage = (): string => {
-    const galleryImages = getGalleryImages();
-    if (galleryImages.length > 1) {
-      return galleryImages[1].file_url;
-    }
-    if (apartment?.title_image) {
-      return apartment.title_image;
-    }
+    if (apartment?.title_image) return apartment.title_image;
     return "/images/hero/1.png";
   };
 
@@ -178,6 +176,14 @@ export default function ApartmentDetailPage() {
     return new Intl.NumberFormat("ru-RU").format(price);
   };
 
+  // Truncate title to max 2 commas
+  const getShortTitle = (title: string | undefined): string => {
+    if (!title) return t.catalogDetail.aboutApartment;
+    const parts = title.split(",");
+    if (parts.length <= 2) return title;
+    return parts.slice(0, 2).join(",").trim();
+  };
+
   // Skeleton Loading UI
   if (isLoading) {
     return (
@@ -187,26 +193,29 @@ export default function ApartmentDetailPage() {
           {/* Hero Skeleton */}
           <div className="relative h-[300px] bg-gray-200 animate-pulse" />
 
-          {/* Map Section Skeleton */}
-          <section className="py-12 bg-white">
+          {/* Info Cards Skeleton */}
+          <section className="py-10 bg-white">
             <div className="container mx-auto px-4 lg:px-8">
-              <div className="h-8 bg-gray-200 rounded w-64 mb-4 animate-pulse" />
-              <div className="h-4 bg-gray-200 rounded w-96 mb-8 animate-pulse" />
-              <div className="h-[400px] bg-gray-200 rounded-lg animate-pulse" />
+              <div className="h-8 bg-gray-200 rounded w-64 mb-8 animate-pulse" />
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-28 bg-gray-200 rounded-xl animate-pulse" />
+                ))}
+              </div>
             </div>
           </section>
 
           {/* Infrastructure Skeleton */}
           <section className="py-12 bg-beige">
             <div className="container mx-auto px-4 lg:px-8">
-              <div className="flex gap-12">
+              <div className="flex flex-col lg:flex-row gap-8">
                 <div className="flex-1 space-y-4">
                   <div className="h-8 bg-gray-200 rounded w-72 animate-pulse" />
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="h-12 bg-gray-200 rounded animate-pulse" />
                   ))}
                 </div>
-                <div className="w-96 h-64 bg-gray-200 rounded-lg animate-pulse" />
+                <div className="lg:w-96 h-64 bg-gray-200 rounded-lg animate-pulse" />
               </div>
             </div>
           </section>
@@ -242,59 +251,15 @@ export default function ApartmentDetailPage() {
           image={getHeroImage()}
         />
 
-        {/* Interactive Map Section */}
-        <section className="py-12 lg:py-16 bg-white">
-          <div className="container mx-auto px-4 lg:px-8">
-            <h2 className="text-3xl lg:text-4xl font-serif italic text-primary mb-2">
-              {t.catalogDetail.interactiveMap}
-            </h2>
-            <p className="text-gray-600 mb-8 max-w-md">
-              {t.catalogDetail.mapDesc}
-            </p>
-
-            {/* Map */}
-            <div className="relative w-full h-[400px] lg:h-[500px] rounded-lg overflow-hidden">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d47980.98675893856!2d69.21992457431642!3d41.31147339999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38ae8b0cc379e9c3%3A0xa5a9323b4aa5cb98!2sTashkent%2C%20Uzbekistan!5e0!3m2!1sen!2s!4v1703955000000!5m2!1sen!2s"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="absolute inset-0"
-              />
-              {/* Map Center Marker */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-                <div className="w-16 h-16 bg-white rounded-lg shadow-lg flex items-center justify-center">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-primary">
-                    <path d="M12 2L4 7V17L12 22L20 17V7L12 2Z" stroke="currentColor" strokeWidth="2" />
-                    <path d="M12 7L8 9.5V14.5L12 17L16 14.5V9.5L12 7Z" fill="currentColor" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Infrastructure Section */}
+        {/* Info + CTA Two Column Layout */}
         <section className="py-12 lg:py-16 bg-beige">
           <div className="container mx-auto px-4 lg:px-8">
-            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8 lg:gap-16">
+            <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
               {/* Left - Title and Accordion */}
               <div className="lg:flex-1">
-                <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-2xl lg:text-3xl font-semibold uppercase tracking-wide">
-                    {apartment.title || t.catalogDetail.aboutApartment}
-                  </h2>
-                  <div className="flex items-center gap-2">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-primary">
-                      <path d="M12 2L4 7V17L12 22L20 17V7L12 2Z" stroke="currentColor" strokeWidth="2" />
-                      <path d="M12 7L8 9.5V14.5L12 17L16 14.5V9.5L12 7Z" fill="currentColor" />
-                    </svg>
-                    <span className="text-lg font-semibold text-primary">EMAN<br/>RIVERSIDE</span>
-                  </div>
-                </div>
+                <h2 className="text-2xl lg:text-3xl font-semibold uppercase tracking-wide mb-8">
+                  {getShortTitle(apartment.title)}
+                </h2>
 
                 {/* Accordion Categories */}
                 <div className="space-y-0">
@@ -326,23 +291,55 @@ export default function ApartmentDetailPage() {
                 </div>
               </div>
 
-              {/* Right - Image */}
-              <div className="lg:w-96">
-                <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden">
-                  <Image
-                    src={getSideImage()}
-                    alt="ЖК EMAN RIVERSIDE"
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
+              {/* Right - CTA Contact Card */}
+              <div className="lg:w-80 shrink-0">
+                <div className="bg-primary rounded-xl p-6 lg:sticky lg:top-24">
+                  <h3 className="text-lg font-serif text-white mb-1">
+                    {t.catalogDetail.leaveRequest}
+                  </h3>
+                  <p className="text-xs text-white/60 mb-5">
+                    {t.catalogDetail.leaveRequestDesc}
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      className="w-full bg-white text-primary hover:bg-gray-100 font-medium"
+                      onClick={() => setIsRequestModalOpen(true)}
+                    >
+                      {t.catalogDetail.leaveRequest}
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                    <Button
+                      className="w-full bg-white/20 text-white border border-white/40 hover:bg-white/30 font-medium"
+                      asChild
+                    >
+                      <a href={`tel:${DEFAULT_PHONE.replace(/\s/g, "")}`}>
+                        <Phone className="w-4 h-4 mr-2" />
+                        {t.catalogDetail.callUs}
+                      </a>
+                    </Button>
+                  </div>
+
+                  {/* Contact details */}
+                  <div className="mt-5 pt-5 border-t border-white/20 space-y-3">
+                    <a href={`tel:${DEFAULT_PHONE.replace(/\s/g, "")}`} className="flex items-center gap-2 text-white/80 hover:text-white transition-colors">
+                      <Phone className="w-3.5 h-3.5 shrink-0" />
+                      <span className="text-xs">{DEFAULT_PHONE}</span>
+                    </a>
+                    <a href={`mailto:${DEFAULT_EMAIL}`} className="flex items-center gap-2 text-white/80 hover:text-white transition-colors">
+                      <Mail className="w-3.5 h-3.5 shrink-0" />
+                      <span className="text-xs">{DEFAULT_EMAIL}</span>
+                    </a>
+                    <div className="flex items-center gap-2 text-white/80">
+                      <MapPin className="w-3.5 h-3.5 shrink-0" />
+                      <span className="text-xs">{apartment.address || DEFAULT_ADDRESS}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </section>
-
-        {/* Infrastructure Gallery */}
+        {/* Infrastructure Gallery - moved up */}
         <section className="py-8 bg-white">
           <div className="container mx-auto px-4 lg:px-8">
             <div className="flex items-center justify-between mb-6">
@@ -392,42 +389,138 @@ export default function ApartmentDetailPage() {
           </div>
         </section>
 
-        {/* Advantages & Map Section */}
-        <section className="relative">
-          <div className="flex flex-col lg:flex-row">
-            {/* Left - Advantages */}
-            <div className="lg:w-1/3 bg-primary text-white p-8 lg:p-12">
-              <h2 className="text-xl lg:text-2xl font-serif mb-6">{t.catalogDetail.apartmentFeatures}</h2>
-              <ul className="space-y-3">
-                {getApartmentAdvantages(apartment, t).map((advantage, idx) => (
-                  <li key={idx} className="text-sm lg:text-base text-white/90">
-                    {advantage}
-                  </li>
-                ))}
-              </ul>
+        {/* Apartment Key Info */}
+        <section className="py-10 lg:py-14 bg-beige">
+          <div className="container mx-auto px-4 lg:px-8">
+            <h2 className="text-2xl lg:text-3xl font-serif italic text-primary mb-2">
+              {getShortTitle(apartment.title)}
+            </h2>
+            {apartment.description && (
+              <p className="text-gray-600 mb-8 max-w-2xl">{apartment.description}</p>
+            )}
+
+            {/* Info Cards Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
+              {apartment.estate_rooms > 0 && (
+                <div className="bg-beige rounded-xl p-4 lg:p-6 flex flex-col gap-2">
+                  <Home className="w-5 h-5 text-primary" />
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">{t.catalogDetail.roomsCount}</span>
+                  <span className="text-xl lg:text-2xl font-semibold">{apartment.estate_rooms}</span>
+                </div>
+              )}
+              {apartment.estate_area > 0 && (
+                <div className="bg-beige rounded-xl p-4 lg:p-6 flex flex-col gap-2">
+                  <Maximize className="w-5 h-5 text-primary" />
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">{t.catalogDetail.areaLabel}</span>
+                  <span className="text-xl lg:text-2xl font-semibold">{apartment.estate_area} <span className="text-sm font-normal text-gray-500">m²</span></span>
+                </div>
+              )}
+              {apartment.estate_floor > 0 && (
+                <div className="bg-beige rounded-xl p-4 lg:p-6 flex flex-col gap-2">
+                  <Building2 className="w-5 h-5 text-primary" />
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">{t.catalogDetail.floorLabel}</span>
+                  <span className="text-xl lg:text-2xl font-semibold">
+                    {apartment.estate_floor}
+                    {apartment.estate_floors_in_house ? <span className="text-sm font-normal text-gray-500"> / {apartment.estate_floors_in_house}</span> : null}
+                  </span>
+                </div>
+              )}
+              {apartment.estate_price > 0 && (
+                <div className="bg-beige rounded-xl p-4 lg:p-6 flex flex-col gap-2">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">{t.catalogDetail.priceLabel}</span>
+                  <span className="text-lg lg:text-xl font-semibold">{apartment.estate_price_human || formatPrice(apartment.estate_price)}</span>
+                </div>
+              )}
             </div>
 
-            {/* Right - Map */}
-            <div className="lg:w-2/3 relative h-[300px] lg:h-[400px]">
+            {/* Additional Info Row */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5 mt-3 lg:mt-5">
+              {apartment.estate_price_m2 > 0 && (
+                <div className="bg-gray-50 rounded-xl p-4 lg:p-6 flex flex-col gap-2">
+                  <Ruler className="w-5 h-5 text-primary" />
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">{t.catalogDetail.pricePerM2}</span>
+                  <span className="text-lg font-semibold">{formatPrice(apartment.estate_price_m2)} <span className="text-sm font-normal text-gray-500">/ m²</span></span>
+                </div>
+              )}
+              {apartment.status_name && (
+                <div className="bg-gray-50 rounded-xl p-4 lg:p-6 flex flex-col gap-2">
+                  <BadgeCheck className="w-5 h-5 text-primary" />
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">{t.catalogDetail.statusTitle}</span>
+                  <span className="text-lg font-semibold">{apartment.status_name}</span>
+                </div>
+              )}
+              {apartment.category_name && (
+                <div className="bg-gray-50 rounded-xl p-4 lg:p-6 flex flex-col gap-2">
+                  <Layers className="w-5 h-5 text-primary" />
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">{t.catalogDetail.categoryLabel}</span>
+                  <span className="text-lg font-semibold">{apartment.category_name}</span>
+                </div>
+              )}
+              {apartment.estate_inServiceDate_human && (
+                <div className="bg-gray-50 rounded-xl p-4 lg:p-6 flex flex-col gap-2">
+                  <Calendar className="w-5 h-5 text-primary" />
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">{t.catalogDetail.deliveryDate}</span>
+                  <span className="text-lg font-semibold">{apartment.estate_inServiceDate_human}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Contact Info */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-5 mt-3 lg:mt-5">
+              <a href={`tel:${DEFAULT_PHONE.replace(/\s/g, "")}`} className="bg-primary/5 border border-primary/20 rounded-xl p-4 lg:p-6 flex items-center gap-3 hover:bg-primary/10 transition-colors">
+                <Phone className="w-5 h-5 text-primary shrink-0" />
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide block">{t.catalogDetail.phoneLabel}</span>
+                  <span className="text-sm font-semibold">{DEFAULT_PHONE}</span>
+                </div>
+              </a>
+              <a href={`mailto:${DEFAULT_EMAIL}`} className="bg-primary/5 border border-primary/20 rounded-xl p-4 lg:p-6 flex items-center gap-3 hover:bg-primary/10 transition-colors">
+                <Mail className="w-5 h-5 text-primary shrink-0" />
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide block">Email</span>
+                  <span className="text-sm font-semibold">{DEFAULT_EMAIL}</span>
+                </div>
+              </a>
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 lg:p-6 flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-primary shrink-0" />
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide block">{t.catalogDetail.addressLabel}</span>
+                  <span className="text-sm font-semibold">{apartment.address || DEFAULT_ADDRESS}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Advantages Section */}
+        <section className="bg-primary text-white py-10 lg:py-14">
+          <div className="container mx-auto px-4 lg:px-8">
+            <h2 className="text-xl lg:text-2xl font-serif mb-6">{t.catalogDetail.apartmentFeatures}</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+              {getApartmentAdvantages(apartment, t).map((advantage, idx) => (
+                <div key={idx} className="bg-white/10 rounded-lg p-4">
+                  <p className="text-sm lg:text-base text-white/90">{advantage}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Map Section */}
+        <section className="py-12 lg:py-16 bg-beige">
+          <div className="container mx-auto px-4 lg:px-8">
+            <div className="relative w-full h-[300px] lg:h-[450px] rounded-lg overflow-hidden">
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d47980.98675893856!2d69.21992457431642!3d41.31147339999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38ae8b0cc379e9c3%3A0xa5a9323b4aa5cb98!2sTashkent%2C%20Uzbekistan!5e0!3m2!1sen!2s!4v1703955000000!5m2!1sen!2s"
                 width="100%"
                 height="100%"
-                style={{ border: 0 }}
+                style={{ border: 0, filter: "grayscale(100%)" }}
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 className="absolute inset-0"
               />
-              {/* Map Marker */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-                <div className="w-12 h-12 bg-white rounded-lg shadow-lg flex items-center justify-center">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-primary">
-                    <path d="M12 2L4 7V17L12 22L20 17V7L12 2Z" stroke="currentColor" strokeWidth="2" />
-                    <path d="M12 7L8 9.5V14.5L12 17L16 14.5V9.5L12 7Z" fill="currentColor" />
-                  </svg>
-                </div>
-              </div>
             </div>
           </div>
         </section>
@@ -527,6 +620,12 @@ export default function ApartmentDetailPage() {
           </div>
         </div>
       )}
+      <RequestModal
+        open={isRequestModalOpen}
+        onOpenChange={setIsRequestModalOpen}
+        source="catalog_detail"
+        estateId={apartment?.id}
+      />
       <Footer />
     </>
   );

@@ -3,20 +3,26 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { PageHero } from "@/components/shared";
 import { Header, Footer } from "@/components/sections";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import {
   ChevronLeft,
   ChevronRight,
   ChevronUp,
   ChevronDown,
   SlidersHorizontal,
-  X,
   FileDown
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import { useEstates } from "@/hooks/useEstates";
 import { Estate } from "@/lib/api/estates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -33,6 +39,7 @@ const areaOptions = [
 const typeOptions = ["Все", "Эконом", "Стандарт"];
 
 const ITEMS_PER_PAGE = 10;
+const USD_RATE = 12950; // UZS per 1 USD (approximate)
 
 interface FilterSectionProps {
   title: string;
@@ -62,6 +69,7 @@ function FilterSection({ title, isOpen, onToggle, children }: FilterSectionProps
 
 export default function CatalogPage() {
   const { t } = useLanguage();
+  const searchParams = useSearchParams();
 
   // React Query - get all data once with caching
   const { data: allApartments = [], isLoading } = useEstates({ type: "living" });
@@ -69,12 +77,39 @@ export default function CatalogPage() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Read URL search params for initial filter values
+  const initialFloor = searchParams.get("floor");
+  const initialRooms = searchParams.get("rooms");
+  const initialArea = searchParams.get("area");
+
+  // Map area param (e.g. "0-50") to areaOptions label (e.g. "< 50")
+  const getInitialArea = (): string[] => {
+    if (!initialArea) return [];
+    const [min, max] = initialArea.split("-").map(Number);
+    const match = areaOptions.find(o => o.min === min && o.max === max);
+    return match ? [match.label] : [];
+  };
+
+  // Compute price range from data
+  const priceRange = useMemo(() => {
+    if (allApartments.length === 0) return { min: 0, max: 1000000000 };
+    const prices = allApartments.map(a => a.estate_price).filter(p => p > 0);
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices),
+    };
+  }, [allApartments]);
+
   // Filter states
   const [priceFrom, setPriceFrom] = useState("");
   const [priceTo, setPriceTo] = useState("");
-  const [selectedFloors, setSelectedFloors] = useState<number[]>([]);
-  const [selectedRooms, setSelectedRooms] = useState<number[]>([]);
-  const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
+  const [selectedFloors, setSelectedFloors] = useState<number[]>(
+    initialFloor ? [parseInt(initialFloor)] : []
+  );
+  const [selectedRooms, setSelectedRooms] = useState<number[]>(
+    initialRooms ? [parseInt(initialRooms)] : []
+  );
+  const [selectedAreas, setSelectedAreas] = useState<string[]>(getInitialArea);
   const [selectedType, setSelectedType] = useState("Все");
 
   // Section states
@@ -85,7 +120,8 @@ export default function CatalogPage() {
     area: true,
     type: true,
   });
-  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  const [currency, setCurrency] = useState<"uzs" | "usd">("uzs");
 
   // Memoized filtered apartments (frontend filtering)
   const filteredApartments = useMemo(() => {
@@ -181,13 +217,18 @@ export default function CatalogPage() {
   };
 
   const formatPrice = (price: number) => {
-    if (price >= 1000000000) {
-      return `${(price / 1000000000).toFixed(1)} млрд`;
+    const value = currency === "usd" ? Math.round(price / USD_RATE) : price;
+    const suffix = currency === "usd" ? "$" : "сум";
+    if (currency === "usd") {
+      return `${new Intl.NumberFormat("ru-RU").format(value)} ${suffix}`;
     }
-    if (price >= 1000000) {
-      return `${(price / 1000000).toFixed(0)} млн`;
+    if (value >= 1000000000) {
+      return `${(value / 1000000000).toFixed(1)} млрд ${suffix}`;
     }
-    return new Intl.NumberFormat("ru-RU").format(price);
+    if (value >= 1000000) {
+      return `${(value / 1000000).toFixed(0)} млн ${suffix}`;
+    }
+    return `${new Intl.NumberFormat("ru-RU").format(value)} ${suffix}`;
   };
 
   const getApartmentImage = (apartment: Estate): string => {
@@ -196,30 +237,68 @@ export default function CatalogPage() {
     return "/images/hero/planirovka1.png";
   };
 
+  const exportToExcel = () => {
+    const data = filteredApartments.map((a) => ({
+      "Название": a.title || "",
+      "Комнаты": a.estate_rooms,
+      "Площадь (м²)": a.estate_area,
+      "Этаж": a.estate_floor,
+      "Цена": a.estate_price,
+      "Цена (сум)": a.estate_price_human || "",
+      "Адрес": a.address || "",
+      "Статус": a.status_name || "",
+      "Категория": a.category_name || "",
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Apartments");
+    XLSX.writeFile(wb, "eman_apartments.xlsx");
+  };
+
   const filterContent = (
     <>
+      {/* Currency Toggle */}
+      <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-200">
+        <span className="text-xs font-medium text-gray-700">Валюта</span>
+        <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+          <button
+            onClick={() => setCurrency("uzs")}
+            className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${currency === "uzs" ? "bg-primary text-white" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            UZS
+          </button>
+          <button
+            onClick={() => setCurrency("usd")}
+            className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${currency === "usd" ? "bg-primary text-white" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            USD
+          </button>
+        </div>
+      </div>
+
       {/* Price Filter */}
       <FilterSection
         title={t.catalog.price}
         isOpen={openSections.price}
         onToggle={() => toggleSection("price")}
       >
-        <div className="flex items-center gap-2">
-          <Input
-            type="text"
-            value={priceFrom}
-            onChange={(e) => { setPriceFrom(e.target.value); setCurrentPage(1); }}
-            placeholder={t.catalog.from}
-            className="h-8 text-xs bg-white border-gray-300"
+        <div className="space-y-3">
+          <Slider
+            min={priceRange.min}
+            max={priceRange.max}
+            step={1000000}
+            value={[Number(priceFrom) || priceRange.min, Number(priceTo) || priceRange.max]}
+            onValueChange={([min, max]) => {
+              setPriceFrom(min <= priceRange.min ? "" : String(min));
+              setPriceTo(max >= priceRange.max ? "" : String(max));
+              setCurrentPage(1);
+            }}
           />
-          <span className="text-gray-400 text-xs">—</span>
-          <Input
-            type="text"
-            value={priceTo}
-            onChange={(e) => { setPriceTo(e.target.value); setCurrentPage(1); }}
-            placeholder={t.catalog.priceTo}
-            className="h-8 text-xs bg-white border-gray-300"
-          />
+          <div className="flex items-center justify-between text-[10px] text-gray-500">
+            <span>{formatPrice(Number(priceFrom) || priceRange.min)}</span>
+            <span>{formatPrice(Number(priceTo) || priceRange.max)}</span>
+          </div>
         </div>
       </FilterSection>
 
@@ -308,9 +387,9 @@ export default function CatalogPage() {
         <Button variant="outline" className="w-full text-xs" onClick={resetFilters}>
           {t.catalog.resetFilters}
         </Button>
-        <Button variant="outline" className="w-full text-xs" onClick={() => {}}>
+        <Button variant="outline" className="w-full text-xs" onClick={exportToExcel}>
           <FileDown className="w-4 h-4 mr-2" />
-          PDF
+          Excel
         </Button>
       </div>
     </>
@@ -336,60 +415,42 @@ export default function CatalogPage() {
                 </div>
               </aside>
 
-              {/* Mobile Filter Button */}
+              {/* Mobile Filter Drawer */}
               <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
-                <Button
-                  onClick={() => setIsMobileFilterOpen(true)}
-                  className="rounded-full shadow-lg px-6"
-                >
-                  <SlidersHorizontal className="w-4 h-4 mr-2" />
-                  {t.catalog.filter}
-                </Button>
+                <Drawer>
+                  <DrawerTrigger asChild>
+                    <Button className="rounded-full shadow-lg px-6">
+                      <SlidersHorizontal className="w-4 h-4 mr-2" />
+                      {t.catalog.filter}
+                    </Button>
+                  </DrawerTrigger>
+                  <DrawerContent>
+                    <div className="mx-auto w-full max-w-lg">
+                      <div className="p-4 overflow-y-auto max-h-[70vh]">
+                        {filterContent}
+                      </div>
+                    </div>
+                  </DrawerContent>
+                </Drawer>
               </div>
 
-              {/* Mobile Filter Drawer */}
-              {isMobileFilterOpen && (
-                <div className="lg:hidden fixed inset-0 z-50">
-                  <div
-                    className="absolute inset-0 bg-black/50"
-                    onClick={() => setIsMobileFilterOpen(false)}
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[85vh] overflow-y-auto">
-                    <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between">
-                      <h3 className="font-semibold">{t.catalog.filter}</h3>
-                      <button
-                        onClick={() => setIsMobileFilterOpen(false)}
-                        className="p-2 hover:bg-gray-100 rounded-full"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
-                    <div className="p-4">{filterContent}</div>
-                  </div>
-                </div>
-              )}
-
               {/* Apartments List */}
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 {isLoading ? (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {[...Array(6)].map((_, i) => (
-                      <div key={i} className="bg-white rounded-lg p-4 flex items-center gap-5 animate-pulse">
-                        <div className="w-40 h-28 shrink-0 rounded-lg bg-gray-200" />
-                        <div className="flex-1 space-y-3">
-                          <div className="h-4 bg-gray-200 rounded w-32" />
-                          <div className="h-3 bg-gray-200 rounded w-24" />
-                          <div className="h-3 bg-gray-200 rounded w-28" />
+                      <div key={i} className="bg-white rounded-lg p-3 sm:p-4 animate-pulse">
+                        <div className="flex gap-3 mb-3 sm:mb-0">
+                          <div className="w-24 h-20 sm:w-40 sm:h-28 shrink-0 rounded-lg bg-gray-200" />
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-3/4" />
+                            <div className="h-3 bg-gray-200 rounded w-1/2" />
+                            <div className="h-3 bg-gray-200 rounded w-2/3" />
+                          </div>
                         </div>
-                        <div className="hidden sm:block">
-                          <div className="h-4 bg-gray-200 rounded w-16" />
-                        </div>
-                        <div className="hidden sm:block">
-                          <div className="h-4 bg-gray-200 rounded w-16" />
-                        </div>
-                        <div className="flex gap-3 shrink-0">
-                          <div className="h-10 bg-gray-200 rounded w-20" />
-                          <div className="h-10 bg-gray-200 rounded w-24" />
+                        <div className="flex gap-2 sm:hidden">
+                          <div className="h-9 bg-gray-200 rounded flex-1" />
+                          <div className="h-9 bg-gray-200 rounded flex-1" />
                         </div>
                       </div>
                     ))}
@@ -399,55 +460,66 @@ export default function CatalogPage() {
                     {paginatedApartments.map((apartment, index) => (
                       <div
                         key={`${apartment.id}-${index}`}
-                        className="bg-white rounded-lg p-4 flex items-center gap-5"
+                        className="bg-white rounded-lg p-3 sm:p-4 overflow-hidden"
                       >
-                        {/* Image */}
-                        <Link
-                          href={`/catalog/${apartment.id}`}
-                          className="relative w-40 h-28 shrink-0 rounded-lg overflow-hidden bg-gray-100"
-                        >
-                          <Image
-                            src={getApartmentImage(apartment)}
-                            alt={`${apartment.estate_rooms}-комнатная квартира`}
-                            fill
-                            className="object-cover"
-                            unoptimized
-                          />
-                        </Link>
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <Link href={`/catalog/${apartment.id}`}>
-                            <h3 className="text-base font-semibold text-gray-900 hover:text-primary transition-colors line-clamp-2">
-                              {apartment.title || "Люкс Экстра"}
-                            </h3>
+                        <div className="flex gap-3 sm:gap-4">
+                          {/* Image */}
+                          <Link
+                            href={`/catalog/${apartment.id}`}
+                            className="relative w-24 h-20 sm:w-36 sm:h-24 md:w-40 md:h-28 shrink-0 rounded-lg overflow-hidden bg-gray-100"
+                          >
+                            <Image
+                              src={getApartmentImage(apartment)}
+                              alt={`${apartment.estate_rooms}-комнатная квартира`}
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
                           </Link>
-                          <p className="text-sm text-gray-500 mt-1">
-                            {apartment.estate_rooms}-{t.catalog.rooms}
-                          </p>
-                          <p className="text-sm text-gray-500 mt-1">
-                            {t.catalog.from} {formatPrice(apartment.estate_price)}
-                          </p>
+
+                          {/* Right content */}
+                          <div className="flex-1 min-w-0 flex flex-col gap-2">
+                            {/* Title + info row */}
+                            <div className="min-w-0">
+                              <Link href={`/catalog/${apartment.id}`}>
+                                <h3 className="text-sm sm:text-base font-semibold text-gray-900 hover:text-primary transition-colors truncate">
+                                  {apartment.title || "Люкс Экстра"}
+                                </h3>
+                              </Link>
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs sm:text-sm text-gray-500">
+                                <span>{apartment.estate_rooms}-{t.catalog.rooms}</span>
+                                <span>{apartment.estate_area} {t.catalog.sqm}</span>
+                                <span>{apartment.estate_floor} {t.catalog.floor}</span>
+                              </div>
+                              <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                                {t.catalog.from} {formatPrice(apartment.estate_price)}
+                              </p>
+                            </div>
+
+                            {/* Buttons - hidden on mobile, shown inline on sm+ */}
+                            <div className="hidden sm:flex gap-2 mt-auto">
+                              <Button className="px-4 text-xs sm:text-sm bg-primary hover:bg-primary/90" asChild>
+                                <Link href={`/catalog/${apartment.id}/request`}>
+                                  {t.catalog.request}
+                                </Link>
+                              </Button>
+                              <Button variant="outline" className="px-4 text-xs sm:text-sm" asChild>
+                                <Link href={`/catalog/${apartment.id}`}>
+                                  {t.catalog.details}
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
                         </div>
 
-                        {/* Area */}
-                        <div className="hidden sm:block text-center px-6">
-                          <p className="text-base font-medium">{apartment.estate_area} {t.catalog.sqm}</p>
-                        </div>
-
-                        {/* Floor */}
-                        <div className="hidden sm:block text-center px-6">
-                          <p className="text-base font-medium">{apartment.estate_floor} {t.catalog.floor}</p>
-                        </div>
-
-                        {/* Buttons */}
-                        <div className="flex gap-3 shrink-0">
-                          <Button className="px-5 bg-primary hover:bg-primary/90" asChild>
+                        {/* Buttons - mobile only, right-aligned */}
+                        <div className="flex gap-2 mt-2 justify-end sm:hidden">
+                          <Button className="px-3 h-8 text-xs bg-primary hover:bg-primary/90" asChild>
                             <Link href={`/catalog/${apartment.id}/request`}>
                               {t.catalog.request}
                             </Link>
                           </Button>
-                          <Button variant="outline" className="px-5" asChild>
+                          <Button variant="outline" className="px-3 h-8 text-xs" asChild>
                             <Link href={`/catalog/${apartment.id}`}>
                               {t.catalog.details}
                             </Link>
@@ -469,28 +541,28 @@ export default function CatalogPage() {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="mt-6 flex items-center justify-center gap-2">
+                  <div className="mt-6 flex items-center justify-center gap-1 lg:gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => goToPage(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="px-3 text-xs"
+                      className="px-1.5 h-7 lg:px-3 lg:h-9 text-[10px] lg:text-xs"
                     >
-                      <ChevronLeft className="w-4 h-4 mr-1" />
-                      {t.common.back}
+                      <ChevronLeft className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                      <span className="hidden lg:inline ml-1">{t.common.back}</span>
                     </Button>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 lg:gap-1.5">
                       {getPageNumbers().map((page, index) =>
                         page === '...' ? (
-                          <span key={`ellipsis-${index}`} className="px-2 text-gray-400 text-xs">...</span>
+                          <span key={`ellipsis-${index}`} className="px-1 lg:px-2 text-gray-400 text-[10px] lg:text-xs">...</span>
                         ) : (
                           <Button
                             key={page}
                             variant={currentPage === page ? "default" : "outline"}
                             size="sm"
                             onClick={() => goToPage(page as number)}
-                            className={`w-8 h-8 text-xs ${currentPage === page ? 'bg-primary text-white' : ''}`}
+                            className={`w-6 h-6 lg:w-8 lg:h-8 text-[10px] lg:text-xs p-0 ${currentPage === page ? 'bg-primary text-white' : ''}`}
                           >
                             {page}
                           </Button>
@@ -502,10 +574,10 @@ export default function CatalogPage() {
                       size="sm"
                       onClick={() => goToPage(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className="px-3 text-xs"
+                      className="px-1.5 h-7 lg:px-3 lg:h-9 text-[10px] lg:text-xs"
                     >
-                      {t.common.next}
-                      <ChevronRight className="w-4 h-4 ml-1" />
+                      <span className="hidden lg:inline mr-1">{t.common.next}</span>
+                      <ChevronRight className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                     </Button>
                   </div>
                 )}

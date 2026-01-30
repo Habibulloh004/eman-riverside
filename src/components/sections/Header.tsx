@@ -18,7 +18,7 @@ export default function Header() {
   const phoneHref = `tel:${settings.contact.phone.replace(/\s/g, "")}`;
 
   const headerNavLinks = [
-    { href: "/about", label: t.nav.about },
+    { href: "/projects", label: t.nav.about },
     { href: "/catalog", label: t.nav.catalog },
     { href: "/gallery", label: t.nav.gallery },
     { href: "/contacts", label: t.nav.contacts },

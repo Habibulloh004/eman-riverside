@@ -3,15 +3,26 @@
 import Image from "next/image";
 import { Search } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
 
 export default function Hero() {
   const { t } = useLanguage();
   const { settings } = useSiteSettings();
-  const [selectedDom, setSelectedDom] = useState("");
+  const router = useRouter();
   const [selectedFloor, setSelectedFloor] = useState("");
-  const [selectedApartment, setSelectedApartment] = useState("");
+  const [selectedArea, setSelectedArea] = useState("");
+  const [selectedRooms, setSelectedRooms] = useState("");
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (selectedFloor) params.set("floor", selectedFloor);
+    if (selectedArea) params.set("area", selectedArea);
+    if (selectedRooms) params.set("rooms", selectedRooms);
+    const query = params.toString();
+    router.push(`/catalog${query ? `?${query}` : ""}`);
+  };
 
   return (
     <section id="hero" className="relative min-h-screen lg:min-h-0 flex items-center justify-center pt-20 pb-4 lg:pt-32 lg:pb-16">
@@ -63,29 +74,6 @@ export default function Hero() {
                 {t.hero.selectApartment}
               </p>
               <div className="grid grid-cols-4 gap-1.5 sm:gap-3 items-end">
-                {/* Дом */}
-                <div>
-                  <label className="text-[10px] sm:text-xs font-medium text-foreground mb-1 block">{t.hero.building}</label>
-                  <div className="relative">
-                    <select
-                      value={selectedDom}
-                      onChange={(e) => setSelectedDom(e.target.value)}
-                      className="w-full h-7 sm:h-9 px-1 sm:px-2 pr-5 sm:pr-6 text-[10px] sm:text-xs border-b border-border bg-transparent appearance-none cursor-pointer focus:outline-none focus:border-primary text-muted-foreground"
-                    >
-                      <option value="">{t.hero.select}</option>
-                      <option value="1">{t.hero.building} 1</option>
-                      <option value="2">{t.hero.building} 2</option>
-                      <option value="3">{t.hero.building} 3</option>
-                    </select>
-                    <div className="absolute right-0.5 sm:right-1 top-1/2 -translate-y-1/2 pointer-events-none">
-                      <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                        <circle cx="12" cy="12" r="3" fill="currentColor" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Этаж */}
                 <div>
                   <label className="text-[10px] sm:text-xs font-medium text-foreground mb-1 block">{t.hero.floor}</label>
@@ -95,8 +83,8 @@ export default function Hero() {
                       onChange={(e) => setSelectedFloor(e.target.value)}
                       className="w-full h-7 sm:h-9 px-1 sm:px-2 pr-5 sm:pr-6 text-[10px] sm:text-xs border-b border-border bg-transparent appearance-none cursor-pointer focus:outline-none focus:border-primary text-muted-foreground"
                     >
-                      <option value="">{t.hero.select}</option>
-                      {[...Array(15)].map((_, i) => (
+                      <option value="">{t.hero.allFloors}</option>
+                      {[...Array(16)].map((_, i) => (
                         <option key={i + 1} value={i + 1}>{i + 1}</option>
                       ))}
                     </select>
@@ -108,19 +96,42 @@ export default function Hero() {
                   </div>
                 </div>
 
-                {/* Квартира */}
+                {/* Площадь */}
                 <div>
-                  <label className="text-[10px] sm:text-xs font-medium text-foreground mb-1 block">{t.hero.apartment}</label>
+                  <label className="text-[10px] sm:text-xs font-medium text-foreground mb-1 block">{t.hero.area}</label>
                   <div className="relative">
                     <select
-                      value={selectedApartment}
-                      onChange={(e) => setSelectedApartment(e.target.value)}
+                      value={selectedArea}
+                      onChange={(e) => setSelectedArea(e.target.value)}
                       className="w-full h-7 sm:h-9 px-1 sm:px-2 pr-5 sm:pr-6 text-[10px] sm:text-xs border-b border-border bg-transparent appearance-none cursor-pointer focus:outline-none focus:border-primary text-muted-foreground"
                     >
-                      <option value="">{t.hero.select}</option>
-                      <option value="1">1-x</option>
-                      <option value="2">2-x</option>
-                      <option value="3">3-x</option>
+                      <option value="">{t.hero.allAreas}</option>
+                      <option value="0-50">&lt; 50 м²</option>
+                      <option value="50-80">50-80 м²</option>
+                      <option value="80-100">80-100 м²</option>
+                      <option value="100-999">&gt; 100 м²</option>
+                    </select>
+                    <div className="absolute right-0.5 sm:right-1 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Комнаты */}
+                <div>
+                  <label className="text-[10px] sm:text-xs font-medium text-foreground mb-1 block">{t.hero.rooms}</label>
+                  <div className="relative">
+                    <select
+                      value={selectedRooms}
+                      onChange={(e) => setSelectedRooms(e.target.value)}
+                      className="w-full h-7 sm:h-9 px-1 sm:px-2 pr-5 sm:pr-6 text-[10px] sm:text-xs border-b border-border bg-transparent appearance-none cursor-pointer focus:outline-none focus:border-primary text-muted-foreground"
+                    >
+                      <option value="">{t.hero.allRooms}</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
                     </select>
                     <div className="absolute right-0.5 sm:right-1 top-1/2 -translate-y-1/2 pointer-events-none">
                       <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,7 +143,10 @@ export default function Hero() {
 
                 {/* Search Button */}
                 <div>
-                  <button className="w-full h-7 sm:h-9 bg-white border border-border rounded-lg flex items-center justify-center hover:border-primary hover:text-primary transition-colors">
+                  <button
+                    onClick={handleSearch}
+                    className="w-full h-7 sm:h-9 bg-primary text-white border border-primary rounded-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
+                  >
                     <Search className="w-3 h-3 sm:w-4 sm:h-4" />
                   </button>
                 </div>

@@ -42,7 +42,6 @@ export default function Location() {
 
           {/* Right - Map */}
           <div className="relative aspect-square lg:aspect-4/3 rounded-lg overflow-hidden bg-muted">
-            {/* Grayscale Map iframe - Tashkent center */}
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d47980.98675893856!2d69.21992457431642!3d41.31147339999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38ae8b0cc379e9c3%3A0xa5a9323b4aa5cb98!2sTashkent%2C%20Uzbekistan!5e0!3m2!1sen!2s!4v1703955000000!5m2!1sen!2s"
               width="100%"
@@ -53,18 +52,6 @@ export default function Location() {
               referrerPolicy="no-referrer-when-downgrade"
               className="absolute inset-0"
             />
-            {/* Map Pin Overlay */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="bg-primary p-3 rounded-lg shadow-lg">
-                <Image
-                  src="/logo.svg"
-                  alt="EMAN RIVERSIDE"
-                  width={60}
-                  height={30}
-                  className="h-6 w-auto brightness-0 invert"
-                />
-              </div>
-            </div>
           </div>
         </div>
       </div>

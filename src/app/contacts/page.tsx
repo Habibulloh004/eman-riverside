@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Header, Footer } from "@/components/sections";
 import { PageHero } from "@/components/shared";
 import { Input } from "@/components/ui/input";
@@ -133,7 +132,7 @@ export default function ContactsPage() {
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2996.5234567890123!2d69.2401!3d41.3111!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDHCsDE4JzQwLjAiTiA2OcKwMTQnMjQuNCJF!5e0!3m2!1sen!2s!4v1234567890123"
                   width="100%"
                   height="100%"
-                  style={{ border: 0 }}
+                  style={{ border: 0, filter: "grayscale(100%)" }}
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
@@ -247,24 +246,12 @@ export default function ContactsPage() {
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2996.5234567890123!2d69.2401!3d41.3111!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDHCsDE4JzQwLjAiTiA2OcKwMTQnMjQuNCJF!5e0!3m2!1sen!2s!4v1234567890123"
                   width="100%"
                   height="100%"
-                  style={{ border: 0 }}
+                  style={{ border: 0, filter: "grayscale(100%)" }}
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                   className="absolute inset-0"
                 />
-                {/* Location marker overlay */}
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                  <div className="relative">
-                    <Image
-                      src="/logo.svg"
-                      alt="EMAN RIVERSIDE"
-                      width={40}
-                      height={40}
-                      className="bg-white p-2 rounded shadow-lg"
-                    />
-                  </div>
-                </div>
               </div>
             </div>
           </div>

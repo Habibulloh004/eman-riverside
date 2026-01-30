@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
+import { RequestModal } from "@/components/shared";
 
 // Social icon components
 const FacebookIcon = () => (
@@ -35,7 +36,7 @@ const YouTubeIcon = () => (
 export default function Footer() {
   const { t } = useLanguage();
   const { settings } = useSiteSettings();
-  const [email, setEmail] = useState("");
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const currentYear = new Date().getFullYear();
 
   // Dynamic social links from settings
@@ -62,29 +63,17 @@ export default function Footer() {
     },
   ].filter(Boolean) as { name: string; href: string; icon: React.ReactNode }[];
 
-  const footerLinks = {
-    navigation: [
-      { href: "#about", label: t.footer.aboutProject },
-      { href: "#", label: t.footer.aboutUs },
-      { href: "#", label: t.footer.agents },
-    ],
-    info: [
-      { href: "#", label: t.footer.blog },
-      { href: "#", label: t.footer.media },
-      { href: "#contact", label: t.footer.contactUs },
-    ],
-  };
-
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert(t.footer.thankYou);
-    setEmail("");
-  };
+  const footerLinks = [
+    { href: "/projects", label: t.nav.about },
+    { href: "/catalog", label: t.nav.catalog },
+    { href: "/gallery", label: t.nav.gallery },
+    { href: "/contacts", label: t.nav.contacts },
+  ];
 
   return (
     <footer className="bg-[#F9EFE7] py-10 lg:py-12">
       <div className="container mx-auto px-4 lg:px-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Brand */}
           <div className="col-span-2 lg:col-span-1">
             {/* Logo */}
@@ -119,12 +108,12 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Navigation */}
           <div>
             <h3 className="text-xs font-semibold text-foreground mb-3">{t.footer.navigation}</h3>
             <ul className="space-y-2">
-              {footerLinks.navigation.map((link) => (
-                <li key={link.label}>
+              {footerLinks.map((link) => (
+                <li key={link.href}>
                   <Link
                     href={link.href}
                     className="text-xs text-muted-foreground hover:text-primary transition-colors"
@@ -136,46 +125,20 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* More Links */}
+          {/* Request */}
           <div>
-            <h3 className="text-xs font-semibold text-foreground mb-3">{t.footer.info}</h3>
-            <ul className="space-y-2">
-              {footerLinks.info.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Newsletter */}
-          <div>
-            <h3 className="text-xs font-semibold text-foreground mb-3">{t.footer.subscribe}</h3>
+            <h3 className="text-xs font-semibold text-foreground mb-3">{t.requestModal.title}</h3>
             <p className="text-[10px] text-muted-foreground mb-3">
-              {t.footer.subscribeDesc}
+              {t.requestModal.description}
             </p>
 
-            <form onSubmit={handleSubscribe} className="flex">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={t.footer.emailPlaceholder}
-                required
-                className="flex-1 px-2 py-1.5 text-xs bg-white border border-border rounded-l-md focus:outline-none focus:border-primary min-w-0"
-              />
-              <button
-                type="submit"
-                className="px-2 py-1.5 bg-primary text-white rounded-r-md hover:bg-primary/90 transition-colors"
-              >
-                <ArrowRight className="w-3 h-3" />
-              </button>
-            </form>
+            <button
+              onClick={() => setIsRequestModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 text-xs font-medium bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+            >
+              {t.requestModal.title}
+              <ArrowRight className="w-3 h-3" />
+            </button>
           </div>
         </div>
 
@@ -186,6 +149,11 @@ export default function Footer() {
           </p>
         </div>
       </div>
+      <RequestModal
+        open={isRequestModalOpen}
+        onOpenChange={setIsRequestModalOpen}
+        source="footer"
+      />
     </footer>
   );
 }

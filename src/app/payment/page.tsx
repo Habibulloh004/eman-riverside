@@ -62,7 +62,7 @@ const faqItems = [
 // Footer links
 const footerLinks = {
   about: [
-    { label: "О Комплексе", href: "/about" },
+    { label: "О Комплексе", href: "/projects" },
     { label: "Локация", href: "/location" },
     { label: "Галерея", href: "/#gallery" },
   ],

@@ -20,7 +20,12 @@ export const uz: Translations = {
     building: "Uy",
     floor: "Qavat",
     apartment: "Kvartira",
+    area: "Maydon",
+    rooms: "Xonalar",
     select: "Ta",
+    allFloors: "Barchasi",
+    allAreas: "Barchasi",
+    allRooms: "Barchasi",
     socialLinks: "Ijt.tarmoq",
   },
 
@@ -231,6 +236,10 @@ export const uz: Translations = {
     deliveryDate: "Topshirish",
     statusTitle: "HOLAT",
     hotOffer: "🔥 Issiq taklif",
+    pricePerM2: "m² uchun narx",
+    categoryLabel: "Kategoriya",
+    phoneLabel: "Telefon",
+    addressLabel: "Manzil",
     apartmentFeatures: "Kvartira xususiyatlari",
     roomApartment: "-xonali kvartira",
     floorOfFloors: "qavat",
@@ -242,6 +251,9 @@ export const uz: Translations = {
     backToCatalog: "Katalogga qaytish",
     locationInfrastructure: "Joylashuv va infratuzilma",
     infrastructureSubtitle: "EMAN RIVERSIDE INFRATUZILMASI",
+    leaveRequest: "Ariza qoldirish",
+    leaveRequestDesc: "Menejerimiz siz bilan bog'lanadi va barcha savollarga javob beradi",
+    callUs: "Bizga qo'ng'iroq qiling",
   },
 
   // Request Page
@@ -306,6 +318,21 @@ export const uz: Translations = {
     emailPlaceholder: "Email...",
     copyright: "Barcha huquqlar himoyalangan",
     thankYou: "Obuna uchun rahmat!",
+  },
+
+  // Request Modal
+  requestModal: {
+    title: "Ariza qoldirish",
+    description: "Formani to'ldiring va menejerimiz siz bilan bog'lanadi",
+    name: "Ismingiz",
+    phone: "Telefon raqami",
+    comments: "Izoh",
+    send: "Yuborish",
+    sending: "Yuborilmoqda...",
+    successTitle: "Ariza yuborildi!",
+    successDesc: "Menejerimiz tez orada siz bilan bog'lanadi.",
+    close: "Yopish",
+    error: "Yuborishda xatolik. Qaytadan urinib ko'ring.",
   },
 
   // Common

@@ -1,17 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useProjectsPublic } from "@/hooks/useProjects";
 
-const sideNavItems = [
-  { label: "Старт", id: "hero" },
-  { label: "01", id: "feature-01" },
-  { label: "02", id: "feature-02" },
-  { label: "03", id: "feature-03" },
-];
+const DEFAULT_PROJECT_COUNT = 3;
 
 export default function SideNav() {
-  const [activeSection, setActiveSection] = useState("hero");
+  const { data, isLoading } = useProjectsPublic();
+  const [activeSection, setActiveSection] = useState("feature-01");
   const [isVisible, setIsVisible] = useState(true);
+
+  const projectCount = data?.items?.length ?? (isLoading ? 0 : DEFAULT_PROJECT_COUNT);
+
+  const sideNavItems = useMemo(() => {
+    const items: { label: string; id: string }[] = [];
+    for (let i = 0; i < projectCount; i++) {
+      const num = String(i + 1).padStart(2, "0");
+      items.push({ label: num, id: `feature-${num}` });
+    }
+    return items;
+  }, [projectCount]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,11 +30,12 @@ export default function SideNav() {
 
       const scrollPosition = window.scrollY + window.innerHeight / 3;
 
-      // Check if we're past the about sections (feature-03)
-      const feature03Element = document.getElementById("feature-03");
-      if (feature03Element) {
-        const feature03Bottom = feature03Element.offsetTop + feature03Element.offsetHeight;
-        setIsVisible(scrollPosition < feature03Bottom);
+      // Check if we're past the last feature section
+      const lastItem = sideNavItems[sideNavItems.length - 1];
+      const lastElement = lastItem ? document.getElementById(lastItem.id) : null;
+      if (lastElement) {
+        const lastBottom = lastElement.offsetTop + lastElement.offsetHeight;
+        setIsVisible(scrollPosition < lastBottom);
       }
 
       for (let i = sections.length - 1; i >= 0; i--) {
@@ -45,7 +54,7 @@ export default function SideNav() {
     handleScroll();
 
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [sideNavItems]);
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -53,6 +62,11 @@ export default function SideNav() {
       element.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  // Hide while loading or if no projects
+  if (isLoading || sideNavItems.length === 0) {
+    return null;
+  }
 
   return (
     <nav

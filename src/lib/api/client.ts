@@ -8,6 +8,7 @@ interface RequestOptions {
 
 class ApiClient {
   private token: string | null = null;
+  private refreshPromise: Promise<string> | null = null;
 
   setToken(token: string | null) {
     this.token = token;
@@ -15,6 +16,32 @@ class ApiClient {
 
   getToken() {
     return this.token;
+  }
+
+  private async refreshToken(): Promise<string> {
+    // Deduplicate concurrent refresh calls
+    if (this.refreshPromise) return this.refreshPromise;
+
+    this.refreshPromise = (async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        });
+
+        if (!response.ok) throw new Error('Refresh failed');
+
+        const data = await response.json();
+        this.token = data.token;
+        localStorage.setItem('token', data.token);
+        return data.token;
+      } finally {
+        this.refreshPromise = null;
+      }
+    })();
+
+    return this.refreshPromise;
   }
 
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
@@ -35,6 +62,32 @@ class ApiClient {
       body: body ? JSON.stringify(body) : undefined,
       credentials: 'include',
     });
+
+    // Auto-refresh on 401 and retry once
+    if (response.status === 401 && !endpoint.includes('/auth/')) {
+      try {
+        const newToken = await this.refreshToken();
+        const retryHeaders = { ...requestHeaders, Authorization: `Bearer ${newToken}` };
+        const retryResponse = await fetch(`${API_URL}${endpoint}`, {
+          method,
+          headers: retryHeaders,
+          body: body ? JSON.stringify(body) : undefined,
+          credentials: 'include',
+        });
+
+        if (!retryResponse.ok) {
+          const error = await retryResponse.json().catch(() => ({ message: 'Request failed' }));
+          throw new Error(error.message || 'Request failed');
+        }
+
+        return retryResponse.json();
+      } catch {
+        // Refresh failed — clear auth and throw
+        localStorage.removeItem('token');
+        this.token = null;
+        throw new Error('Session expired');
+      }
+    }
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Request failed' }));
@@ -59,6 +112,31 @@ class ApiClient {
       body: formData,
       credentials: 'include',
     });
+
+    // Auto-refresh on 401 for uploads too
+    if (response.status === 401) {
+      try {
+        const newToken = await this.refreshToken();
+        const retryHeaders: Record<string, string> = { Authorization: `Bearer ${newToken}` };
+        const retryResponse = await fetch(`${API_URL}${endpoint}`, {
+          method: 'POST',
+          headers: retryHeaders,
+          body: formData,
+          credentials: 'include',
+        });
+
+        if (!retryResponse.ok) {
+          const error = await retryResponse.json().catch(() => ({ message: 'Upload failed' }));
+          throw new Error(error.message || 'Upload failed');
+        }
+
+        return retryResponse.json();
+      } catch {
+        localStorage.removeItem('token');
+        this.token = null;
+        throw new Error('Session expired');
+      }
+    }
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Upload failed' }));
