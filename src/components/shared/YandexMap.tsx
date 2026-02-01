@@ -1,7 +1,13 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
+import { mapIconsApi, MapIcon } from "@/lib/api/map-icons";
+import { settingsApi } from "@/lib/api/settings";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 interface YandexMapProps {
   coordinates?: [number, number];
@@ -12,12 +18,88 @@ interface YandexMapProps {
 }
 
 function YandexMapInner({
-  coordinates = [41.3111, 69.2401],
-  zoom = 14,
+  coordinates,
+  zoom,
   className,
   markerHint = "Eman Riverside",
   grayscale = true,
 }: YandexMapProps) {
+  const [markers, setMarkers] = useState<MapIcon[]>([]);
+  const [defaultCenter, setDefaultCenter] = useState<[number, number] | null>(null);
+  const [defaultZoom, setDefaultZoom] = useState<number | null>(null);
+  const { language } = useLanguage();
+
+  useEffect(() => {
+    let isMounted = true;
+    mapIconsApi
+      .listPublic()
+      .then((data) => {
+        if (!isMounted) return;
+        setMarkers(data.items || []);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setMarkers([]);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    settingsApi
+      .getByCategory("content")
+      .then((data) => {
+        if (!isMounted) return;
+        const coords = data.map_coordinates || "";
+        const zoomValue = data.map_zoom || "";
+        const [latRaw, lngRaw] = coords.split(",").map((value) => value.trim());
+        const lat = Number.parseFloat(latRaw);
+        const lng = Number.parseFloat(lngRaw);
+        const zoomParsed = Number.parseInt(zoomValue, 10);
+
+        if (Number.isFinite(lat) && Number.isFinite(lng)) {
+          setDefaultCenter([lat, lng]);
+        }
+        if (Number.isFinite(zoomParsed)) {
+          setDefaultZoom(zoomParsed);
+        }
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setDefaultCenter(null);
+        setDefaultZoom(null);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const effectiveCenter = coordinates || defaultCenter || [41.3111, 69.2401];
+  const effectiveZoom = zoom ?? defaultZoom ?? 14;
+  const mapKey = `${effectiveCenter[0]}-${effectiveCenter[1]}-${effectiveZoom}`;
+
+  const resolvedMarkers = useMemo(() => {
+    return markers.map((marker) => {
+      const icon = marker.type?.icon || "";
+      const iconUrl = icon.startsWith("http") ? icon : `${API_URL}${icon}`;
+      const markerName =
+        (language === "ru" ? marker.name_ru : marker.name_uz) ||
+        marker.name ||
+        marker.name_ru ||
+        marker.name_uz;
+      return {
+        id: marker.id,
+        name: markerName,
+        coords: [marker.lat, marker.lng] as [number, number],
+        iconUrl: icon ? iconUrl : "",
+      };
+    });
+  }, [language, markers]);
+
+  const showDefaultMarker = resolvedMarkers.length === 0;
+
   return (
     <div
       className={className}
@@ -25,14 +107,42 @@ function YandexMapInner({
     >
       <YMaps query={{ apikey: process.env.NEXT_PUBLIC_YANDEX_API_KEY, lang: "ru_RU" }}>
         <Map
-          defaultState={{ center: coordinates, zoom }}
+          key={mapKey}
+          defaultState={{ center: effectiveCenter, zoom: effectiveZoom }}
           width="100%"
           height="100%"
         >
-          <Placemark
-            geometry={coordinates}
-            properties={{ hintContent: markerHint }}
-          />
+          {showDefaultMarker ? (
+            <Placemark
+              geometry={effectiveCenter}
+              properties={{ hintContent: markerHint }}
+              modules={["geoObject.addon.balloon", "geoObject.addon.hint"]}
+              options={{ openBalloonOnClick: true }}
+            />
+          ) : (
+            resolvedMarkers.map((marker) => (
+              <Placemark
+                key={marker.id}
+                geometry={marker.coords}
+                properties={{
+                  hintContent: marker.name,
+                  balloonContent: marker.name,
+                }}
+                modules={["geoObject.addon.balloon", "geoObject.addon.hint"]}
+                options={
+                  marker.iconUrl
+                    ? {
+                        iconLayout: "default#image",
+                        iconImageHref: marker.iconUrl,
+                        iconImageSize: [32, 32],
+                        iconImageOffset: [-16, -32],
+                        openBalloonOnClick: true,
+                      }
+                    : { preset: "islands#blueDotIcon", openBalloonOnClick: true }
+                }
+              />
+            ))
+          )}
         </Map>
       </YMaps>
     </div>

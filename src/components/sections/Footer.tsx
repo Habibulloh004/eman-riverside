@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, AtSign } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
 import { RequestModal } from "@/components/shared";
@@ -33,6 +33,10 @@ const YouTubeIcon = () => (
   </svg>
 );
 
+const ThreadsIcon = () => (
+  <AtSign className="w-5 h-5" />
+);
+
 export default function Footer() {
   const { t } = useLanguage();
   const { settings } = useSiteSettings();
@@ -60,6 +64,11 @@ export default function Footer() {
       name: "YouTube",
       href: settings.social.youtube,
       icon: <YouTubeIcon />,
+    },
+    settings.social.threads && {
+      name: "Threads",
+      href: settings.social.threads,
+      icon: <ThreadsIcon />,
     },
   ].filter(Boolean) as { name: string; href: string; icon: React.ReactNode }[];
 

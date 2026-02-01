@@ -84,6 +84,8 @@ export const ru = {
   location: {
     title: "Где мы находимся",
     subtitle: "Локация сочетает природу и городскую инфраструктуру — идеальный баланс",
+    panoramaButton: "Панорама 360",
+    panoramaTitle: "Панорама 360",
     places: [
       "Супермаркет Korzinka",
       "Team University",

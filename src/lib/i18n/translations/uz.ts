@@ -13,7 +13,7 @@ export const uz: Translations = {
   // Hero
   hero: {
     title: "EMAN RIVERSIDE",
-    comingSoon: "Скоро",
+    comingSoon: "Tez Kunda",
     comingSoonUz: "Tez Kunda",
     subtitle: "Yangi darajadagi turar-joy majmuasi",
     selectApartment: "KVARTIRA TANLASH",
@@ -86,6 +86,8 @@ export const uz: Translations = {
   location: {
     title: "Biz qayerdamiz",
     subtitle: "Joylashuv tabiat va shahar infratuzilmasini birlashtiradi — ideal muvozanat",
+    panoramaButton: "Panorama 360",
+    panoramaTitle: "Panorama 360",
     places: [
       "Korzinka supermarketi",
       "Team University",

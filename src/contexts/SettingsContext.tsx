@@ -17,6 +17,7 @@ interface SocialSettings {
   instagram: string;
   facebook: string;
   youtube: string;
+  threads: string;
   whatsapp: string;
 }
 
@@ -64,6 +65,7 @@ const defaultSettings: SiteSettings = {
     instagram: "https://instagram.com/emanriverside",
     facebook: "https://facebook.com/emanriverside",
     youtube: "https://youtube.com/@emanriverside",
+    threads: "https://www.threads.net/@emanriverside",
     whatsapp: "+998901234567",
   },
   content: {
@@ -129,6 +131,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           instagram: getValue(data, "social", "instagram", defaultSettings.social.instagram),
           facebook: getValue(data, "social", "facebook", defaultSettings.social.facebook),
           youtube: getValue(data, "social", "youtube", defaultSettings.social.youtube),
+          threads: getValue(data, "social", "threads", defaultSettings.social.threads),
           whatsapp: getValue(data, "social", "whatsapp", defaultSettings.social.whatsapp),
         },
         content: {

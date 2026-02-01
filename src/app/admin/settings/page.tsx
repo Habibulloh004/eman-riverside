@@ -11,6 +11,7 @@ import {
   Instagram,
   Facebook,
   Youtube,
+  AtSign,
   MessageCircle,
   Settings,
   Save,
@@ -80,6 +81,7 @@ export default function SettingsPage() {
     instagram: "",
     facebook: "",
     youtube: "",
+    threads: "",
     whatsapp: "",
   });
 
@@ -113,6 +115,7 @@ export default function SettingsPage() {
         instagram: getValue("instagram"),
         facebook: getValue("facebook"),
         youtube: getValue("youtube"),
+        threads: getValue("threads"),
         whatsapp: getValue("whatsapp"),
       });
 
@@ -193,6 +196,7 @@ export default function SettingsPage() {
         { key: "instagram", value: socialForm.instagram },
         { key: "facebook", value: socialForm.facebook },
         { key: "youtube", value: socialForm.youtube },
+        { key: "threads", value: socialForm.threads },
         { key: "whatsapp", value: socialForm.whatsapp },
       ];
       await settingsApi.bulkUpdate(updates);
@@ -205,15 +209,53 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSavePricing = async () => {
+  const savePaymentPlans = async (
+    nextPlans: PaymentPlan[],
+    nextPlansUz: PaymentPlan[],
+    successMessage: string = t.settings.pricingSaved
+  ) => {
     try {
       setIsSaving(true);
       const updates = [
-        { key: "payment_plans", value: JSON.stringify(paymentPlans) },
-        { key: "payment_plans_uz", value: JSON.stringify(paymentPlansUz) },
+        { key: "payment_plans", value: JSON.stringify(nextPlans) },
+        { key: "payment_plans_uz", value: JSON.stringify(nextPlansUz) },
       ];
       await settingsApi.bulkUpdate(updates);
-      showNotification("success", t.settings.pricingSaved);
+      setPaymentPlans(nextPlans);
+      setPaymentPlansUz(nextPlansUz);
+      showNotification("success", successMessage);
+    } catch (err) {
+      console.error("Failed to save:", err);
+      showNotification("error", t.settings.saveError);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSavePricing = async () => {
+    await savePaymentPlans(paymentPlans, paymentPlansUz);
+  };
+
+  const sanitizeFaq = (items: FAQItem[]) =>
+    items.filter((item) => item.question.trim() !== "" || item.answer.trim() !== "");
+
+  const saveFaqItems = async (
+    nextFaqItems: FAQItem[],
+    nextFaqItemsUz: FAQItem[],
+    successMessage: string = t.settings.faqSaved
+  ) => {
+    try {
+      setIsSaving(true);
+      const cleanedFaqItems = sanitizeFaq(nextFaqItems);
+      const cleanedFaqItemsUz = sanitizeFaq(nextFaqItemsUz);
+      const updates = [
+        { key: "faq_items", value: JSON.stringify(cleanedFaqItems) },
+        { key: "faq_items_uz", value: JSON.stringify(cleanedFaqItemsUz) },
+      ];
+      await settingsApi.bulkUpdate(updates);
+      setFaqItems(cleanedFaqItems);
+      setFaqItemsUz(cleanedFaqItemsUz);
+      showNotification("success", successMessage);
     } catch (err) {
       console.error("Failed to save:", err);
       showNotification("error", t.settings.saveError);
@@ -223,14 +265,24 @@ export default function SettingsPage() {
   };
 
   const handleSaveFaq = async () => {
+    await saveFaqItems(faqItems, faqItemsUz);
+  };
+
+  const saveProjects = async (
+    nextProjects: ProjectItem[],
+    nextProjectsUz: ProjectItem[],
+    successMessage: string = t.settings.projectsSaved
+  ) => {
     try {
       setIsSaving(true);
       const updates = [
-        { key: "faq_items", value: JSON.stringify(faqItems) },
-        { key: "faq_items_uz", value: JSON.stringify(faqItemsUz) },
+        { key: "projects", value: JSON.stringify(nextProjects) },
+        { key: "projects_uz", value: JSON.stringify(nextProjectsUz) },
       ];
       await settingsApi.bulkUpdate(updates);
-      showNotification("success", t.settings.faqSaved);
+      setProjects(nextProjects);
+      setProjectsUz(nextProjectsUz);
+      showNotification("success", successMessage);
     } catch (err) {
       console.error("Failed to save:", err);
       showNotification("error", t.settings.saveError);
@@ -240,20 +292,7 @@ export default function SettingsPage() {
   };
 
   const handleSaveProjects = async () => {
-    try {
-      setIsSaving(true);
-      const updates = [
-        { key: "projects", value: JSON.stringify(projects) },
-        { key: "projects_uz", value: JSON.stringify(projectsUz) },
-      ];
-      await settingsApi.bulkUpdate(updates);
-      showNotification("success", t.settings.projectsSaved);
-    } catch (err) {
-      console.error("Failed to save:", err);
-      showNotification("error", t.settings.saveError);
-    } finally {
-      setIsSaving(false);
-    }
+    await saveProjects(projects, projectsUz);
   };
 
   
@@ -261,10 +300,11 @@ export default function SettingsPage() {
   const addPaymentPlan = () => {
     const newPlan: PaymentPlan = { title: "", description: "", price: "", period: "", features: [] };
     if (activeLang === "ru") {
-      setPaymentPlans([...paymentPlans, newPlan]);
+      setPaymentPlans([newPlan, ...paymentPlans]);
     } else {
-      setPaymentPlansUz([...paymentPlansUz, newPlan]);
+      setPaymentPlansUz([newPlan, ...paymentPlansUz]);
     }
+    showNotification("success", t.settings.planAdded);
   };
 
   const updatePaymentPlan = (index: number, field: keyof PaymentPlan, value: string | string[]) => {
@@ -281,9 +321,13 @@ export default function SettingsPage() {
 
   const removePaymentPlan = (index: number) => {
     if (activeLang === "ru") {
-      setPaymentPlans(paymentPlans.filter((_, i) => i !== index));
+      const nextPlans = paymentPlans.filter((_, i) => i !== index);
+      setPaymentPlans(nextPlans);
+      savePaymentPlans(nextPlans, paymentPlansUz, t.settings.planRemoved);
     } else {
-      setPaymentPlansUz(paymentPlansUz.filter((_, i) => i !== index));
+      const nextPlansUz = paymentPlansUz.filter((_, i) => i !== index);
+      setPaymentPlansUz(nextPlansUz);
+      savePaymentPlans(paymentPlans, nextPlansUz, t.settings.planRemoved);
     }
   };
 
@@ -291,10 +335,11 @@ export default function SettingsPage() {
   const addFaqItem = () => {
     const newItem: FAQItem = { question: "", answer: "" };
     if (activeLang === "ru") {
-      setFaqItems([...faqItems, newItem]);
+      setFaqItems([newItem, ...faqItems]);
     } else {
-      setFaqItemsUz([...faqItemsUz, newItem]);
+      setFaqItemsUz([newItem, ...faqItemsUz]);
     }
+    showNotification("success", t.settings.faqAdded);
   };
 
   const updateFaqItem = (index: number, field: keyof FAQItem, value: string) => {
@@ -311,9 +356,13 @@ export default function SettingsPage() {
 
   const removeFaqItem = (index: number) => {
     if (activeLang === "ru") {
-      setFaqItems(faqItems.filter((_, i) => i !== index));
+      const nextFaqItems = faqItems.filter((_, i) => i !== index);
+      setFaqItems(nextFaqItems);
+      saveFaqItems(nextFaqItems, faqItemsUz, t.settings.faqRemoved);
     } else {
-      setFaqItemsUz(faqItemsUz.filter((_, i) => i !== index));
+      const nextFaqItemsUz = faqItemsUz.filter((_, i) => i !== index);
+      setFaqItemsUz(nextFaqItemsUz);
+      saveFaqItems(faqItems, nextFaqItemsUz, t.settings.faqRemoved);
     }
   };
 
@@ -330,10 +379,11 @@ export default function SettingsPage() {
       features: [],
     };
     if (activeLang === "ru") {
-      setProjects([...projects, newProject]);
+      setProjects([newProject, ...projects]);
     } else {
-      setProjectsUz([...projectsUz, newProject]);
+      setProjectsUz([newProject, ...projectsUz]);
     }
+    showNotification("success", t.settings.projectAdded);
   };
 
   const updateProject = (index: number, field: keyof ProjectItem, value: unknown) => {
@@ -350,9 +400,13 @@ export default function SettingsPage() {
 
   const removeProject = (index: number) => {
     if (activeLang === "ru") {
-      setProjects(projects.filter((_, i) => i !== index));
+      const nextProjects = projects.filter((_, i) => i !== index);
+      setProjects(nextProjects);
+      saveProjects(nextProjects, projectsUz, t.settings.projectRemoved);
     } else {
-      setProjectsUz(projectsUz.filter((_, i) => i !== index));
+      const nextProjectsUz = projectsUz.filter((_, i) => i !== index);
+      setProjectsUz(nextProjectsUz);
+      saveProjects(projects, nextProjectsUz, t.settings.projectRemoved);
     }
   };
 
@@ -614,6 +668,20 @@ export default function SettingsPage() {
                     value={socialForm.youtube}
                     onChange={(e) => setSocialForm({ ...socialForm, youtube: e.target.value })}
                     placeholder="https://youtube.com/@channel"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                    <AtSign className="w-4 h-4 text-gray-600" />
+                    Threads
+                  </label>
+                  <input
+                    type="url"
+                    value={socialForm.threads}
+                    onChange={(e) => setSocialForm({ ...socialForm, threads: e.target.value })}
+                    placeholder="https://www.threads.net/@username"
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
