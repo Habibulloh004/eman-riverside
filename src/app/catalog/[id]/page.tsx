@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { Header, Footer } from "@/components/sections";
-import { PageHero, RequestModal } from "@/components/shared";
+import { PageHero, RequestModal, YandexMap } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Home, Maximize, Building2, Calendar, Layers, BadgeCheck, DollarSign, Ruler, Phone, Mail, MapPin, ArrowRight } from "lucide-react";
 import { useEstate } from "@/hooks/useEstates";
@@ -511,16 +511,7 @@ export default function ApartmentDetailPage() {
         <section className="py-12 lg:py-16 bg-beige">
           <div className="container mx-auto px-4 lg:px-8">
             <div className="relative w-full h-[300px] lg:h-[450px] rounded-lg overflow-hidden">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d47980.98675893856!2d69.21992457431642!3d41.31147339999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38ae8b0cc379e9c3%3A0xa5a9323b4aa5cb98!2sTashkent%2C%20Uzbekistan!5e0!3m2!1sen!2s!4v1703955000000!5m2!1sen!2s"
-                width="100%"
-                height="100%"
-                style={{ border: 0, filter: "grayscale(100%)" }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="absolute inset-0"
-              />
+              <YandexMap className="absolute inset-0" markerHint={apartment.address || "Eman Riverside"} />
             </div>
           </div>
         </section>
