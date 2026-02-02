@@ -100,7 +100,7 @@ export const uz: Translations = {
   // Gallery Section (Home)
   gallerySection: {
     title: "GALEREYA",
-    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.",
+    description: "Qurilish jarayoni va tayyor yechimlar galereyasi: fasadlar, hovlilar va jamoat hududlari.",
   },
 
   // Floor Plans
@@ -147,15 +147,15 @@ export const uz: Translations = {
     constructionTitle: "Qurilish",
     constructionSubtitle: "EMAN RIVERSIDE",
     step1Title: "Birinchi qadamlar",
-    step1Desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.",
+    step1Desc: "Maydon tayyorlanadi, geologiya va poydevor ishlari bajariladi — sifat qat'iy nazoratda.",
     step2Title: "Poydevor",
-    step2Desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.",
+    step2Desc: "Monolit karkas, muhandislik tarmoqlari va energiya tejamkor fasadlar bosqichma-bosqich quriladi.",
     galleryTitle: "Galereya",
     photo: "Rasm",
     interiorTitle: "Interer",
-    interiorDesc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.",
+    interiorDesc: "Intererlar yorug'lik va qulaylik uchun loyihalanadi: panoramali oynalar, funksional reja va sifatli materiallar.",
     exteriorTitle: "Eksterer",
-    exteriorDesc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.",
+    exteriorDesc: "Eksterer zamonaviy arxitektura, bardoshli fasadlar va yashil hududlar bilan uyg'unlashadi.",
     videoTitle: "Video",
   },
 

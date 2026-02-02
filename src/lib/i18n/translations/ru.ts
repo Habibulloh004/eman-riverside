@@ -98,7 +98,7 @@ export const ru = {
   // Gallery Section (Home)
   gallerySection: {
     title: "ГАЛЕРЕЯ",
-    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.",
+    description: "Фотогалерея хода строительства и готовых решений: фасады, дворы и общественные пространства EMAN RIVERSIDE.",
   },
 
   // Floor Plans
@@ -145,15 +145,15 @@ export const ru = {
     constructionTitle: "Строительства",
     constructionSubtitle: "EMAN RIVERSIDE",
     step1Title: "Первые шаги",
-    step1Desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.",
+    step1Desc: "Подготовка площадки, геология и устройство фундамента — прочная база для комплекса.",
     step2Title: "Фундамент",
-    step2Desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.",
+    step2Desc: "Возведение монолитного каркаса, инженерных сетей и фасадов с энергосберегающими решениями.",
     galleryTitle: "Галерея",
     photo: "Фото",
     interiorTitle: "Интерьер",
-    interiorDesc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.",
+    interiorDesc: "Интерьеры продуманы для света и комфорта: панорамные окна, функциональные планировки и качественные материалы.",
     exteriorTitle: "Экстерьер",
-    exteriorDesc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc odio in et, lectus sit lorem id integer.",
+    exteriorDesc: "Экстерьер сочетает современную архитектуру, долговечные фасады и благоустроенные зеленые зоны.",
     videoTitle: "Видео",
   },
 

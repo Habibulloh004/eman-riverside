@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { Metadata } from "next";
-import { PageHero } from "@/components/shared";
 import {
   Header,
   Footer,
@@ -9,6 +8,7 @@ import {
   Location,
   FloorPlans,
 } from "@/components/sections";
+import AboutProjectHero from "@/components/sections/AboutProjectHero";
 
 export const metadata: Metadata = {
   title: "О проекте",
@@ -21,11 +21,7 @@ export default function AboutPage() {
       <Header />
       <SideNav />
       <main>
-        <PageHero
-          title="О Проекте"
-          subtitle="СЕМЕЙНЫЙ КОМФОРТ В ПРИРОДНОЙ ТИШИНЕ"
-          image="/images/hero/1.png"
-        />
+        <AboutProjectHero />
 
         {/* About sections with background */}
         <div className="relative">
