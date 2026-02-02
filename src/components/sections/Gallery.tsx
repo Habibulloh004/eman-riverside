@@ -52,98 +52,47 @@ export default function Gallery() {
       </div>
 
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          {/* Left Column - Title + 2x2 grid */}
-          <div className="lg:col-span-5 flex flex-col gap-4">
-            {/* Title Section */}
-            <div className="mb-4">
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif mb-4">
-                {t.gallerySection.title}
-              </h2>
-              <p className="text-muted-foreground text-sm uppercase tracking-wider max-w-md">
-                {t.gallerySection.description}
-              </p>
-            </div>
-
-            {/* 2x2 Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              {[0, 1, 2, 3].map((idx) => (
-                <div key={idx} className="relative aspect-4/3 rounded-lg overflow-hidden group cursor-pointer">
-                  <Image
-                    src={getImageUrl(idx)}
-                    alt={getImageTitle(idx)}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="(max-width: 768px) 50vw, 20vw"
-                    unoptimized={getImageUrl(idx).startsWith("http")}
-                  />
-                </div>
-              ))}
-            </div>
+        {/* Row 1: Title + 2 landscape images */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-3">
+          <div className="flex flex-col justify-center py-4 lg:pr-8">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif mb-4">
+              {t.gallerySection.title}
+            </h2>
+            <p className="text-muted-foreground text-sm uppercase tracking-wider max-w-xs">
+              {t.gallerySection.description}
+            </p>
           </div>
-
-          {/* Middle Column - 2 tall images */}
-          <div className="lg:col-span-3 flex flex-col gap-4">
-            {[4, 5].map((idx) => (
-              <div key={idx} className="relative aspect-3/4 rounded-lg overflow-hidden group cursor-pointer">
-                <Image
-                  src={getImageUrl(idx)}
-                  alt={getImageTitle(idx)}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  sizes="(max-width: 768px) 100vw, 25vw"
-                  unoptimized={getImageUrl(idx).startsWith("http")}
-                />
-              </div>
-            ))}
+          <div className="relative h-48 lg:h-56 overflow-hidden group cursor-pointer">
+            <Image src={getImageUrl(0)} alt={getImageTitle(0)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 768px) 100vw, 33vw" unoptimized={getImageUrl(0).startsWith("http")} />
           </div>
-
-          {/* Right Column - Complex layout */}
-          <div className="lg:col-span-4 flex flex-col gap-4">
-            {/* Top row - 2 images */}
-            <div className="grid grid-cols-2 gap-4">
-              {[6, 7].map((idx) => (
-                <div key={idx} className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer">
-                  <Image
-                    src={getImageUrl(idx)}
-                    alt={getImageTitle(idx)}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="(max-width: 768px) 50vw, 15vw"
-                    unoptimized={getImageUrl(idx).startsWith("http")}
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Middle - Large image */}
-            <div className="relative aspect-4/3 rounded-lg overflow-hidden group cursor-pointer">
-              <Image
-                src={getImageUrl(8)}
-                alt={getImageTitle(8)}
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-                sizes="(max-width: 768px) 100vw, 30vw"
-                unoptimized={getImageUrl(8).startsWith("http")}
-              />
-            </div>
-
-            {/* Bottom row - 2 images */}
-            <div className="grid grid-cols-2 gap-4">
-              {[9, 10].map((idx) => (
-                <div key={idx} className="relative aspect-3/4 rounded-lg overflow-hidden group cursor-pointer">
-                  <Image
-                    src={getImageUrl(idx)}
-                    alt={getImageTitle(idx)}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="(max-width: 768px) 50vw, 15vw"
-                    unoptimized={getImageUrl(idx).startsWith("http")}
-                  />
-                </div>
-              ))}
-            </div>
+          <div className="relative h-48 lg:h-56 overflow-hidden group cursor-pointer">
+            <Image src={getImageUrl(1)} alt={getImageTitle(1)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 768px) 100vw, 33vw" unoptimized={getImageUrl(1).startsWith("http")} />
           </div>
+        </div>
+
+        {/* Row 2: 4 images, same height, different widths */}
+        <div className="grid grid-cols-2 lg:grid-cols-12 gap-3 mb-3">
+          <div className="lg:col-span-2 relative h-48 lg:h-64 overflow-hidden group cursor-pointer">
+            <Image src={getImageUrl(2)} alt={getImageTitle(2)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 768px) 50vw, 16vw" unoptimized={getImageUrl(2).startsWith("http")} />
+          </div>
+          <div className="lg:col-span-3 relative h-48 lg:h-64 overflow-hidden group cursor-pointer">
+            <Image src={getImageUrl(3)} alt={getImageTitle(3)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 768px) 50vw, 25vw" unoptimized={getImageUrl(3).startsWith("http")} />
+          </div>
+          <div className="lg:col-span-4 relative h-48 lg:h-64 overflow-hidden group cursor-pointer">
+            <Image src={getImageUrl(4)} alt={getImageTitle(4)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 768px) 100vw, 33vw" unoptimized={getImageUrl(4).startsWith("http")} />
+          </div>
+          <div className="lg:col-span-3 relative h-48 lg:h-64 overflow-hidden group cursor-pointer">
+            <Image src={getImageUrl(5)} alt={getImageTitle(5)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 768px) 100vw, 25vw" unoptimized={getImageUrl(5).startsWith("http")} />
+          </div>
+        </div>
+
+        {/* Row 3: 4 equal images in one line */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {[6, 7, 8, 9].map((idx) => (
+            <div key={idx} className="relative h-48 lg:h-64 overflow-hidden group cursor-pointer">
+              <Image src={getImageUrl(idx)} alt={getImageTitle(idx)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 768px) 50vw, 25vw" unoptimized={getImageUrl(idx).startsWith("http")} />
+            </div>
+          ))}
         </div>
       </div>
     </section>

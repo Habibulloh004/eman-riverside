@@ -76,42 +76,39 @@ export default function GalleryPage() {
       <Header />
       <main className="pt-20 lg:pt-24 bg-[#F5ECE4]">
         {/* Hero Section */}
-        <section className="relative h-screen bg-[#F5ECE4] overflow-hidden">
-          {/* Left side - Large Vertical text */}
-          <div className="absolute left-6 lg:left-12 top-1/2 -translate-y-1/2 z-10">
-            <span
-              className="text-[#1a1a1a] text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-[0.2em] whitespace-nowrap"
-              style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
-            >
-              EMAN RIVERSIDE
-            </span>
-          </div>
+        <section className="relative bg-[#F5ECE4] overflow-hidden">
+          <div className="relative h-screen max-h-[900px] max-w-[1920px] mx-auto">
+            {/* Left side - Large Vertical text */}
+            <div className="absolute left-6 lg:left-18 top-[40%] -translate-y-1/2 z-10">
+              <span
+                className="text-[#1a1a1a] text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-medium tracking-[0.2em] whitespace-nowrap"
+                style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+              >
+                EMAN RIVERSIDE
+              </span>
+            </div>
 
-          {/* Logo - positioned right of vertical text, near top */}
-          <div className="absolute max-md:hidden left-24 sm:left-32 lg:left-44 top-28 lg:top-32 z-10">
-            <Image
-              src="/logo.svg"
-              alt="EMAN RIVERSIDE"
-              width={120}
-              height={60}
-              className="h-12 lg:h-14 w-auto"
-            />
-          </div>
+            {/* Logo - positioned right of vertical text, near top */}
+            <div className="absolute max-md:hidden left-24 sm:left-32 lg:left-44 top-28 lg:top-32 z-10">
+              <Image
+                src="/darklogo.png"
+                alt="EMAN RIVERSIDE"
+                width={120}
+                height={60}
+                className="h-10 lg:h-12 w-auto"
+              />
+            </div>
 
-          {/* Main diagonal image - right side with diagonal left edge */}
-          <div
-            className="absolute top-0 right-0 w-[75%] lg:w-[70%] h-full"
-            style={{
-              clipPath: "polygon(25% 0, 100% 0, 100% 100%, 0% 100%)"
-            }}
-          >
-            <Image
-              src="/images/03.webp"
-              alt="EMAN RIVERSIDE Building"
-              fill
-              className="object-cover"
-              priority
-            />
+            {/* Main diagonal image - right side with diagonal left edge */}
+            <div className="absolute top-0 right-0 w-[75%] lg:w-[70%] h-full">
+              <Image
+                src="/images/03.webp"
+                alt="EMAN RIVERSIDE Building"
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
           </div>
         </section>
 
@@ -163,8 +160,7 @@ export default function GalleryPage() {
               <div className="lg:col-span-9 relative h-80 lg:h-150">
                 {/* Image 1 - Left bottom, with green/primary border */}
                 <div
-                  className="absolute max-sm:bottom-20 bottom-0 lg:bottom-[25%] xl:bottom-20 left-0 w-[45%] lg:w-[35%] z-30"
-                  style={{ transform: "rotate(-2deg)" }}
+                  className="absolute bottom-[25%] left-0 w-[45%] lg:w-[35%] z-30"
                 >
                   <div className="relative aspect-square rounded-lg overflow-hidden shadow-2xl">
                     <Image
@@ -179,7 +175,6 @@ export default function GalleryPage() {
                 {/* Image 2 - Center top */}
                 <div
                   className="absolute top-0 left-[30%] lg:left-[25%] w-[45%] lg:w-[35%] z-20"
-                  style={{ transform: "rotate(1deg)" }}
                 >
                   <div className="relative aspect-square rounded-lg overflow-hidden shadow-2xl">
                     <Image
@@ -193,8 +188,7 @@ export default function GalleryPage() {
 
                 {/* Image 3 - Right */}
                 <div
-                  className="absolute top-[25%] lg:top-[20%] right-0 lg:right-12 w-[45%] lg:w-[35%] z-10"
-                  style={{ transform: "rotate(10deg)" }}
+                  className="absolute top-[-20%] right-0 lg:right-20 w-[45%] lg:w-[35%] z-30"
                 >
                   <div className="relative aspect-square rounded-lg overflow-hidden shadow-2xl">
                     <Image
@@ -278,7 +272,7 @@ export default function GalleryPage() {
                   {/* Image with rounded corner */}
                   <div
                     className="relative w-full aspect-4/3 overflow-hidden z-10"
-                    style={{ borderRadius: "0 0 45% 0" }}
+                    style={{ borderRadius: "0 0 396px 0" }}
                   >
                     <Image
                       src="/images/05.jpg"
@@ -289,8 +283,8 @@ export default function GalleryPage() {
                   </div>
                   {/* Gray blob shape - behind and below image */}
                   <div
-                    className="absolute -bottom-8 right-0 w-28 h-44 lg:w-36 lg:h-56 bg-[#9B8B7D] z-0"
-                    style={{ borderRadius: "50% 50% 50% 50% / 60% 60% 40% 40%" }}
+                    className="absolute -bottom-8 right-0 w-28 h-52 lg:w-36 lg:h-64 bg-[#B2A298] z-0"
+                    style={{ rotate: "45deg", borderRadius: "50% 50% 50% 50% / 50% 50% 50% 50%" }}
                   />
                 </div>
               </div>
@@ -312,7 +306,10 @@ export default function GalleryPage() {
 
               {/* Right side image */}
               <div className="lg:col-span-4 relative h-72 lg:h-80">
-                <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute inset-0 overflow-hidden"
+                  style={{ borderRadius: "0 0 0 396px" }}
+
+                >
                   <Image
                     src="/images/01.webp"
                     alt={t.gallery.interiorTitle}
@@ -339,34 +336,41 @@ export default function GalleryPage() {
               <div className="lg:col-span-9 relative h-80 lg:h-96">
                 {/* Main organic/bean shape image */}
                 <div
-                  className="absolute left-[5%] top-[10%] w-[55%] lg:w-[50%] h-[85%] overflow-hidden"
-                  style={{ borderRadius: "60% 40% 55% 45% / 55% 45% 55% 45%" }}
+                  className="z-20 absolute left-[5%] top-[10%] w-[55%] lg:w-[50%] h-[85%] overflow-hidden"
+                  style={{ rotate: "-45deg", borderRadius: "50% 50% 50% 50% / 50% 50% 50% 50%" }}
                 >
                   <Image
-                    src="/images/04.webp"
+                    src="/images/02.2.webp"
                     alt={t.gallery.exteriorTitle}
                     fill
                     className="object-cover"
                   />
-                </div>
 
+                </div>
                 {/* Decorative red ellipse outline - wrapping around images */}
                 <svg
-                  className="absolute right-[0%] bottom-[0%] w-64 lg:w-80 h-52 lg:h-64"
+                  className="z-10 absolute left-[0%] top-[10%] w-[55%] lg:w-[50%] h-[85%] overflow-hidden -rotate-45"
                   viewBox="0 0 320 260"
                   fill="none"
                   preserveAspectRatio="none"
                 >
                   <ellipse cx="160" cy="130" rx="155" ry="125" stroke="#B91C1C" strokeWidth="1" fill="none" />
                 </svg>
-
+                <svg
+                  className="rotate-45 absolute left-[20%] top-[20%] w-[55%] lg:w-[50%] h-[85%] overflow-hidden"
+                  viewBox="0 0 320 260"
+                  fill="none"
+                  preserveAspectRatio="none"
+                >
+                  <ellipse cx="160" cy="130" rx="155" ry="125" stroke="#B91C1C" strokeWidth="1" fill="none" />
+                </svg>
                 {/* Small circular image - inside the ellipse */}
-                <div className="absolute right-[10%] lg:right-[12%] bottom-[12%] w-20 h-20 lg:w-24 lg:h-24 rounded-full overflow-hidden shadow-lg">
+                <div className="rotate-45 absolute left-[50%] top-[60%] w-50 h-50 rounded-full overflow-hidden">
                   <Image
-                    src="/images/hero/1.png"
+                    src="/images/04.webp"
                     alt={t.gallery.exteriorTitle}
                     fill
-                    className="object-cover"
+                    className="object-cover -rotate-45"
                   />
                 </div>
               </div>

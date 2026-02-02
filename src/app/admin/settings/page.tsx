@@ -164,7 +164,7 @@ export default function SettingsPage() {
 
   const showNotification = (type: "success" | "error", message: string) => {
     setNotification({ type, message });
-    setTimeout(() => setNotification(null), 3000);
+    setTimeout(() => setNotification(null), 4000);
   };
 
   const handleSaveContact = async () => {
