@@ -1,23 +1,28 @@
 import type { NextConfig } from "next";
+import type { RemotePattern } from "next/dist/shared/lib/image-config";
 import withPWA from "next-pwa";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-const apiRemotePattern = (() => {
+const apiRemotePattern: RemotePattern | null = (() => {
   if (!apiUrl) return null;
   try {
     const url = new URL(apiUrl);
-    return {
-      protocol: url.protocol.replace(":", ""),
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    const protocol: RemotePattern["protocol"] =
+      url.protocol === "https:" ? "https" : "http";
+    const pattern: RemotePattern = {
+      protocol,
       hostname: url.hostname,
-      port: url.port || undefined,
       pathname: "/uploads/**",
+      ...(url.port ? { port: url.port } : {}),
     };
+    return pattern;
   } catch {
     return null;
   }
 })();
 
-const remotePatterns = [
+const remotePatterns: NonNullable<NextConfig["images"]>["remotePatterns"] = [
   {
     protocol: "http",
     hostname: "localhost",
@@ -35,10 +40,6 @@ const remotePatterns = [
     hostname: "95.46.96.115",
     port: "3000",
     pathname: "/uploads/**",
-  },
-  {
-    hostname: "localhost",
-    port: "8080",
   },
   {
     protocol: "https",
