@@ -511,7 +511,7 @@ export default function ApartmentDetailPage() {
         <section className="py-12 lg:py-16 bg-beige">
           <div className="container mx-auto px-4 lg:px-8">
             <div className="relative w-full h-[300px] lg:h-[450px] rounded-lg overflow-hidden">
-              <YandexMap className="absolute inset-0" markerHint={apartment.address || "Eman Riverside"} />
+              <YandexMap className="absolute inset-0" />
             </div>
           </div>
         </section>

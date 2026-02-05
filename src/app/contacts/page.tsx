@@ -129,7 +129,7 @@ export default function ContactsPage() {
 
               {/* Right - Map */}
               <div className="relative h-[300px] lg:h-[400px] rounded-lg overflow-hidden">
-                <YandexMap className="absolute inset-0" markerHint="Eman Riverside" />
+                <YandexMap className="absolute inset-0" />
               </div>
             </div>
           </div>
@@ -234,7 +234,7 @@ export default function ContactsPage() {
 
               {/* Right - Map */}
               <div className="relative h-[350px] lg:h-[450px] rounded-lg overflow-hidden shadow-lg">
-                <YandexMap className="absolute inset-0" markerHint="Eman Riverside" />
+                <YandexMap className="absolute inset-0" />
               </div>
             </div>
           </div>

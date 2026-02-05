@@ -55,7 +55,7 @@ export default function Location() {
 
           {/* Right - Map */}
           <div className="relative aspect-square lg:aspect-4/3 rounded-lg overflow-hidden bg-muted">
-            <YandexMap className="absolute inset-0" markerHint="Eman Riverside" />
+            <YandexMap className="absolute inset-0" />
             <Button
               size="sm"
               className="absolute bottom-4 right-4 z-10 rounded-full shadow-lg px-4"

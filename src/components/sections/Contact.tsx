@@ -89,7 +89,7 @@ export default function Contact() {
 
             {/* Map */}
             <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-              <YandexMap className="absolute inset-0" markerHint="Eman Riverside" />
+              <YandexMap className="absolute inset-0" />
             </div>
           </div>
 

@@ -13,7 +13,6 @@ interface YandexMapProps {
   coordinates?: [number, number];
   zoom?: number;
   className?: string;
-  markerHint?: string;
   grayscale?: boolean;
 }
 
@@ -21,7 +20,6 @@ function YandexMapInner({
   coordinates,
   zoom,
   className,
-  markerHint = "Eman Riverside",
   grayscale = true,
 }: YandexMapProps) {
   const [markers, setMarkers] = useState<MapIcon[]>([]);
@@ -98,8 +96,6 @@ function YandexMapInner({
     });
   }, [language, markers]);
 
-  const showDefaultMarker = resolvedMarkers.length === 0;
-
   return (
     <div
       className={className}
@@ -112,37 +108,28 @@ function YandexMapInner({
           width="100%"
           height="100%"
         >
-          {showDefaultMarker ? (
+          {resolvedMarkers.map((marker) => (
             <Placemark
-              geometry={effectiveCenter}
-              properties={{ hintContent: markerHint }}
+              key={marker.id}
+              geometry={marker.coords}
+              properties={{
+                hintContent: marker.name,
+                balloonContent: marker.name,
+              }}
               modules={["geoObject.addon.balloon", "geoObject.addon.hint"]}
-              options={{ openBalloonOnClick: true }}
+              options={
+                marker.iconUrl
+                  ? {
+                      iconLayout: "default#image",
+                      iconImageHref: marker.iconUrl,
+                      iconImageSize: [32, 32],
+                      iconImageOffset: [-16, -32],
+                      openBalloonOnClick: true,
+                    }
+                  : { preset: "islands#blueDotIcon", openBalloonOnClick: true }
+              }
             />
-          ) : (
-            resolvedMarkers.map((marker) => (
-              <Placemark
-                key={marker.id}
-                geometry={marker.coords}
-                properties={{
-                  hintContent: marker.name,
-                  balloonContent: marker.name,
-                }}
-                modules={["geoObject.addon.balloon", "geoObject.addon.hint"]}
-                options={
-                  marker.iconUrl
-                    ? {
-                        iconLayout: "default#image",
-                        iconImageHref: marker.iconUrl,
-                        iconImageSize: [32, 32],
-                        iconImageOffset: [-16, -32],
-                        openBalloonOnClick: true,
-                      }
-                    : { preset: "islands#blueDotIcon", openBalloonOnClick: true }
-                }
-              />
-            ))
-          )}
+          ))}
         </Map>
       </YMaps>
     </div>

@@ -471,7 +471,7 @@ export default function ApartmentRequestPage() {
 
                 {/* Map */}
                 <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-muted shadow-lg">
-                  <YandexMap className="absolute inset-0" markerHint="Eman Riverside" />
+                  <YandexMap className="absolute inset-0" />
                 </div>
               </div>
 
