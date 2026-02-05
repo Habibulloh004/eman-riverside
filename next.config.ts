@@ -43,6 +43,11 @@ const remotePatterns: NonNullable<NextConfig["images"]>["remotePatterns"] = [
   },
   {
     protocol: "https",
+    hostname: "api.weldmarket.uz",
+    pathname: "/uploads/**",
+  },
+  {
+    protocol: "https",
     hostname: "**",
   },
   ...(apiRemotePattern ? [apiRemotePattern] : []),
