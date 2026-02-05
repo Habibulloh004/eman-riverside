@@ -98,10 +98,10 @@ class ApiClient {
   }
 
   async upload(endpoint: string, file: File): Promise<{ url: string; path: string }> {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const requestHeaders: Record<string, string> = {};
+    const requestHeaders: Record<string, string> = {
+      'Content-Type': file.type || 'application/octet-stream',
+      'X-Filename': encodeURIComponent(file.name),
+    };
     if (this.token) {
       requestHeaders['Authorization'] = `Bearer ${this.token}`;
     }
@@ -109,7 +109,7 @@ class ApiClient {
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: 'POST',
       headers: requestHeaders,
-      body: formData,
+      body: file,
       credentials: 'include',
     });
 
@@ -118,10 +118,12 @@ class ApiClient {
       try {
         const newToken = await this.refreshToken();
         const retryHeaders: Record<string, string> = { Authorization: `Bearer ${newToken}` };
+        retryHeaders['Content-Type'] = file.type || 'application/octet-stream';
+        retryHeaders['X-Filename'] = encodeURIComponent(file.name);
         const retryResponse = await fetch(`${API_URL}${endpoint}`, {
           method: 'POST',
           headers: retryHeaders,
-          body: formData,
+          body: file,
           credentials: 'include',
         });
 

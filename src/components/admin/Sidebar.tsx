@@ -68,6 +68,17 @@ export default function Sidebar() {
         </svg>
       ),
     },
+    {
+      name: t.sidebar.security,
+      href: "/admin/security",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5s-3 1.343-3 3 1.343 3 3 3z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 11c0-3.866 3.582-7 7-7s7 3.134 7 7v3a4 4 0 01-4 4H9a4 4 0 01-4-4v-3z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 18h8" />
+        </svg>
+      ),
+    },
   ];
 
   const languages: { value: AdminLang; label: string }[] = [

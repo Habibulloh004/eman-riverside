@@ -14,6 +14,17 @@ interface MeResponse {
   username: string;
 }
 
+interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
+  confirm_password?: string;
+}
+
+interface ChangePasswordResponse {
+  success: boolean;
+  message: string;
+}
+
 export const authApi = {
   login: (data: LoginRequest) =>
     apiClient.post<LoginResponse>('/api/auth/login', data),
@@ -26,4 +37,7 @@ export const authApi = {
 
   me: () =>
     apiClient.get<MeResponse>('/api/admin/me'),
+
+  changePassword: (data: ChangePasswordRequest) =>
+    apiClient.post<ChangePasswordResponse>('/api/admin/password', data),
 };

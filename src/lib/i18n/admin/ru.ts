@@ -9,6 +9,7 @@ export const ru: AdminTranslations = {
     submissions: "Заявки",
     maps: "Карта",
     settings: "Настройки",
+    security: "Безопасность",
     logout: "Выход",
     goToSite: "Перейти на сайт",
     connected: "Подключено",
@@ -291,5 +292,23 @@ export const ru: AdminTranslations = {
     faqSaved: "FAQ сохранён",
     projectsSaved: "Проекты сохранены",
     saveError: "Ошибка сохранения",
+  },
+
+  // Security
+  security: {
+    title: "Безопасность",
+    subtitle: "Смена пароля администратора",
+    currentPassword: "Текущий пароль",
+    newPassword: "Новый пароль",
+    confirmPassword: "Подтвердите новый пароль",
+    save: "Сохранить пароль",
+    saving: "Сохранение...",
+    success: "Пароль обновлен",
+    error: "Не удалось обновить пароль",
+    hint: "Пароль должен содержать минимум 8 символов.",
+    validationRequired: "Пожалуйста, заполните все поля",
+    validationMinLength: "Пароль должен быть не менее 8 символов",
+    validationMismatch: "Пароли не совпадают",
+    validationSame: "Новый пароль должен отличаться от текущего",
   },
 };

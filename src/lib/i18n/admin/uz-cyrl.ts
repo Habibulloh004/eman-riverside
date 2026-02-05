@@ -7,6 +7,7 @@ export const uzCyrl = {
     submissions: "Аризалар",
     maps: "Харита",
     settings: "Созламалар",
+    security: "Хавфсизлик",
     logout: "Чиқиш",
     goToSite: "Сайтга ўтиш",
     connected: "Уланган",
@@ -289,6 +290,24 @@ export const uzCyrl = {
     faqSaved: "FAQ сақланди",
     projectsSaved: "Лойиҳалар сақланди",
     saveError: "Сақлашда хатолик",
+  },
+
+  // Security
+  security: {
+    title: "Хавфсизлик",
+    subtitle: "Админ паролини янгилаш",
+    currentPassword: "Жорий парол",
+    newPassword: "Янги парол",
+    confirmPassword: "Янги паролни тасдиқлаш",
+    save: "Паролни сақлаш",
+    saving: "Сақланмоқда...",
+    success: "Парол янгиланди",
+    error: "Паролни янгилашда хатолик",
+    hint: "Парол камида 8 та белгидан иборат бўлиши керак.",
+    validationRequired: "Илтимос барча майдонларни тўлдиринг",
+    validationMinLength: "Парол камида 8 та белги бўлиши керак",
+    validationMismatch: "Янги пароллар мос келмади",
+    validationSame: "Янги парол жорий паролдан фарқли бўлиши керак",
   },
 } as const;
 
