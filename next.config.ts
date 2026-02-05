@@ -50,11 +50,11 @@ const remotePatterns: NonNullable<NextConfig["images"]>["remotePatterns"] = [
 
 const nextConfig: NextConfig = {
   experimental: {
-    imgOptConcurrency: 12,          // 4 CPU uchun max safe
+    imgOptConcurrency: 8,          // 4 CPU uchun max safe
     imgOptTimeoutInSeconds: 300,    // 7s default emas
-    imgOptMaxInputPixels: 268_402_689, // default (sharp limit)
+    // imgOptMaxInputPixels: 268_402_689, // default (sharp limit)
   },
-  
+
   // Use Webpack for PWA compatibility
   turbopack: {},
 
@@ -63,6 +63,8 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60 * 60 * 24 * 365, // 1 yil
     remotePatterns,
+    deviceSizes: [360, 640, 750, 828, 1080, 1200, 1600],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
 
   // Cache headers
