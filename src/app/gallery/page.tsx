@@ -29,7 +29,9 @@ const defaultGalleryItems = {
 
 export default function GalleryPage() {
   const { t, language } = useLanguage();
-  const [galleryItems, setGalleryItems] = useState<Array<{ image: string; title: string; description: string }>>([]);
+  const [galleryItems, setGalleryItems] = useState<
+    Array<{ id: number | string; image: string; title: string; description: string }>
+  >([]);
   const [videoItems, setVideoItems] = useState<Array<{ url: string; thumbnail: string; title: string }>>([]);
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,13 +43,18 @@ export default function GalleryPage() {
         const imageData = await galleryApi.listPublic({ type: "image" });
         if (imageData.items && imageData.items.length > 0) {
           const items = imageData.items.map((item: GalleryItem) => ({
+            id: item.id,
             image: item.url.startsWith("http") ? item.url : `${API_URL}${item.url}`,
             title: language === "uz" ? (item.title_uz || item.title) : item.title,
             description: language === "uz" ? (item.description_uz || item.description) : item.description,
           }));
           setGalleryItems(items);
         } else {
-          setGalleryItems(language === "uz" ? defaultGalleryItems.uz : defaultGalleryItems.ru);
+          const defaults = (language === "uz" ? defaultGalleryItems.uz : defaultGalleryItems.ru).map((item) => ({
+            id: `${item.title}-${item.image}`,
+            ...item,
+          }));
+          setGalleryItems(defaults);
         }
 
         // Load all videos
@@ -62,7 +69,11 @@ export default function GalleryPage() {
         }
       } catch (error) {
         console.error("Failed to load gallery:", error);
-        setGalleryItems(language === "uz" ? defaultGalleryItems.uz : defaultGalleryItems.ru);
+        const defaults = (language === "uz" ? defaultGalleryItems.uz : defaultGalleryItems.ru).map((item) => ({
+          id: `${item.title}-${item.image}`,
+          ...item,
+        }));
+        setGalleryItems(defaults);
       } finally {
         setIsLoading(false);
       }
@@ -107,6 +118,7 @@ export default function GalleryPage() {
                 fill
                 className="object-cover"
                 priority
+                sizes="(max-width: 1024px) 75vw, 70vw"
               />
             </div>
           </div>
@@ -168,6 +180,7 @@ export default function GalleryPage() {
                       alt="Construction 1"
                       fill
                       className="object-cover"
+                      sizes="(max-width: 1024px) 45vw, 26vw"
                     />
                   </div>
                 </div>
@@ -182,6 +195,7 @@ export default function GalleryPage() {
                       alt="Construction 2"
                       fill
                       className="object-cover"
+                      sizes="(max-width: 1024px) 45vw, 26vw"
                     />
                   </div>
                 </div>
@@ -196,6 +210,7 @@ export default function GalleryPage() {
                       alt="Construction 3"
                       fill
                       className="object-cover"
+                      sizes="(max-width: 1024px) 45vw, 26vw"
                     />
                   </div>
                 </div>
@@ -230,9 +245,9 @@ export default function GalleryPage() {
                   className="flex gap-4 lg:gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4 -mx-4 px-4 lg:-mx-8 lg:px-8"
                   style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
-                  {galleryItems.map((item, idx) => (
+                  {galleryItems.map((item) => (
                     <div
-                      key={idx}
+                      key={item.id}
                       className="flex-shrink-0 w-[70%] sm:w-[45%] lg:w-[280px] snap-center flex flex-col"
                     >
                       <div className="relative aspect-[3/4] rounded-sm overflow-hidden mb-3 lg:mb-4">
@@ -241,7 +256,7 @@ export default function GalleryPage() {
                           alt={item.title}
                           fill
                           className="object-cover"
-                          unoptimized={item.image.startsWith("http")}
+                          sizes="(max-width: 640px) 70vw, (max-width: 1024px) 45vw, 280px"
                         />
                       </div>
                       <h3 className="text-white text-sm font-medium mb-1 lg:mb-2 line-clamp-1">{item.title}</h3>
@@ -279,6 +294,7 @@ export default function GalleryPage() {
                       alt={t.gallery.interiorTitle}
                       fill
                       className="object-cover"
+                      sizes="(max-width: 1024px) 100vw, 33vw"
                     />
                   </div>
                   {/* Gray blob shape - behind and below image */}
@@ -315,6 +331,7 @@ export default function GalleryPage() {
                     alt={t.gallery.interiorTitle}
                     fill
                     className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 33vw"
                   />
                 </div>
               </div>
@@ -344,6 +361,7 @@ export default function GalleryPage() {
                     alt={t.gallery.exteriorTitle}
                     fill
                     className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 40vw"
                   />
 
                 </div>
@@ -371,6 +389,7 @@ export default function GalleryPage() {
                     alt={t.gallery.exteriorTitle}
                     fill
                     className="object-cover -rotate-45"
+                    sizes="200px"
                   />
                 </div>
               </div>
@@ -468,6 +487,7 @@ export default function GalleryPage() {
                   alt={t.gallery.videoTitle}
                   fill
                   className="object-cover"
+                  sizes="100vw"
                 />
                 <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                   <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-white/90 flex items-center justify-center">

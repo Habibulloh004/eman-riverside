@@ -142,16 +142,15 @@ export function HeroVideoDialog({
     <div className={className}>
       {/* Thumbnail with play button */}
       <div
-        className="group relative cursor-pointer"
+        className="group relative w-full h-[60vh] cursor-pointer"
         onClick={() => setIsVideoOpen(true)}
       >
         <Image
           src={thumbnailSrc}
           alt={thumbnailAlt}
-          width={100}
-          height={100}
-          className="w-full h-[60vh] rounded-lg border shadow-lg transition-all duration-300 group-hover:brightness-90 object-cover"
-          unoptimized={thumbnailSrc.startsWith("http")}
+          fill
+          sizes="100vw"
+          className="rounded-lg border shadow-lg transition-all duration-300 group-hover:brightness-90 object-cover"
         />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="flex size-16 lg:size-24 items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm transition-transform duration-300 group-hover:scale-110">

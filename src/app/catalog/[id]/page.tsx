@@ -119,19 +119,20 @@ export default function ApartmentDetailPage() {
   const currentImages = activeTab === "plans" ? getPlanImages() : getGalleryImages();
 
   // Get all images for infrastructure gallery (combine all image groups)
-  const getAllImages = (): string[] => {
+  const getAllImages = (): Array<{ id: number | string; url: string }> => {
     if (!apartment?.images || apartment.images.length === 0) {
-      return defaultGalleryImages;
+      return defaultGalleryImages.map((url) => ({ id: url, url }));
     }
-    const allImages: string[] = [];
-    apartment.images.forEach(group => {
-      group.images.forEach(img => {
+    const allImages: Array<{ id: number | string; url: string }> = [];
+    apartment.images.forEach((group) => {
+      group.images.forEach((img) => {
         if (img.file_url) {
-          allImages.push(img.file_url);
+          const id = img.file_id || img.file_url || `${group.id}-${img.file_name || "image"}`;
+          allImages.push({ id, url: img.file_url });
         }
       });
     });
-    return allImages.length > 0 ? allImages : defaultGalleryImages;
+    return allImages.length > 0 ? allImages : defaultGalleryImages.map((url) => ({ id: url, url }));
   };
 
   const infrastructureGallery = getAllImages();
@@ -367,7 +368,7 @@ export default function ApartmentDetailPage() {
               style={{ transform: `translateX(-${infrastructureIndex * 100}%)` }}
             >
               {infrastructureGallery.map((img, idx) => (
-                <div key={idx} className="shrink-0 w-full h-full">
+                <div key={img.id} className="shrink-0 w-full h-full">
                   <div
                     className="relative w-full h-full cursor-pointer"
                     onClick={() => {
@@ -376,11 +377,11 @@ export default function ApartmentDetailPage() {
                     }}
                   >
                     <Image
-                      src={img}
+                      src={img.url}
                       alt={`Инфраструктура ${idx + 1}`}
                       fill
                       className="object-cover"
-                      unoptimized
+                      sizes="100vw"
                     />
                   </div>
                 </div>
@@ -564,7 +565,7 @@ export default function ApartmentDetailPage() {
               alt={currentImages[currentImageIndex]?.file_name || ""}
               fill
               className="object-contain"
-              unoptimized
+              sizes="100vw"
             />
           </div>
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm">
@@ -599,11 +600,11 @@ export default function ApartmentDetailPage() {
           </button>
           <div className="relative w-full max-w-5xl h-[80vh]" onClick={(e) => e.stopPropagation()}>
             <Image
-              src={infrastructureGallery[infrastructureIndex]}
+              src={infrastructureGallery[infrastructureIndex]?.url || ""}
               alt={`Инфраструктура ${infrastructureIndex + 1}`}
               fill
               className="object-contain"
-              unoptimized
+              sizes="100vw"
             />
           </div>
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm">

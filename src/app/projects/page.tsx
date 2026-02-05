@@ -33,6 +33,7 @@ export default function AboutPage() {
                 alt=""
                 fill
                 className="object-cover object-right"
+                sizes="33vw"
               />
             </div>
             <div className="absolute right-0 top-0 w-2/3 h-full">
@@ -41,6 +42,7 @@ export default function AboutPage() {
                 alt=""
                 fill
                 className="object-cover object-left"
+                sizes="67vw"
               />
             </div>
             {/* Gradient Overlay */}

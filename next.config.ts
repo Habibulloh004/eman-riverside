@@ -1,6 +1,52 @@
 import type { NextConfig } from "next";
 import withPWA from "next-pwa";
 
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+const apiRemotePattern = (() => {
+  if (!apiUrl) return null;
+  try {
+    const url = new URL(apiUrl);
+    return {
+      protocol: url.protocol.replace(":", ""),
+      hostname: url.hostname,
+      port: url.port || undefined,
+      pathname: "/uploads/**",
+    };
+  } catch {
+    return null;
+  }
+})();
+
+const remotePatterns = [
+  {
+    protocol: "http",
+    hostname: "localhost",
+    port: "8080",
+    pathname: "/uploads/**",
+  },
+  {
+    protocol: "http",
+    hostname: "127.0.0.1",
+    port: "8080",
+    pathname: "/uploads/**",
+  },
+  {
+    protocol: "http",
+    hostname: "95.46.96.115",
+    port: "3000",
+    pathname: "/uploads/**",
+  },
+  {
+    hostname: "localhost",
+    port: "8080",
+  },
+  {
+    protocol: "https",
+    hostname: "**",
+  },
+  ...(apiRemotePattern ? [apiRemotePattern] : []),
+];
+
 const nextConfig: NextConfig = {
   // Use Webpack for PWA compatibility
   turbopack: {},
@@ -9,28 +55,7 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60 * 60 * 24 * 365, // 1 yil
-    remotePatterns: [
-      {
-        protocol: "http",
-        hostname: "localhost",
-        port: "8080",
-        pathname: "/uploads/**",
-      },
-      {
-        protocol: "http",
-        hostname: "127.0.0.1",
-        port: "8080",
-        pathname: "/uploads/**",
-      },
-      {
-        hostname: "localhost",
-        port: "8080",
-      },
-      {
-        protocol: "https",
-        hostname: "**",
-      },
-    ],
+    remotePatterns,
   },
 
   // Cache headers

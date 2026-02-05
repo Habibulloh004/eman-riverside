@@ -60,6 +60,7 @@ export default function Gallery() {
           alt=""
           fill
           className="object-cover opacity-[0.04]"
+          sizes="100vw"
         />
       </div>
 
@@ -75,31 +76,31 @@ export default function Gallery() {
           </div>
 
           <div className="gallery-tile tile-a">
-            <Image src={getImageUrl(0)} alt={getImageTitle(0)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 100vw, 25vw" unoptimized={getImageUrl(0).startsWith("http")} />
+            <Image src={getImageUrl(0)} alt={getImageTitle(0)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 100vw, 25vw" />
           </div>
           <div className="gallery-tile tile-b">
-            <Image src={getImageUrl(1)} alt={getImageTitle(1)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" unoptimized={getImageUrl(1).startsWith("http")} />
+            <Image src={getImageUrl(1)} alt={getImageTitle(1)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
           </div>
           <div className="gallery-tile tile-c">
-            <Image src={getImageUrl(2)} alt={getImageTitle(2)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" unoptimized={getImageUrl(2).startsWith("http")} />
+            <Image src={getImageUrl(2)} alt={getImageTitle(2)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
           </div>
           <div className="gallery-tile tile-d">
-            <Image src={getImageUrl(3)} alt={getImageTitle(3)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" unoptimized={getImageUrl(3).startsWith("http")} />
+            <Image src={getImageUrl(3)} alt={getImageTitle(3)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
           </div>
           <div className="gallery-tile tile-e">
-            <Image src={getImageUrl(4)} alt={getImageTitle(4)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" unoptimized={getImageUrl(4).startsWith("http")} />
+            <Image src={getImageUrl(4)} alt={getImageTitle(4)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
           </div>
           <div className="gallery-tile tile-f">
-            <Image src={getImageUrl(5)} alt={getImageTitle(5)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" unoptimized={getImageUrl(5).startsWith("http")} />
+            <Image src={getImageUrl(5)} alt={getImageTitle(5)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
           </div>
           <div className="gallery-tile tile-g">
-            <Image src={getImageUrl(6)} alt={getImageTitle(6)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" unoptimized={getImageUrl(6).startsWith("http")} />
+            <Image src={getImageUrl(6)} alt={getImageTitle(6)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
           </div>
           <div className="gallery-tile tile-h">
-            <Image src={getImageUrl(7)} alt={getImageTitle(7)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" unoptimized={getImageUrl(7).startsWith("http")} />
+            <Image src={getImageUrl(7)} alt={getImageTitle(7)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
           </div>
           <div className="gallery-tile tile-i">
-            <Image src={getImageUrl(8)} alt={getImageTitle(8)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" unoptimized={getImageUrl(8).startsWith("http")} />
+            <Image src={getImageUrl(8)} alt={getImageTitle(8)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
           </div>
         </div>
       </div>

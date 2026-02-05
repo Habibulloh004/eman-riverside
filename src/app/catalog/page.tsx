@@ -469,9 +469,9 @@ function CatalogContent() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {paginatedApartments.map((apartment, index) => (
+                    {paginatedApartments.map((apartment) => (
                       <div
-                        key={`${apartment.id}-${index}`}
+                        key={apartment.id}
                         className="bg-white rounded-lg p-3 sm:p-4 overflow-hidden"
                       >
                         <div className="flex gap-3 sm:gap-4">
@@ -485,7 +485,7 @@ function CatalogContent() {
                               alt={`${apartment.estate_rooms}-комнатная квартира`}
                               fill
                               className="object-cover"
-                              unoptimized
+                              sizes="(max-width: 640px) 96px, (max-width: 768px) 144px, 160px"
                             />
                           </Link>
 

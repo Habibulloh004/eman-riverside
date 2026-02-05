@@ -31,6 +31,7 @@ export default function Home() {
                 className="object-cover object-right"
                 priority
                 quality={90}
+                sizes="33vw"
               />
             </div>
             {/* Right building image */}
@@ -42,6 +43,7 @@ export default function Home() {
                 className="object-cover object-left"
                 priority
                 quality={90}
+                sizes="67vw"
               />
             </div>
             {/* Gradient Overlay - starts with some opacity at top */}

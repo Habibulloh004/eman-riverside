@@ -18,6 +18,7 @@ export default function PageHero({ title, subtitle, image }: PageHeroProps) {
             fill
             className="object-cover"
             priority
+            sizes="100vw"
           />
         ) : (
           <div className="w-full h-full bg-primary" />

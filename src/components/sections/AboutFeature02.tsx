@@ -27,6 +27,7 @@ export default function AboutFeature02() {
           alt=""
           fill
           className="object-cover opacity-[0.04]"
+          sizes="100vw"
         />
       </div>
       <div className="container mx-auto px-4 lg:px-8 relative z-10">

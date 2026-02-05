@@ -247,6 +247,7 @@ export default function PaymentPage() {
                     alt="Карта"
                     fill
                     className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
                   />
                 </div>
               </div>

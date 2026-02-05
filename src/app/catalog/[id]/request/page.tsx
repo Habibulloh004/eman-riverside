@@ -206,6 +206,7 @@ export default function ApartmentRequestPage() {
               alt=""
               fill
               className="object-cover opacity-[0.03]"
+              sizes="100vw"
             />
           </div>
 
@@ -270,6 +271,7 @@ export default function ApartmentRequestPage() {
               alt=""
               fill
               className="object-cover opacity-[0.03]"
+              sizes="100vw"
             />
           </div>
 

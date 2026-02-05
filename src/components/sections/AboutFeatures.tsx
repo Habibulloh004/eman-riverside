@@ -41,6 +41,7 @@ function FeatureItem({ project, index, language, t }: FeatureItemProps) {
           alt=""
           fill
           className="object-cover opacity-[0.04]"
+          sizes="100vw"
         />
       </div>
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
@@ -79,7 +80,6 @@ function FeatureItem({ project, index, language, t }: FeatureItemProps) {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"
-              unoptimized={image.startsWith("http")}
             />
           </div>
         </div>

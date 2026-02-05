@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
 import { mapIconsApi, MapIcon } from "@/lib/api/map-icons";
@@ -9,19 +9,16 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-interface YandexMapProps {
+export interface YandexMapProps {
   coordinates?: [number, number];
   zoom?: number;
   className?: string;
   grayscale?: boolean;
 }
 
-function YandexMapInner({
-  coordinates,
-  zoom,
-  className,
-  grayscale = true,
-}: YandexMapProps) {
+type YandexMapInnerProps = Omit<YandexMapProps, "className" | "grayscale">;
+
+function YandexMapInner({ coordinates, zoom }: YandexMapInnerProps) {
   const [markers, setMarkers] = useState<MapIcon[]>([]);
   const [defaultCenter, setDefaultCenter] = useState<[number, number] | null>(null);
   const [defaultZoom, setDefaultZoom] = useState<number | null>(null);
@@ -97,50 +94,87 @@ function YandexMapInner({
   }, [language, markers]);
 
   return (
-    <div
-      className={className}
-      style={grayscale ? { filter: "grayscale(100%)" } : undefined}
-    >
-      <YMaps query={{ apikey: process.env.NEXT_PUBLIC_YANDEX_API_KEY, lang: "ru_RU" }}>
-        <Map
-          key={mapKey}
-          defaultState={{ center: effectiveCenter, zoom: effectiveZoom }}
-          width="100%"
-          height="100%"
-        >
-          {resolvedMarkers.map((marker) => (
-            <Placemark
-              key={marker.id}
-              geometry={marker.coords}
-              properties={{
-                hintContent: marker.name,
-                balloonContent: marker.name,
-              }}
-              modules={["geoObject.addon.balloon", "geoObject.addon.hint"]}
-              options={
-                marker.iconUrl
-                  ? {
-                      iconLayout: "default#image",
-                      iconImageHref: marker.iconUrl,
-                      iconImageSize: [32, 32],
-                      iconImageOffset: [-16, -32],
-                      openBalloonOnClick: true,
-                    }
-                  : { preset: "islands#blueDotIcon", openBalloonOnClick: true }
-              }
-            />
-          ))}
-        </Map>
-      </YMaps>
-    </div>
+    <YMaps query={{ apikey: process.env.NEXT_PUBLIC_YANDEX_API_KEY, lang: "ru_RU" }}>
+      <Map
+        key={mapKey}
+        defaultState={{ center: effectiveCenter, zoom: effectiveZoom }}
+        width="100%"
+        height="100%"
+      >
+        {resolvedMarkers.map((marker) => (
+          <Placemark
+            key={marker.id}
+            geometry={marker.coords}
+            properties={{
+              hintContent: marker.name,
+              balloonContent: marker.name,
+            }}
+            modules={["geoObject.addon.balloon", "geoObject.addon.hint"]}
+            options={
+              marker.iconUrl
+                ? {
+                    iconLayout: "default#image",
+                    iconImageHref: marker.iconUrl,
+                    iconImageSize: [32, 32],
+                    iconImageOffset: [-16, -32],
+                    openBalloonOnClick: true,
+                  }
+                : { preset: "islands#blueDotIcon", openBalloonOnClick: true }
+            }
+          />
+        ))}
+      </Map>
+    </YMaps>
   );
 }
 
-const YandexMap = dynamic(() => Promise.resolve(YandexMapInner), {
+const DynamicYandexMap = dynamic(() => Promise.resolve(YandexMapInner), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full bg-muted animate-pulse rounded-lg" />
   ),
 });
 
-export default YandexMap;
+export default function YandexMap({
+  className,
+  grayscale = true,
+  coordinates,
+  zoom,
+}: YandexMapProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    if (isVisible) return;
+    const node = containerRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") {
+      setIsVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [isVisible]);
+
+  return (
+    <div
+      ref={containerRef}
+      className={className}
+      style={grayscale ? { filter: "grayscale(100%)" } : undefined}
+    >
+      {isVisible ? (
+        <DynamicYandexMap coordinates={coordinates} zoom={zoom} />
+      ) : (
+        <div className="w-full h-full bg-muted animate-pulse rounded-lg" />
+      )}
+    </div>
+  );
+}

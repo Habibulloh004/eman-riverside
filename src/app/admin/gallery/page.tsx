@@ -302,7 +302,7 @@ export default function GalleryPage() {
                       alt={item.title || "Gallery image"}
                       fill
                       className="object-cover"
-                      unoptimized
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full bg-gray-800">
@@ -313,7 +313,7 @@ export default function GalleryPage() {
                             alt={item.title || "Video thumbnail"}
                             fill
                             className="object-cover opacity-70"
-                            unoptimized
+                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                           />
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">

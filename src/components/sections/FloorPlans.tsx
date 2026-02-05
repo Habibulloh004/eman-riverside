@@ -99,7 +99,6 @@ export default function FloorPlans() {
                       fill
                       className="object-contain p-4 transition-transform group-hover:scale-105"
                       sizes="(max-width: 768px) 100vw, 50vw"
-                      unoptimized={plan.image.startsWith("http")}
                     />
                   </div>
                 </div>

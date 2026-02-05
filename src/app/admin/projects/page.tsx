@@ -212,7 +212,7 @@ export default function ProjectsPage() {
                       alt={item.type_ru}
                       fill
                       className="object-cover"
-                      unoptimized
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
                     {!item.is_published && (
                       <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded">
@@ -290,7 +290,6 @@ export default function ProjectsPage() {
                         width={96}
                         height={80}
                         className="object-contain"
-                        unoptimized
                       />
                     ) : (
                       t.projects.imageLabel
