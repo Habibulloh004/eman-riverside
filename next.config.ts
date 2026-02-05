@@ -49,6 +49,12 @@ const remotePatterns: NonNullable<NextConfig["images"]>["remotePatterns"] = [
 ];
 
 const nextConfig: NextConfig = {
+  experimental: {
+    imgOptConcurrency: 12,          // 4 CPU uchun max safe
+    imgOptTimeoutInSeconds: 300,    // 7s default emas
+    imgOptMaxInputPixels: 268_402_689, // default (sharp limit)
+  },
+  
   // Use Webpack for PWA compatibility
   turbopack: {},
 
