@@ -598,6 +598,22 @@ export default function GalleryPage() {
                 )}
               </div>
 
+              {/* Redirect URL input - only for images */}
+              {formData.type === "image" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {t.gallery.redirectUrlLabel}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.redirect_url}
+                    onChange={(e) => setFormData({ ...formData, redirect_url: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="https://..."
+                  />
+                </div>
+              )}
+
               {/* Thumbnail for videos */}
               {formData.type === "video" && (
                 <div>
