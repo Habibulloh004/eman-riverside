@@ -42,11 +42,31 @@ export default function GalleryPage() {
     description_uz: "",
     type: "image",
     url: "",
+    redirect_url: "",
     thumbnail: "",
     category: "construction",
     sort_order: 0,
     is_published: true,
   });
+
+  const isYouTubeUrl = (value: string) =>
+    /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(value);
+
+  const isUploadedMediaUrl = (value: string) => {
+    if (!value) return false;
+    if (value.startsWith("/uploads/") || value.startsWith("uploads/")) return true;
+    if (value.startsWith("http")) {
+      return value.includes("/uploads/");
+    }
+    return false;
+  };
+
+  const isVideoUrlValid = () => {
+    if (formData.type !== "video") return true;
+    const url = formData.url.trim();
+    if (!url) return false;
+    return isYouTubeUrl(url) || isUploadedMediaUrl(url);
+  };
 
   const loadItems = useCallback(async () => {
     setIsLoading(true);
@@ -125,6 +145,11 @@ export default function GalleryPage() {
       return;
     }
 
+    if (!isVideoUrlValid()) {
+      alert(t.gallery.videoUrlInvalid);
+      return;
+    }
+
     setIsSaving(true);
     try {
       if (editingItem) {
@@ -152,6 +177,7 @@ export default function GalleryPage() {
       description_uz: item.description_uz,
       type: item.type,
       url: item.url,
+      redirect_url: item.redirect_url || "",
       thumbnail: item.thumbnail,
       category: item.category,
       sort_order: item.sort_order,
@@ -179,6 +205,7 @@ export default function GalleryPage() {
       description_uz: "",
       type: activeTab,
       url: "",
+      redirect_url: "",
       thumbnail: "",
       category: "construction",
       sort_order: 0,
@@ -531,7 +558,7 @@ export default function GalleryPage() {
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600"></div>
                         <span>{t.gallery.uploading}</span>
                       </div>
-                    ) : formData.url ? (
+                    ) : isUploadedMediaUrl(formData.url) ? (
                       <div className="text-green-600">
                         <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -564,6 +591,11 @@ export default function GalleryPage() {
                   className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="https://..."
                 />
+                {formData.type === "video" && (
+                  <p className={`mt-1 text-xs ${isVideoUrlValid() ? "text-gray-500" : "text-red-600"}`}>
+                    {isVideoUrlValid() ? t.gallery.videoUrlHint : t.gallery.videoUrlInvalid}
+                  </p>
+                )}
               </div>
 
               {/* Thumbnail for videos */}
@@ -615,7 +647,7 @@ export default function GalleryPage() {
               <div className="flex gap-3 pt-4 border-t">
                 <button
                   type="submit"
-                  disabled={isSaving || isUploading}
+                  disabled={isSaving || isUploading || (formData.type === "video" && !isVideoUrlValid())}
                   className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isSaving ? t.gallery.saving : t.gallery.saveBtn}

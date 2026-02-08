@@ -22,6 +22,19 @@ const apiRemotePattern: RemotePattern | null = (() => {
   }
 })();
 
+const isLocalApiHost = (() => {
+  if (!apiUrl) return false;
+  try {
+    const url = new URL(apiUrl);
+    return url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "::1";
+  } catch {
+    return false;
+  }
+})();
+
+const disableImageOptimization =
+  process.env.NODE_ENV === "development" || isLocalApiHost;
+
 const remotePatterns: NonNullable<NextConfig["images"]>["remotePatterns"] = [
   {
     protocol: "http",
@@ -67,6 +80,7 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60 * 60 * 24 * 365, // 1 yil
+    unoptimized: disableImageOptimization,
     remotePatterns,
     deviceSizes: [360, 640, 750, 828, 1080, 1200, 1600],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],

@@ -8,6 +8,7 @@ export interface GalleryItem {
   description_uz: string;
   type: 'image' | 'video';
   url: string;
+  redirect_url?: string;
   thumbnail: string;
   category: string;
   sort_order: number;
@@ -28,6 +29,7 @@ export interface CreateGalleryRequest {
   description_uz: string;
   type: 'image' | 'video';
   url: string;
+  redirect_url?: string;
   thumbnail: string;
   category: string;
   sort_order: number;

@@ -30,11 +30,36 @@ const defaultGalleryItems = {
 export default function GalleryPage() {
   const { t, language } = useLanguage();
   const [galleryItems, setGalleryItems] = useState<
-    Array<{ id: number | string; image: string; title: string; description: string }>
+    Array<{ id: number | string; image: string; title: string; description: string; redirect_url?: string }>
   >([]);
-  const [videoItems, setVideoItems] = useState<Array<{ url: string; thumbnail: string; title: string }>>([]);
+  const [videoItems, setVideoItems] = useState<Array<{ url: string; thumbnail: string; title: string; redirect_url?: string }>>([]);
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+
+  const renderVideoThumbnail = (item: { url: string; thumbnail: string; title: string; redirect_url?: string }) => {
+    const thumbnailSrc = item.thumbnail || "/images/hero/1.png";
+
+    return (
+      <div className="relative">
+        <HeroVideoDialog
+          animationStyle="from-center"
+          videoSrc={item.url}
+          thumbnailSrc={thumbnailSrc}
+          thumbnailAlt={item.title || t.gallery.videoTitle}
+        />
+        {item.redirect_url && (
+          <a
+            href={item.redirect_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute right-4 top-4 z-20 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-primary shadow-lg backdrop-blur-sm transition-colors hover:bg-white"
+          >
+            {t.gallery.seeMore}
+          </a>
+        )}
+      </div>
+    );
+  };
 
   useEffect(() => {
     const loadGallery = async () => {
@@ -47,6 +72,7 @@ export default function GalleryPage() {
             image: item.url.startsWith("http") ? item.url : `${API_URL}${item.url}`,
             title: language === "uz" ? (item.title_uz || item.title) : item.title,
             description: language === "uz" ? (item.description_uz || item.description) : item.description,
+            redirect_url: item.redirect_url,
           }));
           setGalleryItems(items);
         } else {
@@ -64,6 +90,7 @@ export default function GalleryPage() {
             url: video.url.startsWith("http") ? video.url : `${API_URL}${video.url}`,
             thumbnail: video.thumbnail ? (video.thumbnail.startsWith("http") ? video.thumbnail : `${API_URL}${video.thumbnail}`) : "",
             title: language === "uz" ? (video.title_uz || video.title) : video.title,
+            redirect_url: video.redirect_url,
           }));
           setVideoItems(videos);
         }
@@ -245,24 +272,47 @@ export default function GalleryPage() {
                   className="flex gap-4 lg:gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4 -mx-4 px-4 lg:-mx-8 lg:px-8"
                   style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
-                  {galleryItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex-shrink-0 w-[70%] sm:w-[45%] lg:w-[280px] snap-center flex flex-col"
-                    >
-                      <div className="relative aspect-[3/4] rounded-sm overflow-hidden mb-3 lg:mb-4">
-                        <Image
-                          src={item.image}
-                          alt={item.title}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 640px) 70vw, (max-width: 1024px) 45vw, 280px"
-                        />
+                  {galleryItems.map((item) => {
+                    const tileClassName = "flex-shrink-0 w-[70%] sm:w-[45%] lg:w-[280px] snap-center flex flex-col";
+                    const content = (
+                      <>
+                        <div className="relative aspect-[3/4] rounded-sm overflow-hidden mb-3 lg:mb-4">
+                          <Image
+                            src={item.image}
+                            alt={item.title}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 640px) 70vw, (max-width: 1024px) 45vw, 280px"
+                          />
+                        </div>
+                        <h3 className="text-white text-sm font-medium mb-1 lg:mb-2 line-clamp-1">{item.title}</h3>
+                        <p className="text-white/60 text-xs leading-relaxed line-clamp-3">{item.description}</p>
+                      </>
+                    );
+
+                    if (item.redirect_url) {
+                      return (
+                        <a
+                          key={item.id}
+                          href={item.redirect_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`${tileClassName} cursor-pointer hover:opacity-95 transition-opacity`}
+                        >
+                          {content}
+                        </a>
+                      );
+                    }
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={tileClassName}
+                      >
+                        {content}
                       </div>
-                      <h3 className="text-white text-sm font-medium mb-1 lg:mb-2 line-clamp-1">{item.title}</h3>
-                      <p className="text-white/60 text-xs leading-relaxed line-clamp-3">{item.description}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -425,12 +475,7 @@ export default function GalleryPage() {
                 {/* Single video or carousel */}
                 {videoItems.length === 1 ? (
                   <div>
-                    <HeroVideoDialog
-                      animationStyle="from-center"
-                      videoSrc={videoItems[0].url}
-                      thumbnailSrc={videoItems[0].thumbnail || "/images/hero/1.png"}
-                      thumbnailAlt={videoItems[0].title || t.gallery.videoTitle}
-                    />
+                    {renderVideoThumbnail(videoItems[0])}
                     {videoItems[0].title && (
                       <p className="text-white/80 text-sm lg:text-base mt-4 text-center">
                         {videoItems[0].title}
@@ -441,12 +486,7 @@ export default function GalleryPage() {
                   <>
                     {/* Video carousel container */}
                     <div className="relative">
-                      <HeroVideoDialog
-                        animationStyle="from-center"
-                        videoSrc={videoItems[activeVideoIndex].url}
-                        thumbnailSrc={videoItems[activeVideoIndex].thumbnail || "/images/hero/1.png"}
-                        thumbnailAlt={videoItems[activeVideoIndex].title || t.gallery.videoTitle}
-                      />
+                      {renderVideoThumbnail(videoItems[activeVideoIndex])}
                     </div>
                     {/* Navigation arrows */}
                     <button

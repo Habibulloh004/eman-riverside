@@ -155,6 +155,7 @@ export const ru = {
     exteriorTitle: "Экстерьер",
     exteriorDesc: "Экстерьер сочетает современную архитектуру, долговечные фасады и благоустроенные зеленые зоны.",
     videoTitle: "Видео",
+    seeMore: "Подробнее",
   },
 
   // Contacts Page

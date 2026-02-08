@@ -157,6 +157,7 @@ export const uz: Translations = {
     exteriorTitle: "Eksterer",
     exteriorDesc: "Eksterer zamonaviy arxitektura, bardoshli fasadlar va yashil hududlar bilan uyg'unlashadi.",
     videoTitle: "Video",
+    seeMore: "Batafsil",
   },
 
   // Contacts Page

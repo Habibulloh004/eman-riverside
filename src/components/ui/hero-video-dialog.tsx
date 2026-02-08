@@ -58,6 +58,49 @@ const animationVariants = {
   },
 };
 
+const getYouTubeEmbedUrl = (input: string): string | null => {
+  if (!input) return null;
+  try {
+    const url = new URL(input);
+    const host = url.hostname.replace(/^www\./, "");
+    let videoId = "";
+
+    if (host === "youtu.be") {
+      videoId = url.pathname.replace("/", "").split("/")[0] || "";
+    } else if (host === "youtube.com" || host === "m.youtube.com") {
+      if (url.pathname === "/watch") {
+        videoId = url.searchParams.get("v") || "";
+      } else if (url.pathname.startsWith("/embed/")) {
+        videoId = url.pathname.split("/")[2] || "";
+      } else if (url.pathname.startsWith("/shorts/")) {
+        videoId = url.pathname.split("/")[2] || "";
+      } else if (url.pathname.startsWith("/live/")) {
+        videoId = url.pathname.split("/")[2] || "";
+      }
+    }
+
+    if (!videoId) return null;
+
+    const startParam = url.searchParams.get("t") || url.searchParams.get("start");
+    const start = startParam ? `&start=${parseYouTubeStart(startParam)}` : "";
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0${start}`;
+  } catch {
+    return null;
+  }
+};
+
+const parseYouTubeStart = (value: string): number => {
+  if (!value) return 0;
+  if (/^\d+$/.test(value)) return Number(value);
+  // Support formats like 1h2m3s, 2m10s, 45s
+  const match = value.match(/(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?/i);
+  if (!match) return 0;
+  const hours = match[1] ? Number(match[1]) : 0;
+  const minutes = match[2] ? Number(match[2]) : 0;
+  const seconds = match[3] ? Number(match[3]) : 0;
+  return hours * 3600 + minutes * 60 + seconds;
+};
+
 // Standalone video modal component for external control
 interface VideoModalProps {
   isOpen: boolean;
@@ -73,7 +116,8 @@ export function VideoModal({
   animationStyle = "from-center",
 }: VideoModalProps) {
   const selectedAnimation = animationVariants[animationStyle];
-  const isYouTube = videoSrc.includes("youtube.com") || videoSrc.includes("youtu.be");
+  const youTubeEmbedUrl = getYouTubeEmbedUrl(videoSrc);
+  const isYouTube = !!youTubeEmbedUrl;
 
   return (
     <AnimatePresence>
@@ -105,10 +149,11 @@ export function VideoModal({
           >
             {isYouTube ? (
               <iframe
-                src={videoSrc}
+                src={youTubeEmbedUrl || videoSrc}
                 className="size-full"
                 allowFullScreen
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                title="YouTube video player"
               />
             ) : (
               <video
@@ -136,7 +181,8 @@ export function HeroVideoDialog({
   const selectedAnimation = animationVariants[animationStyle];
 
   // Check if it's a YouTube URL
-  const isYouTube = videoSrc.includes("youtube.com") || videoSrc.includes("youtu.be");
+  const youTubeEmbedUrl = getYouTubeEmbedUrl(videoSrc);
+  const isYouTube = !!youTubeEmbedUrl;
 
   return (
     <div className={className}>
@@ -184,20 +230,21 @@ export function HeroVideoDialog({
             <motion.div
               {...selectedAnimation}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="relative mx-4 aspect-video w-full max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {isYouTube ? (
-                <iframe
-                  src={videoSrc}
-                  className="size-full"
-                  allowFullScreen
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                />
-              ) : (
-                <video
-                  src={videoSrc}
-                  className="size-full"
+            className="relative mx-4 aspect-video w-full max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {isYouTube ? (
+              <iframe
+                src={youTubeEmbedUrl || videoSrc}
+                className="size-full"
+                allowFullScreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                title="YouTube video player"
+              />
+            ) : (
+              <video
+                src={videoSrc}
+                className="size-full"
                   controls
                   autoPlay
                 />
