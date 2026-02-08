@@ -14,10 +14,12 @@ export default function Gallery() {
   const images = (data?.items || []).map((item) => ({
     url: item.url.startsWith("http") ? item.url : `${API_URL}${item.url}`,
     title: language === "uz" ? (item.title_uz || item.title) : item.title,
+    redirectUrl: item.redirect_url || null,
   }));
 
   const getImageUrl = (index: number) => images[index]?.url || DEFAULT_IMAGE;
   const getImageTitle = (index: number) => images[index]?.title || t.gallerySection.title;
+  const getRedirectUrl = (index: number) => images[index]?.redirectUrl || null;
 
   if (isLoading) {
     return (
@@ -75,33 +77,87 @@ export default function Gallery() {
             </p>
           </div>
 
-          <div className="gallery-tile tile-a">
-            <Image src={getImageUrl(0)} alt={getImageTitle(0)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 100vw, 25vw" />
-          </div>
-          <div className="gallery-tile tile-b">
-            <Image src={getImageUrl(1)} alt={getImageTitle(1)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-          </div>
-          <div className="gallery-tile tile-c">
-            <Image src={getImageUrl(2)} alt={getImageTitle(2)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-          </div>
-          <div className="gallery-tile tile-d">
-            <Image src={getImageUrl(3)} alt={getImageTitle(3)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-          </div>
-          <div className="gallery-tile tile-e">
-            <Image src={getImageUrl(4)} alt={getImageTitle(4)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-          </div>
-          <div className="gallery-tile tile-f">
-            <Image src={getImageUrl(5)} alt={getImageTitle(5)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-          </div>
-          <div className="gallery-tile tile-g">
-            <Image src={getImageUrl(6)} alt={getImageTitle(6)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-          </div>
-          <div className="gallery-tile tile-h">
-            <Image src={getImageUrl(7)} alt={getImageTitle(7)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-          </div>
-          <div className="gallery-tile tile-i">
-            <Image src={getImageUrl(8)} alt={getImageTitle(8)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-          </div>
+          {getRedirectUrl(0) ? (
+            <a href={getRedirectUrl(0)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-a">
+              <Image src={getImageUrl(0)} alt={getImageTitle(0)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 100vw, 25vw" />
+            </a>
+          ) : (
+            <div className="gallery-tile tile-a">
+              <Image src={getImageUrl(0)} alt={getImageTitle(0)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 100vw, 25vw" />
+            </div>
+          )}
+          {getRedirectUrl(1) ? (
+            <a href={getRedirectUrl(1)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-b">
+              <Image src={getImageUrl(1)} alt={getImageTitle(1)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
+            </a>
+          ) : (
+            <div className="gallery-tile tile-b">
+              <Image src={getImageUrl(1)} alt={getImageTitle(1)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
+            </div>
+          )}
+          {getRedirectUrl(2) ? (
+            <a href={getRedirectUrl(2)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-c">
+              <Image src={getImageUrl(2)} alt={getImageTitle(2)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
+            </a>
+          ) : (
+            <div className="gallery-tile tile-c">
+              <Image src={getImageUrl(2)} alt={getImageTitle(2)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
+            </div>
+          )}
+          {getRedirectUrl(3) ? (
+            <a href={getRedirectUrl(3)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-d">
+              <Image src={getImageUrl(3)} alt={getImageTitle(3)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
+            </a>
+          ) : (
+            <div className="gallery-tile tile-d">
+              <Image src={getImageUrl(3)} alt={getImageTitle(3)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
+            </div>
+          )}
+          {getRedirectUrl(4) ? (
+            <a href={getRedirectUrl(4)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-e">
+              <Image src={getImageUrl(4)} alt={getImageTitle(4)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
+            </a>
+          ) : (
+            <div className="gallery-tile tile-e">
+              <Image src={getImageUrl(4)} alt={getImageTitle(4)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
+            </div>
+          )}
+          {getRedirectUrl(5) ? (
+            <a href={getRedirectUrl(5)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-f">
+              <Image src={getImageUrl(5)} alt={getImageTitle(5)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
+            </a>
+          ) : (
+            <div className="gallery-tile tile-f">
+              <Image src={getImageUrl(5)} alt={getImageTitle(5)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
+            </div>
+          )}
+          {getRedirectUrl(6) ? (
+            <a href={getRedirectUrl(6)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-g">
+              <Image src={getImageUrl(6)} alt={getImageTitle(6)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
+            </a>
+          ) : (
+            <div className="gallery-tile tile-g">
+              <Image src={getImageUrl(6)} alt={getImageTitle(6)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
+            </div>
+          )}
+          {getRedirectUrl(7) ? (
+            <a href={getRedirectUrl(7)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-h">
+              <Image src={getImageUrl(7)} alt={getImageTitle(7)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
+            </a>
+          ) : (
+            <div className="gallery-tile tile-h">
+              <Image src={getImageUrl(7)} alt={getImageTitle(7)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
+            </div>
+          )}
+          {getRedirectUrl(8) ? (
+            <a href={getRedirectUrl(8)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-i">
+              <Image src={getImageUrl(8)} alt={getImageTitle(8)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
+            </a>
+          ) : (
+            <div className="gallery-tile tile-i">
+              <Image src={getImageUrl(8)} alt={getImageTitle(8)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
+            </div>
+          )}
         </div>
       </div>
 
