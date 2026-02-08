@@ -49,14 +49,8 @@ const remotePatterns: NonNullable<NextConfig["images"]>["remotePatterns"] = [
     pathname: "/uploads/**",
   },
   {
-    protocol: "http",
-    hostname: "95.46.96.115",
-    port: "8080",
-    pathname: "/uploads/**",
-  },
-  {
     protocol: "https",
-    hostname: "api.weldmarket.uz",
+    hostname: "api.emandevelopment.uz",
     pathname: "/uploads/**",
   },
   {
