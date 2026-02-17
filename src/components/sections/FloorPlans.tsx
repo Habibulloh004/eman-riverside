@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useRandomEstates } from "@/hooks/useEstates";
 import { FloorPlanSkeleton } from "@/components/ui/skeleton";
@@ -12,7 +14,32 @@ interface PlanItem {
   type: string;
   area: string;
   description: string;
-  image: string;
+  images: string[];
+}
+
+function getEstateImages(estate: Estate): string[] {
+  const images: string[] = [];
+
+  if (estate.images && estate.images.length > 0) {
+    estate.images.forEach(group => {
+      group.images.forEach(img => {
+        if (img.file_url) images.push(img.file_url);
+      });
+    });
+  }
+
+  if (images.length === 0) {
+    if (estate.plan_image) images.push(estate.plan_image);
+    if (estate.title_image && estate.title_image !== estate.plan_image) {
+      images.push(estate.title_image);
+    }
+  }
+
+  if (images.length === 0) {
+    images.push("/images/hero/planirovka1.png");
+  }
+
+  return images;
 }
 
 function mapEstateToPlan(estate: Estate): PlanItem {
@@ -21,8 +48,70 @@ function mapEstateToPlan(estate: Estate): PlanItem {
     type: `${estate.estate_rooms}-комнатная`,
     area: `${estate.estate_area} м²`,
     description: estate.title || `Этаж ${estate.estate_floor}`,
-    image: estate.plan_image || estate.title_image || "/images/hero/planirovka1.png",
+    images: getEstateImages(estate),
   };
+}
+
+function PlanCarousel({ images, alt }: { images: string[]; alt: string }) {
+  const [current, setCurrent] = useState(0);
+
+  const prev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrent((c) => (c - 1 + images.length) % images.length);
+  };
+
+  const next = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrent((c) => (c + 1) % images.length);
+  };
+
+  return (
+    <div className="relative aspect-4/3 bg-white rounded-lg overflow-hidden shadow-sm group/carousel">
+      <Image
+        src={images[current]}
+        alt={alt}
+        fill
+        className="object-contain p-4 transition-transform group-hover:scale-105"
+        sizes="(max-width: 768px) 100vw, 50vw"
+        unoptimized={images[current].startsWith("http")}
+      />
+
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={prev}
+            className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 shadow flex items-center justify-center hover:bg-white transition-colors z-10 opacity-0 group-hover/carousel:opacity-100"
+          >
+            <ChevronLeft className="w-4 h-4 text-gray-700" />
+          </button>
+          <button
+            onClick={next}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 shadow flex items-center justify-center hover:bg-white transition-colors z-10 opacity-0 group-hover/carousel:opacity-100"
+          >
+            <ChevronRight className="w-4 h-4 text-gray-700" />
+          </button>
+
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            {images.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCurrent(idx);
+                }}
+                className={`w-2 h-2 rounded-full transition-colors ${
+                  idx === current ? "bg-primary" : "bg-gray-300"
+                }`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 export default function FloorPlans() {
@@ -36,7 +125,7 @@ export default function FloorPlans() {
         type: p.type,
         area: p.area,
         description: p.description,
-        image: "/images/hero/planirovka1.png",
+        images: ["/images/hero/planirovka1.png"],
       }));
 
   return (
@@ -90,17 +179,9 @@ export default function FloorPlans() {
                 href={estates.length > 0 ? `/catalog/${plan.id}` : "/catalog"}
                 className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center group cursor-pointer"
               >
-                {/* Plan Image */}
+                {/* Plan Image Carousel */}
                 <div className={`relative ${index % 2 === 1 ? "lg:order-2" : ""}`}>
-                  <div className="relative aspect-4/3 bg-white rounded-lg overflow-hidden shadow-sm transition-shadow group-hover:shadow-md">
-                    <Image
-                      src={plan.image}
-                      alt={plan.type}
-                      fill
-                      className="object-contain p-4 transition-transform group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                    />
-                  </div>
+                  <PlanCarousel images={plan.images} alt={plan.type} />
                 </div>
 
                 {/* Plan Info */}

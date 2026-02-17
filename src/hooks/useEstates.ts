@@ -55,7 +55,10 @@ export function useRandomEstates(count: number = 2) {
   const { data: estates, ...rest } = useEstates({ type: "living" });
 
   const randomEstates = estates
-    ? [...estates].sort(() => Math.random() - 0.5).slice(0, count)
+    ? [...estates]
+        .filter(e => e.estate_floor > 0 && e.estate_area >= 35)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, count)
     : [];
 
   return { data: randomEstates, ...rest };

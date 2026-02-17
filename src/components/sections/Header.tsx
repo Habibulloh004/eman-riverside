@@ -3,14 +3,16 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
+import { RequestModal } from "@/components/shared";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
   const { settings } = useSiteSettings();
 
@@ -78,10 +80,17 @@ export default function Header() {
             </button>
           </nav>
 
-          {/* Call Button */}
-          <div className="hidden lg:flex items-center">
+          {/* CTA Buttons */}
+          <div className="hidden lg:flex items-center gap-3">
             <Button
               className="rounded-full px-6 bg-primary text-white hover:bg-primary/90"
+              onClick={() => setIsRequestModalOpen(true)}
+            >
+              {t.requestModal.title}
+            </Button>
+            <Button
+              className="rounded-full px-6"
+              variant="outline"
               asChild
             >
               <a href={phoneHref}>{t.nav.call}</a>
@@ -128,11 +137,17 @@ export default function Header() {
               {language === "ru" ? "РУС" : "UZB"}/{language === "ru" ? "УЗБ" : "RUS"}
             </button>
             <div
-              className={`mt-4 px-4 transition-all duration-300 ${
+              className={`mt-4 px-4 flex flex-col gap-2 transition-all duration-300 ${
                 isOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
               }`}
               style={{ transitionDelay: isOpen ? `${(headerNavLinks.length + 1) * 50}ms` : "0ms" }}
             >
+              <Button
+                className="w-full rounded-full bg-primary text-white hover:bg-primary/90"
+                onClick={() => { setIsRequestModalOpen(true); setIsOpen(false); }}
+              >
+                {t.requestModal.title}
+              </Button>
               <Button
                 variant="outline"
                 className="w-full border-primary text-primary hover:bg-primary hover:text-white rounded-full"
@@ -144,6 +159,12 @@ export default function Header() {
           </div>
         </nav>
       </div>
+
+      <RequestModal
+        open={isRequestModalOpen}
+        onOpenChange={setIsRequestModalOpen}
+        source="header"
+      />
     </header>
   );
 }

@@ -139,7 +139,9 @@ function CatalogContent() {
   const filteredApartments = useMemo(() => {
     if (allApartments.length === 0) return [];
 
-    let filtered = [...allApartments];
+    let filtered = [...allApartments].filter(
+      a => a.estate_floor > 0 && a.estate_area >= 35
+    );
 
     // Room filter
     if (selectedRooms.length > 0) {
