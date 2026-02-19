@@ -8,7 +8,6 @@ import { PageHero } from "@/components/shared";
 import { Header, Footer } from "@/components/sections";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Slider } from "@/components/ui/slider";
 import {
   Drawer,
   DrawerContent,
@@ -20,9 +19,7 @@ import {
   ChevronUp,
   ChevronDown,
   SlidersHorizontal,
-  FileDown
 } from "lucide-react";
-import * as XLSX from "xlsx";
 import { useEstates } from "@/hooks/useEstates";
 import { Estate } from "@/lib/api/estates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -39,7 +36,6 @@ const areaOptions = [
 const typeOptions = ["Все", "Эконом", "Стандарт"];
 
 const ITEMS_PER_PAGE = 10;
-const USD_RATE = 12950; // UZS per 1 USD (approximate)
 
 interface FilterSectionProps {
   title: string;
@@ -102,19 +98,7 @@ function CatalogContent() {
     return match ? [match.label] : [];
   };
 
-  // Compute price range from data
-  const priceRange = useMemo(() => {
-    if (allApartments.length === 0) return { min: 0, max: 1000000000 };
-    const prices = allApartments.map(a => a.estate_price).filter(p => p > 0);
-    return {
-      min: Math.min(...prices),
-      max: Math.max(...prices),
-    };
-  }, [allApartments]);
-
   // Filter states
-  const [priceFrom, setPriceFrom] = useState("");
-  const [priceTo, setPriceTo] = useState("");
   const [selectedFloors, setSelectedFloors] = useState<number[]>(
     initialFloor ? [parseInt(initialFloor)] : []
   );
@@ -126,14 +110,11 @@ function CatalogContent() {
 
   // Section states
   const [openSections, setOpenSections] = useState({
-    price: true,
     floor: true,
     rooms: true,
     area: true,
     type: true,
   });
-
-  const [currency, setCurrency] = useState<"uzs" | "usd">("uzs");
 
   // Memoized filtered apartments (frontend filtering)
   const filteredApartments = useMemo(() => {
@@ -146,16 +127,6 @@ function CatalogContent() {
     // Room filter
     if (selectedRooms.length > 0) {
       filtered = filtered.filter(a => selectedRooms.includes(a.estate_rooms));
-    }
-
-    // Price filter
-    if (priceFrom) {
-      const min = parseInt(priceFrom.replace(/\D/g, "")) || 0;
-      filtered = filtered.filter(a => a.estate_price >= min);
-    }
-    if (priceTo) {
-      const max = parseInt(priceTo.replace(/\D/g, "")) || Infinity;
-      filtered = filtered.filter(a => a.estate_price <= max);
     }
 
     // Area filter
@@ -175,11 +146,9 @@ function CatalogContent() {
     }
 
     return filtered;
-  }, [allApartments, selectedRooms, priceFrom, priceTo, selectedAreas, selectedFloors]);
+  }, [allApartments, selectedRooms, selectedAreas, selectedFloors]);
 
   const resetFilters = () => {
-    setPriceFrom("");
-    setPriceTo("");
     setSelectedFloors([]);
     setSelectedRooms([]);
     setSelectedAreas([]);
@@ -230,92 +199,14 @@ function CatalogContent() {
     setCurrentPage(1); // Reset to first page when filter changes
   };
 
-  const formatPrice = (price: number) => {
-    const value = currency === "usd" ? Math.round(price / USD_RATE) : price;
-    const suffix = currency === "usd" ? "$" : "сум";
-    if (currency === "usd") {
-      return `${new Intl.NumberFormat("ru-RU").format(value)} ${suffix}`;
-    }
-    if (value >= 1000000000) {
-      return `${(value / 1000000000).toFixed(1)} млрд ${suffix}`;
-    }
-    if (value >= 1000000) {
-      return `${(value / 1000000).toFixed(0)} млн ${suffix}`;
-    }
-    return `${new Intl.NumberFormat("ru-RU").format(value)} ${suffix}`;
-  };
-
   const getApartmentImage = (apartment: Estate): string => {
     if (apartment.plan_image) return apartment.plan_image;
     if (apartment.title_image) return apartment.title_image;
     return "/images/hero/planirovka1.png";
   };
 
-  const exportToExcel = () => {
-    const data = filteredApartments.map((a) => ({
-      "Название": a.title || "",
-      "Комнаты": a.estate_rooms,
-      "Площадь (м²)": a.estate_area,
-      "Этаж": a.estate_floor,
-      "Цена": a.estate_price,
-      "Цена (сум)": a.estate_price_human || "",
-      "Адрес": a.address || "",
-      "Статус": a.status_name || "",
-      "Категория": a.category_name || "",
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Apartments");
-    XLSX.writeFile(wb, "eman_apartments.xlsx");
-  };
-
   const filterContent = (
     <>
-      {/* Currency Toggle */}
-      <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-200">
-        <span className="text-xs font-medium text-gray-700">Валюта</span>
-        <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
-          <button
-            onClick={() => setCurrency("uzs")}
-            className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${currency === "uzs" ? "bg-primary text-white" : "text-gray-500 hover:text-gray-700"}`}
-          >
-            UZS
-          </button>
-          <button
-            onClick={() => setCurrency("usd")}
-            className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${currency === "usd" ? "bg-primary text-white" : "text-gray-500 hover:text-gray-700"}`}
-          >
-            USD
-          </button>
-        </div>
-      </div>
-
-      {/* Price Filter */}
-      <FilterSection
-        title={t.catalog.price}
-        isOpen={openSections.price}
-        onToggle={() => toggleSection("price")}
-      >
-        <div className="space-y-3">
-          <Slider
-            min={priceRange.min}
-            max={priceRange.max}
-            step={1000000}
-            value={[Number(priceFrom) || priceRange.min, Number(priceTo) || priceRange.max]}
-            onValueChange={([min, max]) => {
-              setPriceFrom(min <= priceRange.min ? "" : String(min));
-              setPriceTo(max >= priceRange.max ? "" : String(max));
-              setCurrentPage(1);
-            }}
-          />
-          <div className="flex items-center justify-between text-[10px] text-gray-500">
-            <span>{formatPrice(Number(priceFrom) || priceRange.min)}</span>
-            <span>{formatPrice(Number(priceTo) || priceRange.max)}</span>
-          </div>
-        </div>
-      </FilterSection>
-
       {/* Floor Filter */}
       <FilterSection
         title={t.catalog.floorFilter}
@@ -401,10 +292,6 @@ function CatalogContent() {
         <Button variant="outline" className="w-full text-xs" onClick={resetFilters}>
           {t.catalog.resetFilters}
         </Button>
-        <Button variant="outline" className="w-full text-xs" onClick={exportToExcel}>
-          <FileDown className="w-4 h-4 mr-2" />
-          Excel
-        </Button>
       </div>
     </>
   );
@@ -470,7 +357,7 @@ function CatalogContent() {
                     ))}
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 min-[1700px]:grid-cols-2 gap-4">
                     {paginatedApartments.map((apartment) => (
                       <div
                         key={apartment.id}
@@ -505,9 +392,6 @@ function CatalogContent() {
                                 <span>{apartment.estate_area} {t.catalog.sqm}</span>
                                 <span>{apartment.estate_floor} {t.catalog.floor}</span>
                               </div>
-                              <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-                                {t.catalog.from} {formatPrice(apartment.estate_price)}
-                              </p>
                             </div>
 
                             {/* Buttons - hidden on mobile, shown inline on sm+ */}

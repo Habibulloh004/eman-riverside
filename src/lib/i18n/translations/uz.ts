@@ -84,7 +84,7 @@ export const uz: Translations = {
 
   // Location
   location: {
-    title: "Biz qayerdamiz",
+    title: "Bizning joylashuvimiz",
     subtitle: "Joylashuv tabiat va shahar infratuzilmasini birlashtiradi — ideal muvozanat",
     panoramaButton: "Panorama 360",
     panoramaTitle: "Panorama 360",
@@ -125,12 +125,12 @@ export const uz: Translations = {
 
   // Contact Section (Home)
   contactSection: {
-    label: "BIZ BILAN BOG'LANISH",
+    label: "BIZ BILAN BO'GLANING!",
     title: "Kontaktlar",
-    description: "SAVOLLAR, IZOHLAR YOKI TAKLIFLAR? SHUNCHAKI FORMANI TO'LDIRING VA BIZ TEZ ORADA SIZ BILAN BOG'LANAMIZ.",
-    findApartment: "O'ZINGIZGA ORZU QILGAN",
-    dream: "KVARTIRA TOPING!",
-    formDesc: "FORMANI TO'LDIRING VA MENEJERLARIMIZ SIZ BILAN BOG'LANADI!",
+    description: "SAVOLLARINGIZ, IZOHLARINGIZ YOKI TAKLIFLARINGIZ BORMI? SHUNCHAKI SO'ROVNOMANI TO'LDIRING VA BIZ SIZ BILAN BOG'LANAMIZ!",
+    findApartment: "O'ZINGIZ ORZU QILGAN",
+    dream: "XONADONINGIZNI TOPING!",
+    formDesc: "SO'ROVNOMANI TO'LDIRING VA MENEJERLARIMIZ SIZ BILAN BOG'LANADI!",
     name: "ISM",
     phone: "TELEFON RAQAMI",
     comments: "IZOHLAR",
@@ -169,6 +169,11 @@ export const uz: Translations = {
     callBtn: "Qo'ng'iroq qilish",
     whatsappBtn: "Whatsapp ga yozish",
     telegramBtn: "Telegram ga yozish",
+    instagramBtn: "Instagram",
+    facebookBtn: "Facebook",
+    youtubeBtn: "YouTube",
+    threadsBtn: "Threads",
+    workingHours: "Ish vaqti",
     findApartment: "O'ZINGIZGA ORZU QILGAN",
     dream: "KVARTIRA TOPING!",
     formDesc: "FORMANI TO'LDIRING VA MENEJERLARIMIZ SIZ BILAN BOG'LANADI",

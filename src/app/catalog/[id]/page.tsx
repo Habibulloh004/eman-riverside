@@ -7,18 +7,82 @@ import { useParams } from "next/navigation";
 import { Header, Footer } from "@/components/sections";
 import { PageHero, RequestModal, YandexMap } from "@/components/shared";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Home, Maximize, Building2, Calendar, Layers, BadgeCheck, DollarSign, Ruler, Phone, Mail, MapPin, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Home, Maximize, Building2, Calendar, Layers, BadgeCheck, Phone, Mail, MapPin, ArrowRight } from "lucide-react";
 import { useEstate } from "@/hooks/useEstates";
 import { Estate, EstateImage } from "@/lib/api/estates";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSiteSettings } from "@/contexts/SettingsContext";
 
-// Default contact info when API doesn't provide it
-const DEFAULT_PHONE = "+998 78 777 77 77";
-const DEFAULT_EMAIL = "info@eman.uz";
-const DEFAULT_ADDRESS = "Toshkent sh., Yashnobod tumani, Qadriyat MFY";
+const normalizeKey = (value: string) => value.trim().toLowerCase();
+
+const STATUS_MAP_UZ: Record<string, string> = {
+  "свободна": "Bo'sh",
+  "свободно": "Bo'sh",
+  "в продаже": "Sotuvda",
+  "доступна": "Mavjud",
+  "забронирована": "Band qilingan",
+  "резерв": "Rezerv",
+  "продана": "Sotilgan",
+  "архив": "Arxiv",
+  "акция": "Aksiya",
+  "hot": "Aksiya",
+};
+
+const STATUS_MAP_RU: Record<string, string> = {
+  "available": "Доступна",
+  "free": "Свободна",
+  "reserved": "Забронирована",
+  "sold": "Продана",
+  "archive": "Архив",
+  "promo": "Акция",
+  "hot": "Акция",
+};
+
+const CATEGORY_MAP_UZ: Record<string, string> = {
+  "эконом": "Ekonom",
+  "стандарт": "Standart",
+  "комфорт": "Komfort",
+  "бизнес": "Biznes",
+  "премиум": "Premium",
+  "элит": "Elit",
+  "кладовая": "Ombor",
+  "апартаменты": "Apartament",
+};
+
+const CATEGORY_MAP_RU: Record<string, string> = {
+  "economy": "Эконом",
+  "standard": "Стандарт",
+  "comfort": "Комфорт",
+  "business": "Бизнес",
+  "premium": "Премиум",
+  "elite": "Элит",
+  "storage": "Кладовая",
+  "apartment": "Апартаменты",
+};
+
+const translateStatusName = (value: string | undefined, language: string) => {
+  if (!value) return null;
+  const key = normalizeKey(value);
+  if (language === "uz") return STATUS_MAP_UZ[key] ?? value;
+  if (language === "ru") return STATUS_MAP_RU[key] ?? value;
+  return value;
+};
+
+const translateCategoryName = (value: string | undefined, language: string) => {
+  if (!value) return null;
+  const key = normalizeKey(value);
+  if (language === "uz") return CATEGORY_MAP_UZ[key] ?? value;
+  if (language === "ru") return CATEGORY_MAP_RU[key] ?? value;
+  return value;
+};
 
 // Helper to generate apartment info categories from API data
-const getApartmentCategories = (apartment: Estate | null, t: ReturnType<typeof useLanguage>["t"]) => {
+const getApartmentCategories = (
+  apartment: Estate | null,
+  t: ReturnType<typeof useLanguage>["t"],
+  language: string,
+  fallbackAddress: string
+) => {
   if (!apartment) return [];
 
   return [
@@ -28,15 +92,14 @@ const getApartmentCategories = (apartment: Estate | null, t: ReturnType<typeof u
       items: [
         apartment.estate_rooms ? `${t.catalogDetail.roomsCount}: ${apartment.estate_rooms}` : null,
         apartment.estate_area ? `${t.catalogDetail.areaLabel}: ${apartment.estate_area} м²` : null,
-        apartment.estate_floor ? `${t.catalogDetail.floorLabel}: ${apartment.estate_floor}${apartment.estate_floors_in_house ? ` ${t.catalogDetail.floorOf} ${apartment.estate_floors_in_house}` : ''}` : null,
-        apartment.estate_price_human ? `${t.catalogDetail.priceLabel}: ${apartment.estate_price_human}` : null,
+        apartment.estate_floor > 0 ? `${t.catalogDetail.floorLabel}: ${apartment.estate_floor}${apartment.estate_floors_in_house ? ` ${t.catalogDetail.floorOf} ${apartment.estate_floors_in_house}` : ''}` : null,
       ].filter(Boolean) as string[],
     },
     {
       id: "location",
       title: t.catalogDetail.locationTitle,
       items: [
-        apartment.address || DEFAULT_ADDRESS,
+        apartment.address || fallbackAddress,
         `${t.catalogDetail.developer}: ${apartment.company_name || "Eman Development"}`,
         apartment.estate_inServiceDate_human ? `${t.catalogDetail.deliveryDate}: ${apartment.estate_inServiceDate_human}` : null,
       ].filter(Boolean) as string[],
@@ -45,8 +108,8 @@ const getApartmentCategories = (apartment: Estate | null, t: ReturnType<typeof u
       id: "status",
       title: t.catalogDetail.statusTitle,
       items: [
-        apartment.status_name || null,
-        apartment.category_name || null,
+        translateStatusName(apartment.status_name, language),
+        translateCategoryName(apartment.category_name, language),
         apartment.is_hot ? t.catalogDetail.hotOffer : null,
       ].filter(Boolean) as string[],
     },
@@ -54,7 +117,11 @@ const getApartmentCategories = (apartment: Estate | null, t: ReturnType<typeof u
 };
 
 // Helper to get apartment advantages from API data
-const getApartmentAdvantages = (apartment: Estate | null, t: ReturnType<typeof useLanguage>["t"]): string[] => {
+const getApartmentAdvantages = (
+  apartment: Estate | null,
+  t: ReturnType<typeof useLanguage>["t"],
+  language: string
+): string[] => {
   if (!apartment) return [];
 
   const advantages: string[] = [];
@@ -65,14 +132,12 @@ const getApartmentAdvantages = (apartment: Estate | null, t: ReturnType<typeof u
   if (apartment.estate_area) {
     advantages.push(`${t.catalogDetail.areaLabel} ${apartment.estate_area} м²`);
   }
-  if (apartment.estate_floor && apartment.estate_floors_in_house) {
+  if (apartment.estate_floor > 0 && apartment.estate_floors_in_house) {
     advantages.push(`${apartment.estate_floor} ${t.catalogDetail.floorOfFloors} ${apartment.estate_floors_in_house}`);
   }
-  if (apartment.estate_price_human) {
-    advantages.push(`${t.catalogDetail.priceLabel}: ${apartment.estate_price_human}`);
-  }
-  if (apartment.status_name) {
-    advantages.push(apartment.status_name);
+  const translatedStatus = translateStatusName(apartment.status_name, language);
+  if (translatedStatus) {
+    advantages.push(translatedStatus);
   }
   if (apartment.company_name) {
     advantages.push(apartment.company_name);
@@ -91,10 +156,14 @@ const defaultGalleryImages = [
 export default function ApartmentDetailPage() {
   const params = useParams();
   const apartmentId = Number(params.id);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { settings } = useSiteSettings();
 
   // React Query with cache
   const { data: apartment, isLoading } = useEstate(apartmentId);
+  const phone = apartment?.contact_phones?.[0] || settings.contact.phone;
+  const email = settings.contact.email;
+  const address = language === "uz" ? settings.contact.address_uz : settings.contact.address;
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<"plans" | "gallery">("plans");
@@ -171,10 +240,6 @@ export default function ApartmentDetailPage() {
 
   const prevInfrastructure = () => {
     setInfrastructureIndex((prev) => (prev - 1 + infrastructureGallery.length) % infrastructureGallery.length);
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("ru-RU").format(price);
   };
 
   // Truncate title to max 2 commas
@@ -264,7 +329,7 @@ export default function ApartmentDetailPage() {
 
                 {/* Accordion Categories */}
                 <div className="space-y-0">
-                  {getApartmentCategories(apartment, t).map((category) => (
+                  {getApartmentCategories(apartment, t, language, address).map((category) => (
                     <div key={category.id} className="border-b border-gray-300">
                       <button
                         onClick={() => setOpenCategory(openCategory === category.id ? "" : category.id)}
@@ -313,7 +378,7 @@ export default function ApartmentDetailPage() {
                       className="w-full bg-white/20 text-white border border-white/40 hover:bg-white/30 font-medium"
                       asChild
                     >
-                      <a href={`tel:${DEFAULT_PHONE.replace(/\s/g, "")}`}>
+                      <a href={`tel:${phone.replace(/\s/g, "")}`}>
                         <Phone className="w-4 h-4 mr-2" />
                         {t.catalogDetail.callUs}
                       </a>
@@ -322,17 +387,17 @@ export default function ApartmentDetailPage() {
 
                   {/* Contact details */}
                   <div className="mt-5 pt-5 border-t border-white/20 space-y-3">
-                    <a href={`tel:${DEFAULT_PHONE.replace(/\s/g, "")}`} className="flex items-center gap-2 text-white/80 hover:text-white transition-colors">
+                    <a href={`tel:${phone.replace(/\s/g, "")}`} className="flex items-center gap-2 text-white/80 hover:text-white transition-colors">
                       <Phone className="w-3.5 h-3.5 shrink-0" />
-                      <span className="text-xs">{DEFAULT_PHONE}</span>
+                      <span className="text-xs">{phone}</span>
                     </a>
-                    <a href={`mailto:${DEFAULT_EMAIL}`} className="flex items-center gap-2 text-white/80 hover:text-white transition-colors">
+                    <a href={`mailto:${email}`} className="flex items-center gap-2 text-white/80 hover:text-white transition-colors">
                       <Mail className="w-3.5 h-3.5 shrink-0" />
-                      <span className="text-xs">{DEFAULT_EMAIL}</span>
+                      <span className="text-xs">{email}</span>
                     </a>
                     <div className="flex items-center gap-2 text-white/80">
                       <MapPin className="w-3.5 h-3.5 shrink-0" />
-                      <span className="text-xs">{apartment.address || DEFAULT_ADDRESS}</span>
+                      <span className="text-xs">{apartment.address || address}</span>
                     </div>
                   </div>
                 </div>
@@ -368,7 +433,7 @@ export default function ApartmentDetailPage() {
               style={{ transform: `translateX(-${infrastructureIndex * 100}%)` }}
             >
               {infrastructureGallery.map((img, idx) => (
-                <div key={img.id} className="shrink-0 w-full h-full">
+                <div key={`${img.id}-${idx}`} className="shrink-0 w-full h-full">
                   <div
                     className="relative w-full h-full cursor-pointer"
                     onClick={() => {
@@ -426,36 +491,22 @@ export default function ApartmentDetailPage() {
                   </span>
                 </div>
               )}
-              {apartment.estate_price > 0 && (
-                <div className="bg-beige rounded-xl p-4 lg:p-6 flex flex-col gap-2">
-                  <DollarSign className="w-5 h-5 text-primary" />
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">{t.catalogDetail.priceLabel}</span>
-                  <span className="text-lg lg:text-xl font-semibold">{apartment.estate_price_human || formatPrice(apartment.estate_price)}</span>
-                </div>
-              )}
             </div>
 
             {/* Additional Info Row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5 mt-3 lg:mt-5">
-              {apartment.estate_price_m2 > 0 && (
-                <div className="bg-gray-50 rounded-xl p-4 lg:p-6 flex flex-col gap-2">
-                  <Ruler className="w-5 h-5 text-primary" />
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">{t.catalogDetail.pricePerM2}</span>
-                  <span className="text-lg font-semibold">{formatPrice(apartment.estate_price_m2)} <span className="text-sm font-normal text-gray-500">/ m²</span></span>
-                </div>
-              )}
               {apartment.status_name && (
                 <div className="bg-gray-50 rounded-xl p-4 lg:p-6 flex flex-col gap-2">
                   <BadgeCheck className="w-5 h-5 text-primary" />
                   <span className="text-xs text-gray-500 uppercase tracking-wide">{t.catalogDetail.statusTitle}</span>
-                  <span className="text-lg font-semibold">{apartment.status_name}</span>
+                  <span className="text-lg font-semibold">{translateStatusName(apartment.status_name, language)}</span>
                 </div>
               )}
               {apartment.category_name && (
                 <div className="bg-gray-50 rounded-xl p-4 lg:p-6 flex flex-col gap-2">
                   <Layers className="w-5 h-5 text-primary" />
                   <span className="text-xs text-gray-500 uppercase tracking-wide">{t.catalogDetail.categoryLabel}</span>
-                  <span className="text-lg font-semibold">{apartment.category_name}</span>
+                  <span className="text-lg font-semibold">{translateCategoryName(apartment.category_name, language)}</span>
                 </div>
               )}
               {apartment.estate_inServiceDate_human && (
@@ -469,25 +520,25 @@ export default function ApartmentDetailPage() {
 
             {/* Contact Info */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-5 mt-3 lg:mt-5">
-              <a href={`tel:${DEFAULT_PHONE.replace(/\s/g, "")}`} className="bg-primary/5 border border-primary/20 rounded-xl p-4 lg:p-6 flex items-center gap-3 hover:bg-primary/10 transition-colors">
+              <a href={`tel:${phone.replace(/\s/g, "")}`} className="bg-primary/5 border border-primary/20 rounded-xl p-4 lg:p-6 flex items-center gap-3 hover:bg-primary/10 transition-colors">
                 <Phone className="w-5 h-5 text-primary shrink-0" />
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide block">{t.catalogDetail.phoneLabel}</span>
-                  <span className="text-sm font-semibold">{DEFAULT_PHONE}</span>
+                  <span className="text-sm font-semibold">{phone}</span>
                 </div>
               </a>
-              <a href={`mailto:${DEFAULT_EMAIL}`} className="bg-primary/5 border border-primary/20 rounded-xl p-4 lg:p-6 flex items-center gap-3 hover:bg-primary/10 transition-colors">
+              <a href={`mailto:${email}`} className="bg-primary/5 border border-primary/20 rounded-xl p-4 lg:p-6 flex items-center gap-3 hover:bg-primary/10 transition-colors">
                 <Mail className="w-5 h-5 text-primary shrink-0" />
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide block">Email</span>
-                  <span className="text-sm font-semibold">{DEFAULT_EMAIL}</span>
+                  <span className="text-sm font-semibold">{email}</span>
                 </div>
               </a>
               <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 lg:p-6 flex items-center gap-3">
                 <MapPin className="w-5 h-5 text-primary shrink-0" />
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide block">{t.catalogDetail.addressLabel}</span>
-                  <span className="text-sm font-semibold">{apartment.address || DEFAULT_ADDRESS}</span>
+                  <span className="text-sm font-semibold">{apartment.address || address}</span>
                 </div>
               </div>
             </div>
@@ -499,7 +550,7 @@ export default function ApartmentDetailPage() {
           <div className="container mx-auto px-4 lg:px-8">
             <h2 className="text-xl lg:text-2xl font-serif mb-6">{t.catalogDetail.apartmentFeatures}</h2>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-              {getApartmentAdvantages(apartment, t).map((advantage, idx) => (
+              {getApartmentAdvantages(apartment, t, language).map((advantage, idx) => (
                 <div key={idx} className="bg-white/10 rounded-lg p-4">
                   <p className="text-sm lg:text-base text-white/90">{advantage}</p>
                 </div>

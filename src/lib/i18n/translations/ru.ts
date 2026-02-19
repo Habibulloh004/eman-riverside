@@ -123,7 +123,7 @@ export const ru = {
 
   // Contact Section (Home)
   contactSection: {
-    label: "КАК СНАМИ СВЯЗАТЬСЯ",
+    label: "Связь с нами!",
     title: "Контакты",
     description: "ВОПРОСЫ, КОММЕНТАРИИ ИЛИ ПРЕДЛОЖЕНИЯ? ПРОСТО ЗАПОЛНИТЕ ФОРМУ, И МЫ СКОРО С ВАМИ СВЯЖЕМСЯ.",
     findApartment: "НАЙДИТЕ СЕБЕ КВАРТИРУ",
@@ -167,6 +167,11 @@ export const ru = {
     callBtn: "Позвонить",
     whatsappBtn: "Написать в Whatsapp",
     telegramBtn: "Написать в Telegram",
+    instagramBtn: "Instagram",
+    facebookBtn: "Facebook",
+    youtubeBtn: "YouTube",
+    threadsBtn: "Threads",
+    workingHours: "Режим работы",
     findApartment: "НАЙДИТЕ СЕБЕ КВАРТИРУ",
     dream: "МЕЧТЫ!",
     formDesc: "ЗАПОЛНИТЕ ФОРМУ И НАШИ МЕНЕДЖЕРЫ СВЯЖУТСЯ С ВАМИ",

@@ -7,7 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { galleryApi, GalleryItem } from "@/lib/api/gallery";
 import { HeroVideoDialog } from "@/components/ui/hero-video-dialog";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090";
 
 // Default gallery items if API returns empty
 const defaultGalleryItems = {
@@ -286,7 +286,10 @@ export default function GalleryPage() {
                           />
                         </div>
                         <h3 className="text-white text-sm font-medium mb-1 lg:mb-2 line-clamp-1">{item.title}</h3>
-                        <p className="text-white/60 text-xs leading-relaxed line-clamp-3">{item.description}</p>
+                        <div
+                          className="text-white/60 text-xs leading-relaxed line-clamp-3 prose prose-invert prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{ __html: item.description }}
+                        />
                       </>
                     );
 

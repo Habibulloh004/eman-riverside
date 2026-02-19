@@ -6,7 +6,7 @@ import { useProjectsPublic } from "@/hooks/useProjects";
 import { FeatureSkeleton } from "@/components/ui/skeleton";
 import { Project } from "@/lib/api/projects";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090";
 
 interface FeatureItemProps {
   project: Project;
@@ -61,7 +61,7 @@ function FeatureItem({ project, index, language, t }: FeatureItemProps) {
               </div>
 
               <h3 className="text-2xl lg:text-4xl font-serif mb-8">
-                {title}<br />{titleLine2}
+                {titleLine2}
               </h3>
 
               {description && (

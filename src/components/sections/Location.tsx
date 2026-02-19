@@ -46,8 +46,8 @@ export default function Location() {
             {/* Nearby Places */}
             <ul className="space-y-4">
               {t.location.places.map((place) => (
-                <li key={place} className="flex items-start gap-3">
-                  <span className="text-primary mt-1">•</span>
+                <li key={place} className="flex items-center gap-3">
+                  <span className="text-primary">•</span>
                   <span className="text-foreground">{place}</span>
                 </li>
               ))}

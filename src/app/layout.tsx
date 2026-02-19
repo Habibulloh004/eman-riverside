@@ -100,7 +100,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" className="scroll-smooth" data-scroll-behavior="smooth" suppressHydrationWarning>
-      <body className={`${inter.variable} ${playfair.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${playfair.variable} font-sans antialiased`} suppressHydrationWarning>
         <QueryProvider>
           <SettingsProvider>
             <LanguageProvider>

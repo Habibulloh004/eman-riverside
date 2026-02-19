@@ -27,6 +27,7 @@ import {
   Layers,
 } from "lucide-react";
 import { useAdminLanguage } from "@/contexts/AdminLanguageContext";
+import RichTextEditor from "@/components/ui/rich-text-editor";
 
 interface PaymentPlan {
   title: string;
@@ -799,12 +800,10 @@ export default function SettingsPage() {
                           </div>
                           <div>
                             <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.planDescription}</label>
-                            <input
-                              type="text"
+                            <RichTextEditor
                               value={plan.description}
-                              onChange={(e) => updatePaymentPlan(index, "description", e.target.value)}
+                              onChange={(value) => updatePaymentPlan(index, "description", value)}
                               placeholder={activeLang === "ru" ? "Описание..." : "Tavsif..."}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
                             />
                           </div>
                         </div>
@@ -1071,12 +1070,10 @@ export default function SettingsPage() {
 
                       <div className="mb-4">
                         <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.descriptionOptional}</label>
-                        <textarea
+                        <RichTextEditor
                           value={project.description || ""}
-                          onChange={(e) => updateProject(index, "description", e.target.value)}
+                          onChange={(value) => updateProject(index, "description", value)}
                           placeholder={activeLang === "ru" ? "Описание проекта..." : "Loyiha tavsifi..."}
-                          rows={2}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
                         />
                       </div>
 

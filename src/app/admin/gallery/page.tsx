@@ -5,8 +5,9 @@ import Image from "next/image";
 import { galleryApi, GalleryItem, CreateGalleryRequest } from "@/lib/api/gallery";
 import { VideoModal } from "@/components/ui/hero-video-dialog";
 import { useAdminLanguage } from "@/contexts/AdminLanguageContext";
+import RichTextEditor from "@/components/ui/rich-text-editor";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8090';
 
 export default function GalleryPage() {
   const [items, setItems] = useState<GalleryItem[]>([]);
@@ -34,6 +35,8 @@ export default function GalleryPage() {
   // Active tab and filters
   const [activeTab, setActiveTab] = useState<"image" | "video">("image");
   const [filterCategory, setFilterCategory] = useState("");
+
+  const [modalLangTab, setModalLangTab] = useState<"ru" | "uz">("ru");
 
   const [formData, setFormData] = useState<CreateGalleryRequest>({
     title: "",
@@ -216,12 +219,14 @@ export default function GalleryPage() {
   const openNewModal = () => {
     setEditingItem(null);
     resetForm();
+    setModalLangTab("ru");
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingItem(null);
+    setModalLangTab("ru");
   };
 
   const getCategoryLabel = (value: string) => {
@@ -478,63 +483,85 @@ export default function GalleryPage() {
                 </div>
               )}
 
-              {/* Titles */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t.gallery.titleRu}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder={t.gallery.titlePlaceholder}
-                    required
-                  />
+              {/* Language Tabs */}
+              <div className="border rounded-lg overflow-hidden">
+                <div className="flex border-b bg-gray-50">
+                  <button
+                    type="button"
+                    onClick={() => setModalLangTab("ru")}
+                    className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+                      modalLangTab === "ru"
+                        ? "bg-white text-green-600 border-b-2 border-green-600 -mb-px"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    {t.settings.russian}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModalLangTab("uz")}
+                    className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+                      modalLangTab === "uz"
+                        ? "bg-white text-green-600 border-b-2 border-green-600 -mb-px"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    {t.settings.uzbek}
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t.gallery.titleUz}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.title_uz}
-                    onChange={(e) => setFormData({ ...formData, title_uz: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder={t.gallery.titlePlaceholder}
-                    required
-                  />
-                </div>
-              </div>
 
-              {/* Descriptions */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t.gallery.descriptionRu}
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder={t.gallery.descriptionPlaceholder}
-                    rows={3}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t.gallery.descriptionUz}
-                  </label>
-                  <textarea
-                    value={formData.description_uz}
-                    onChange={(e) => setFormData({ ...formData, description_uz: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder={t.gallery.descriptionPlaceholder}
-                    rows={3}
-                    required
-                  />
+                <div className="p-4 space-y-4">
+                  {modalLangTab === "ru" ? (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t.gallery.titleRu}
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.title}
+                          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                          className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          placeholder={t.gallery.titlePlaceholder}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t.gallery.descriptionRu}
+                        </label>
+                        <RichTextEditor
+                          value={formData.description}
+                          onChange={(value) => setFormData({ ...formData, description: value })}
+                          placeholder={t.gallery.descriptionPlaceholder}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t.gallery.titleUz}
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.title_uz}
+                          onChange={(e) => setFormData({ ...formData, title_uz: e.target.value })}
+                          className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          placeholder={t.gallery.titlePlaceholder}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t.gallery.descriptionUz}
+                        </label>
+                        <RichTextEditor
+                          value={formData.description_uz}
+                          onChange={(value) => setFormData({ ...formData, description_uz: value })}
+                          placeholder={t.gallery.descriptionPlaceholder}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 

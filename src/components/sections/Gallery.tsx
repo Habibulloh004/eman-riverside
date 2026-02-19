@@ -1,15 +1,129 @@
 "use client";
 
+import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
+import { AnimatePresence, motion } from "framer-motion";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useGalleryPublic } from "@/hooks/useGallery";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090";
 const DEFAULT_IMAGE = "/images/hero/1.png";
+
+interface LightboxProps {
+  images: { url: string; title: string }[];
+  currentIndex: number;
+  onClose: () => void;
+  onNavigate: (index: number) => void;
+}
+
+function Lightbox({ images, currentIndex, onClose, onNavigate }: LightboxProps) {
+  const handlePrev = useCallback(() => {
+    onNavigate(currentIndex > 0 ? currentIndex - 1 : images.length - 1);
+  }, [currentIndex, images.length, onNavigate]);
+
+  const handleNext = useCallback(() => {
+    onNavigate(currentIndex < images.length - 1 ? currentIndex + 1 : 0);
+  }, [currentIndex, images.length, onNavigate]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") handlePrev();
+      if (e.key === "ArrowRight") handleNext();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose, handlePrev, handleNext]);
+
+  // Prevent body scroll when lightbox is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  const image = images[currentIndex];
+  if (!image) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      {/* Close button */}
+      <motion.button
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.5 }}
+        className="absolute right-4 top-4 z-50 flex size-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+        onClick={onClose}
+      >
+        <X className="size-5" />
+      </motion.button>
+
+      {/* Prev button */}
+      {images.length > 1 && (
+        <button
+          className="absolute left-4 z-50 flex size-12 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+          onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+        >
+          <ChevronLeft className="size-6" />
+        </button>
+      )}
+
+      {/* Next button */}
+      {images.length > 1 && (
+        <button
+          className="absolute right-4 z-50 flex size-12 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+          onClick={(e) => { e.stopPropagation(); handleNext(); }}
+        >
+          <ChevronRight className="size-6" />
+        </button>
+      )}
+
+      {/* Image */}
+      <motion.div
+        key={currentIndex}
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+        className="relative mx-16 max-h-[85vh] max-w-[90vw]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Image
+          src={image.url}
+          alt={image.title}
+          width={1200}
+          height={800}
+          className="max-h-[85vh] w-auto rounded-lg object-contain"
+          sizes="90vw"
+          priority
+        />
+        {image.title && (
+          <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 to-transparent px-4 py-3 rounded-b-lg">
+            <p className="text-white text-sm">{image.title}</p>
+          </div>
+        )}
+      </motion.div>
+
+      {/* Counter */}
+      {images.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/70 text-sm">
+          {currentIndex + 1} / {images.length}
+        </div>
+      )}
+    </motion.div>
+  );
+}
 
 export default function Gallery() {
   const { t, language } = useLanguage();
   const { data, isLoading } = useGalleryPublic({ type: "image" });
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const images = (data?.items || []).map((item) => ({
     url: item.url.startsWith("http") ? item.url : `${API_URL}${item.url}`,
@@ -20,6 +134,15 @@ export default function Gallery() {
   const getImageUrl = (index: number) => images[index]?.url || DEFAULT_IMAGE;
   const getImageTitle = (index: number) => images[index]?.title || t.gallerySection.title;
   const getRedirectUrl = (index: number) => images[index]?.redirectUrl || null;
+
+  const handleTileClick = (index: number) => {
+    const redirectUrl = getRedirectUrl(index);
+    if (redirectUrl) {
+      window.open(redirectUrl, "_blank", "noopener,noreferrer");
+    } else {
+      setLightboxIndex(index);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -53,6 +176,9 @@ export default function Gallery() {
     );
   }
 
+  const tileIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  const tileClasses = ["tile-a", "tile-b", "tile-c", "tile-d", "tile-e", "tile-f", "tile-g", "tile-h", "tile-i"];
+
   return (
     <section id="gallery" className="relative py-16 lg:py-24 overflow-hidden">
       {/* Background image with low opacity */}
@@ -77,89 +203,35 @@ export default function Gallery() {
             </p>
           </div>
 
-          {getRedirectUrl(0) ? (
-            <a href={getRedirectUrl(0)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-a">
-              <Image src={getImageUrl(0)} alt={getImageTitle(0)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 100vw, 25vw" />
-            </a>
-          ) : (
-            <div className="gallery-tile tile-a">
-              <Image src={getImageUrl(0)} alt={getImageTitle(0)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 100vw, 25vw" />
+          {tileIndices.map((i) => (
+            <div
+              key={tileClasses[i]}
+              className={`gallery-tile ${tileClasses[i]}`}
+              onClick={() => handleTileClick(i)}
+            >
+              <Image
+                src={getImageUrl(i)}
+                alt={getImageTitle(i)}
+                fill
+                className="object-cover transition-transform duration-500 hover:scale-105"
+                sizes={i === 0 ? "(max-width: 1024px) 100vw, 25vw" : "(max-width: 1024px) 50vw, 25vw"}
+              />
             </div>
-          )}
-          {getRedirectUrl(1) ? (
-            <a href={getRedirectUrl(1)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-b">
-              <Image src={getImageUrl(1)} alt={getImageTitle(1)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-            </a>
-          ) : (
-            <div className="gallery-tile tile-b">
-              <Image src={getImageUrl(1)} alt={getImageTitle(1)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-            </div>
-          )}
-          {getRedirectUrl(2) ? (
-            <a href={getRedirectUrl(2)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-c">
-              <Image src={getImageUrl(2)} alt={getImageTitle(2)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-            </a>
-          ) : (
-            <div className="gallery-tile tile-c">
-              <Image src={getImageUrl(2)} alt={getImageTitle(2)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-            </div>
-          )}
-          {getRedirectUrl(3) ? (
-            <a href={getRedirectUrl(3)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-d">
-              <Image src={getImageUrl(3)} alt={getImageTitle(3)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-            </a>
-          ) : (
-            <div className="gallery-tile tile-d">
-              <Image src={getImageUrl(3)} alt={getImageTitle(3)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-            </div>
-          )}
-          {getRedirectUrl(4) ? (
-            <a href={getRedirectUrl(4)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-e">
-              <Image src={getImageUrl(4)} alt={getImageTitle(4)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-            </a>
-          ) : (
-            <div className="gallery-tile tile-e">
-              <Image src={getImageUrl(4)} alt={getImageTitle(4)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-            </div>
-          )}
-          {getRedirectUrl(5) ? (
-            <a href={getRedirectUrl(5)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-f">
-              <Image src={getImageUrl(5)} alt={getImageTitle(5)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-            </a>
-          ) : (
-            <div className="gallery-tile tile-f">
-              <Image src={getImageUrl(5)} alt={getImageTitle(5)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-            </div>
-          )}
-          {getRedirectUrl(6) ? (
-            <a href={getRedirectUrl(6)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-g">
-              <Image src={getImageUrl(6)} alt={getImageTitle(6)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-            </a>
-          ) : (
-            <div className="gallery-tile tile-g">
-              <Image src={getImageUrl(6)} alt={getImageTitle(6)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-            </div>
-          )}
-          {getRedirectUrl(7) ? (
-            <a href={getRedirectUrl(7)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-h">
-              <Image src={getImageUrl(7)} alt={getImageTitle(7)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-            </a>
-          ) : (
-            <div className="gallery-tile tile-h">
-              <Image src={getImageUrl(7)} alt={getImageTitle(7)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-            </div>
-          )}
-          {getRedirectUrl(8) ? (
-            <a href={getRedirectUrl(8)!} target="_blank" rel="noopener noreferrer" className="gallery-tile tile-i">
-              <Image src={getImageUrl(8)} alt={getImageTitle(8)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-            </a>
-          ) : (
-            <div className="gallery-tile tile-i">
-              <Image src={getImageUrl(8)} alt={getImageTitle(8)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-            </div>
-          )}
+          ))}
         </div>
       </div>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightboxIndex !== null && images.length > 0 && (
+          <Lightbox
+            images={images}
+            currentIndex={lightboxIndex}
+            onClose={() => setLightboxIndex(null)}
+            onNavigate={setLightboxIndex}
+          />
+        )}
+      </AnimatePresence>
 
       <style jsx>{`
         .gallery-grid {

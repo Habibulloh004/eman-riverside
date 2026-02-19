@@ -7,7 +7,7 @@ import { mapIconsApi, MapIcon } from "@/lib/api/map-icons";
 import { settingsApi } from "@/lib/api/settings";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090";
 
 export interface YandexMapProps {
   coordinates?: [number, number];

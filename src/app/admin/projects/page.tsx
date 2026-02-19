@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { projectsApi, Project, CreateProjectRequest } from "@/lib/api/projects";
 import { useAdminLanguage } from "@/contexts/AdminLanguageContext";
+import RichTextEditor from "@/components/ui/rich-text-editor";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8090';
 
 export default function ProjectsPage() {
   const [items, setItems] = useState<Project[]>([]);
@@ -15,6 +16,8 @@ export default function ProjectsPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { t } = useAdminLanguage();
+
+  const [modalLangTab, setModalLangTab] = useState<"ru" | "uz">("ru");
 
   const [formData, setFormData] = useState<CreateProjectRequest>({
     type_ru: "",
@@ -154,12 +157,14 @@ export default function ProjectsPage() {
   const openNewModal = () => {
     setEditingItem(null);
     resetForm();
+    setModalLangTab("ru");
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingItem(null);
+    setModalLangTab("ru");
   };
 
   return (
@@ -225,7 +230,10 @@ export default function ProjectsPage() {
                   <h3 className="font-semibold text-lg text-gray-900">{item.type_ru}</h3>
                   <p className="text-sm text-gray-500 mb-1">{item.type_uz}</p>
                   <p className="text-sm text-primary font-medium mb-2">{item.area_ru}</p>
-                  <p className="text-sm text-gray-600 line-clamp-2">{item.description_ru}</p>
+                  <div
+                    className="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: item.description_ru || "" }}
+                  />
                   <div className="flex gap-2 mt-4">
                     <button
                       onClick={() => handleEdit(item)}
@@ -298,101 +306,120 @@ export default function ProjectsPage() {
                   <div className="flex-1 min-w-0">
                     <h4 className="font-serif text-lg text-gray-900">{formData.type_ru || "3-комнатные"}</h4>
                     <p className="text-xs text-gray-500">{formData.area_ru || "от 56.79 до 61 м²"}</p>
-                    <p className="text-xs text-gray-600 italic mt-1">{formData.description_ru || "Tavsif..."}</p>
+                    <div
+                      className="text-xs text-gray-600 italic mt-1 prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: formData.description_ru || "Tavsif..." }}
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Type - Xona turi */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t.projects.roomTypeRu}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.type_ru}
-                    onChange={(e) => setFormData({ ...formData, type_ru: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="3-комнатные"
-                    required
-                  />
-                  <p className="text-xs text-gray-400 mt-1">{t.projects.roomTypeHint}</p>
+              {/* Language Tabs */}
+              <div className="border rounded-lg overflow-hidden">
+                <div className="flex border-b bg-gray-50">
+                  <button
+                    type="button"
+                    onClick={() => setModalLangTab("ru")}
+                    className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+                      modalLangTab === "ru"
+                        ? "bg-white text-green-600 border-b-2 border-green-600 -mb-px"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    {t.settings.russian}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModalLangTab("uz")}
+                    className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+                      modalLangTab === "uz"
+                        ? "bg-white text-green-600 border-b-2 border-green-600 -mb-px"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    {t.settings.uzbek}
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t.projects.roomTypeUz}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.type_uz}
-                    onChange={(e) => setFormData({ ...formData, type_uz: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="3-xonali"
-                    required
-                  />
-                </div>
-              </div>
 
-              {/* Area - Maydon */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t.projects.areaRu}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.area_ru}
-                    onChange={(e) => setFormData({ ...formData, area_ru: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="от 56.79 до 61 м²"
-                    required
-                  />
-                  <p className="text-xs text-gray-400 mt-1">{t.projects.areaHint}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t.projects.areaUz}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.area_uz}
-                    onChange={(e) => setFormData({ ...formData, area_uz: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="56.79 dan 61 m² gacha"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Descriptions - Tavsif */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t.projects.descriptionRu}
-                  </label>
-                  <textarea
-                    value={formData.description_ru}
-                    onChange={(e) => setFormData({ ...formData, description_ru: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Оптимально для семьи с двумя детьми"
-                    rows={2}
-                    required
-                  />
-                  <p className="text-xs text-gray-400 mt-1">{t.projects.descHint}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t.projects.descriptionUz}
-                  </label>
-                  <textarea
-                    value={formData.description_uz}
-                    onChange={(e) => setFormData({ ...formData, description_uz: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Ikki bolali oila uchun optimal"
-                    rows={2}
-                    required
-                  />
+                <div className="p-4 space-y-4">
+                  {modalLangTab === "ru" ? (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t.projects.roomTypeRu}
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.type_ru}
+                          onChange={(e) => setFormData({ ...formData, type_ru: e.target.value })}
+                          className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          placeholder="3-комнатные"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">{t.projects.roomTypeHint}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t.projects.areaRu}
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.area_ru}
+                          onChange={(e) => setFormData({ ...formData, area_ru: e.target.value })}
+                          className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          placeholder="от 56.79 до 61 м²"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">{t.projects.areaHint}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t.projects.descriptionRu}
+                        </label>
+                        <RichTextEditor
+                          value={formData.description_ru}
+                          onChange={(value) => setFormData({ ...formData, description_ru: value })}
+                          placeholder="Оптимально для семьи с двумя детьми"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">{t.projects.descHint}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t.projects.roomTypeUz}
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.type_uz}
+                          onChange={(e) => setFormData({ ...formData, type_uz: e.target.value })}
+                          className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          placeholder="3-xonali"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t.projects.areaUz}
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.area_uz}
+                          onChange={(e) => setFormData({ ...formData, area_uz: e.target.value })}
+                          className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          placeholder="56.79 dan 61 m² gacha"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t.projects.descriptionUz}
+                        </label>
+                        <RichTextEditor
+                          value={formData.description_uz}
+                          onChange={(value) => setFormData({ ...formData, description_uz: value })}
+                          placeholder="Ikki bolali oila uchun optimal"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 

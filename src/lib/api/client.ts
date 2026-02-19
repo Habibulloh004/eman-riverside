@@ -1,4 +1,7 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8090';
+const PROXY_URL = '/api/proxy';
+
+const getBaseUrl = () => (typeof window === 'undefined' ? API_URL : PROXY_URL);
 
 interface RequestOptions {
   method?: string;
@@ -24,7 +27,7 @@ class ApiClient {
 
     this.refreshPromise = (async () => {
       try {
-        const response = await fetch(`${API_URL}/api/auth/refresh`, {
+      const response = await fetch(`${getBaseUrl()}/api/auth/refresh`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -56,7 +59,7 @@ class ApiClient {
       requestHeaders['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`${getBaseUrl()}${endpoint}`, {
       method,
       headers: requestHeaders,
       body: body ? JSON.stringify(body) : undefined,
@@ -68,7 +71,7 @@ class ApiClient {
       try {
         const newToken = await this.refreshToken();
         const retryHeaders = { ...requestHeaders, Authorization: `Bearer ${newToken}` };
-        const retryResponse = await fetch(`${API_URL}${endpoint}`, {
+        const retryResponse = await fetch(`${getBaseUrl()}${endpoint}`, {
           method,
           headers: retryHeaders,
           body: body ? JSON.stringify(body) : undefined,
@@ -98,18 +101,18 @@ class ApiClient {
   }
 
   async upload(endpoint: string, file: File): Promise<{ url: string; path: string }> {
-    const requestHeaders: Record<string, string> = {
-      'Content-Type': file.type || 'application/octet-stream',
-      'X-Filename': encodeURIComponent(file.name),
-    };
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const requestHeaders: Record<string, string> = {};
     if (this.token) {
       requestHeaders['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`${getBaseUrl()}${endpoint}`, {
       method: 'POST',
       headers: requestHeaders,
-      body: file,
+      body: formData,
       credentials: 'include',
     });
 
@@ -118,12 +121,12 @@ class ApiClient {
       try {
         const newToken = await this.refreshToken();
         const retryHeaders: Record<string, string> = { Authorization: `Bearer ${newToken}` };
-        retryHeaders['Content-Type'] = file.type || 'application/octet-stream';
-        retryHeaders['X-Filename'] = encodeURIComponent(file.name);
-        const retryResponse = await fetch(`${API_URL}${endpoint}`, {
+        const retryFormData = new FormData();
+        retryFormData.append('file', file);
+        const retryResponse = await fetch(`${getBaseUrl()}${endpoint}`, {
           method: 'POST',
           headers: retryHeaders,
-          body: file,
+          body: retryFormData,
           credentials: 'include',
         });
 

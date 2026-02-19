@@ -309,17 +309,10 @@ export default function ApartmentRequestPage() {
                       <h3 className={`font-semibold text-lg mb-2 ${option.color === "primary" ? "text-yellow-300" : "text-yellow-600"}`}>
                         {option.title}
                       </h3>
-                      <p className={`text-xs leading-relaxed ${option.color === "primary" ? "text-white/70" : "text-gray-500"}`}>
-                        {option.description}
-                      </p>
-                    </div>
-
-                    {/* Price */}
-                    <div className="mb-6">
-                      <span className="text-3xl lg:text-4xl font-bold">{option.price}</span>
-                      <span className={`text-sm ml-2 ${option.color === "primary" ? "text-white/70" : "text-gray-500"}`}>
-                        {option.priceNote}
-                      </span>
+                      <div
+                        className={`text-xs leading-relaxed ${option.color === "primary" ? "text-white/70" : "text-gray-500"} prose prose-sm max-w-none`}
+                        dangerouslySetInnerHTML={{ __html: option.description }}
+                      />
                     </div>
 
                     {/* Select Button */}

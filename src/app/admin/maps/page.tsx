@@ -6,7 +6,7 @@ import { mapIconsApi, MapIcon, MapIconType } from "@/lib/api/map-icons";
 import { settingsApi } from "@/lib/api/settings";
 import { useAdminLanguage } from "@/contexts/AdminLanguageContext";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090";
 
 const resolveUrl = (url: string) => (url.startsWith("http") ? url : `${API_URL}${url}`);
 

@@ -118,8 +118,10 @@ export default function FloorPlans() {
   const { t } = useLanguage();
   const { data: estates, isLoading } = useRandomEstates(2);
 
-  const plans: PlanItem[] = estates.length > 0
-    ? estates.map(mapEstateToPlan)
+  const validEstates = estates.filter((estate) => estate.estate_floor > 0);
+
+  const plans: PlanItem[] = validEstates.length > 0
+    ? validEstates.map(mapEstateToPlan)
     : t.floorPlans.plans.map((p, i) => ({
         id: i,
         type: p.type,
