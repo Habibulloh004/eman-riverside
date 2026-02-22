@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { settingsApi, SiteSetting } from "@/lib/api/settings";
+import { useState, useEffect, useCallback } from "react";
+import { settingsApi } from "@/lib/api/settings";
+import { apiClient } from "@/lib/api";
 import {
   Phone,
   Mail,
@@ -25,6 +26,9 @@ import {
   Trash2,
   GripVertical,
   Layers,
+  Music,
+  FileText,
+  Upload,
 } from "lucide-react";
 import { useAdminLanguage } from "@/contexts/AdminLanguageContext";
 import RichTextEditor from "@/components/ui/rich-text-editor";
@@ -62,6 +66,8 @@ interface ProjectItem {
 export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingMusic, setIsUploadingMusic] = useState(false);
+  const [isUploadingBrochure, setIsUploadingBrochure] = useState(false);
   const [activeTab, setActiveTab] = useState<"contact" | "social" | "pricing" | "faq" | "projects">("contact");
   const [activeLang, setActiveLang] = useState<"ru" | "uz">("ru");
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -75,6 +81,8 @@ export default function SettingsPage() {
     address_uz: "",
     working_hours: "",
     working_hours_uz: "",
+    background_music_url: "",
+    brochure_file_url: "",
   });
 
   const [socialForm, setSocialForm] = useState({
@@ -95,7 +103,7 @@ export default function SettingsPage() {
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [projectsUz, setProjectsUz] = useState<ProjectItem[]>([]);
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       setIsLoading(true);
       const data = await settingsApi.list();
@@ -109,6 +117,8 @@ export default function SettingsPage() {
         address_uz: getValue("address_uz"),
         working_hours: getValue("working_hours"),
         working_hours_uz: getValue("working_hours_uz"),
+        background_music_url: getValue("background_music_url"),
+        brochure_file_url: getValue("brochure_file_url"),
       });
 
       setSocialForm({
@@ -151,21 +161,39 @@ export default function SettingsPage() {
         setProjectsUz(projUz ? JSON.parse(projUz) : []);
       } catch { setProjectsUz([]); }
 
-      } catch (err) {
+    } catch (err) {
       console.error("Failed to load settings:", err);
       showNotification("error", t.settings.loadError);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [t.settings.loadError]);
 
   useEffect(() => {
-    loadSettings();
-  }, []);
+    void loadSettings();
+  }, [loadSettings]);
 
   const showNotification = (type: "success" | "error", message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 4000);
+  };
+
+  const handleMusicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingMusic(true);
+    try {
+      const result = await apiClient.upload("/api/admin/upload", file);
+      setContactForm((prev) => ({ ...prev, background_music_url: result.url }));
+      showNotification("success", t.settings.backgroundMusicUploaded);
+    } catch (err) {
+      console.error("Failed to upload music:", err);
+      showNotification("error", t.settings.saveError);
+    } finally {
+      setIsUploadingMusic(false);
+      e.target.value = "";
+    }
   };
 
   const handleSaveContact = async () => {
@@ -178,6 +206,8 @@ export default function SettingsPage() {
         { key: "address_uz", value: contactForm.address_uz },
         { key: "working_hours", value: contactForm.working_hours },
         { key: "working_hours_uz", value: contactForm.working_hours_uz },
+        { key: "background_music_url", value: contactForm.background_music_url },
+        { key: "brochure_file_url", value: contactForm.brochure_file_url },
       ];
       await settingsApi.bulkUpdate(updates);
       showNotification("success", t.settings.contactSaved);
@@ -186,6 +216,24 @@ export default function SettingsPage() {
       showNotification("error", t.settings.saveError);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleBrochureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingBrochure(true);
+    try {
+      const result = await apiClient.upload("/api/admin/upload", file);
+      setContactForm((prev) => ({ ...prev, brochure_file_url: result.url }));
+      showNotification("success", t.settings.brochureUploaded);
+    } catch (err) {
+      console.error("Failed to upload brochure:", err);
+      showNotification("error", t.settings.saveError);
+    } finally {
+      setIsUploadingBrochure(false);
+      e.target.value = "";
     }
   };
 
@@ -593,6 +641,80 @@ export default function SettingsPage() {
                     placeholder={activeLang === "ru" ? "Пн-Пт: 9:00 - 18:00" : "Du-Ju: 9:00 - 18:00"}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                    <Music className="w-4 h-4 text-gray-400" />
+                    {t.settings.backgroundMusicLabel}
+                  </label>
+                  <div className="mb-3">
+                    <label className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer text-sm font-medium text-gray-700">
+                      {isUploadingMusic ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      {isUploadingMusic ? t.settings.backgroundMusicUploading : t.settings.backgroundMusicUpload}
+                      <input
+                        type="file"
+                        accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/mp4,.mp3,.wav,.ogg,.m4a,.aac"
+                        onChange={handleMusicUpload}
+                        disabled={isUploadingMusic}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  {contactForm.background_music_url ? (
+                    <div className="flex items-center justify-between gap-3 px-4 py-3 border border-gray-200 rounded-xl bg-gray-50">
+                      <p className="text-xs text-gray-600 truncate">
+                        {t.settings.backgroundMusicCurrent}: {contactForm.background_music_url}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setContactForm({ ...contactForm, background_music_url: "" })}
+                        className="text-xs font-medium text-red-600 hover:text-red-700"
+                      >
+                        {t.settings.backgroundMusicClear}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500">{t.settings.backgroundMusicNone}</p>
+                  )}
+                  <p className="mt-2 text-xs text-gray-500">{t.settings.backgroundMusicHint}</p>
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                    <FileText className="w-4 h-4 text-gray-400" />
+                    {t.settings.brochureLabel}
+                  </label>
+                  <div className="mb-3">
+                    <label className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer text-sm font-medium text-gray-700">
+                      {isUploadingBrochure ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      {isUploadingBrochure ? t.settings.brochureUploading : t.settings.brochureUpload}
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf,.csv,.odt,.ods,.odp,.zip,.rar,.7z"
+                        onChange={handleBrochureUpload}
+                        disabled={isUploadingBrochure}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  {contactForm.brochure_file_url ? (
+                    <div className="flex items-center justify-between gap-3 px-4 py-3 border border-gray-200 rounded-xl bg-gray-50">
+                      <p className="text-xs text-gray-600 truncate">
+                        {t.settings.brochureCurrent}: {contactForm.brochure_file_url}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setContactForm({ ...contactForm, brochure_file_url: "" })}
+                        className="text-xs font-medium text-red-600 hover:text-red-700"
+                      >
+                        {t.settings.brochureClear}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500">{t.settings.brochureNone}</p>
+                  )}
+                  <p className="mt-2 text-xs text-gray-500">{t.settings.brochureHint}</p>
                 </div>
               </div>
 

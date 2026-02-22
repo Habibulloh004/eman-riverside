@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { QueryProvider } from "@/lib/query-provider";
 import { Toaster } from "sonner";
+import { BackgroundMusicPlayer } from "@/components/shared/BackgroundMusicPlayer";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -104,6 +105,7 @@ export default function RootLayout({
         <QueryProvider>
           <SettingsProvider>
             <LanguageProvider>
+              <BackgroundMusicPlayer />
               <ScrollToTop />
               {children}
               <Toaster

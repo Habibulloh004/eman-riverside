@@ -27,6 +27,8 @@ interface ContentSettings {
   hero_subtitle_uz: string;
   map_embed_url: string;
   map_coordinates: string;
+  background_music_url: string;
+  brochure_file_url: string;
 }
 
 interface SiteSettings {
@@ -74,6 +76,8 @@ const defaultSettings: SiteSettings = {
     hero_subtitle_uz: "Yangi darajadagi turar-joy majmuasi",
     map_embed_url: "",
     map_coordinates: "41.3111,69.2401",
+    background_music_url: "",
+    brochure_file_url: "",
   },
   payment_plans: [],
   payment_plans_uz: [],
@@ -140,6 +144,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           hero_subtitle_uz: getValue(data, "content", "hero_subtitle_uz", defaultSettings.content.hero_subtitle_uz),
           map_embed_url: getValue(data, "content", "map_embed_url", defaultSettings.content.map_embed_url),
           map_coordinates: getValue(data, "content", "map_coordinates", defaultSettings.content.map_coordinates),
+          background_music_url: getValue(
+            data,
+            "content",
+            "background_music_url",
+            defaultSettings.content.background_music_url
+          ),
+          brochure_file_url: getValue(
+            data,
+            "content",
+            "brochure_file_url",
+            defaultSettings.content.brochure_file_url
+          ),
         },
         payment_plans: getJSONValue<PaymentPlan[]>(data, "pricing", "payment_plans", []),
         payment_plans_uz: getJSONValue<PaymentPlan[]>(data, "pricing", "payment_plans_uz", []),

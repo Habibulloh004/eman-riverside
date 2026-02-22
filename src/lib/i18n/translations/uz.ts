@@ -7,14 +7,15 @@ export const uz: Translations = {
     catalog: "KATALOG",
     gallery: "GALEREYA",
     contacts: "KONTAKTLAR",
+    brochure: "BUKLETNI YUKLAB OLISH",
     call: "QO'NG'IROQ",
   },
 
   // Hero
   hero: {
     title: "EMAN RIVERSIDE",
-    comingSoon: "Tez Kunda",
-    comingSoonUz: "Tez Kunda",
+    comingSoon: "Yashashning yangi standarti",
+    comingSoonUz: "Yashashning yangi standarti",
     subtitle: "Yangi darajadagi turar-joy majmuasi",
     selectApartment: "KVARTIRA TANLASH",
     building: "Uy",

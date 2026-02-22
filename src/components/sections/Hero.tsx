@@ -11,6 +11,8 @@ export default function Hero() {
   const { t } = useLanguage();
   const { settings } = useSiteSettings();
   const router = useRouter();
+  const heroHeadline = t.hero.comingSoon;
+  const isLongHeadline = heroHeadline.length > 20;
   const [selectedFloor, setSelectedFloor] = useState("");
   const [selectedArea, setSelectedArea] = useState("");
   const [selectedRooms, setSelectedRooms] = useState("");
@@ -96,16 +98,18 @@ export default function Hero() {
         {/* Main Hero Card - Green box + Image side by side */}
         <div className="flex flex-col lg:flex-row rounded-xl overflow-hidden shadow-2xl w-full lg:w-11/12 max-w-[1400px] mx-auto">
           {/* Left - Green Box with text and search form */}
-          <div className="bg-primary p-5 sm:p-6 lg:p-14 text-white lg:w-[42%] flex flex-col justify-between min-h-[320px] sm:min-h-[380px] lg:min-h-[500px]">
+          <div className="bg-primary p-5 sm:p-6 lg:p-14 text-white lg:w-[44%] xl:w-[42%] flex flex-col gap-4 lg:gap-0 lg:justify-between min-h-[260px] sm:min-h-[300px] lg:min-h-[500px]">
             <div>
-              <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-serif font-light mb-1 sm:mb-3">
-                {t.hero.comingSoon}
+              <h1
+                className={`font-serif font-light mb-2 leading-[0.95] break-normal [overflow-wrap:normal] ${
+                  isLongHeadline
+                    ? "text-[clamp(2rem,5vw,4.2rem)]"
+                    : "text-[clamp(2.25rem,5.6vw,4.8rem)]"
+                }`}
+              >
+                {heroHeadline}
               </h1>
-              <br />
-              {/* <h2 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-serif font-light mb-4 sm:mb-8">
-                {t.hero.comingSoon}
-              </h2> */}
-              <p className="text-white/80 text-sm sm:text-base lg:text-xl">
+              <p className="text-white/80 text-sm sm:text-base lg:text-xl my-3">
                 {t.hero.subtitle}
               </p>
             </div>

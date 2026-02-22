@@ -3,11 +3,39 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
 import { RequestModal } from "@/components/shared";
+
+function resolveHeaderFileUrl(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("blob:") ||
+    trimmed.startsWith("data:")
+  ) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("/api/proxy/")) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("/uploads/")) {
+    return `/api/proxy${trimmed}`;
+  }
+
+  if (trimmed.startsWith("//")) {
+    return `https:${trimmed}`;
+  }
+
+  return trimmed;
+}
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,6 +46,8 @@ export default function Header() {
 
   // Format phone for tel: href
   const phoneHref = `tel:${settings.contact.phone.replace(/\s/g, "")}`;
+  const brochureUrl = resolveHeaderFileUrl(settings.content.brochure_file_url || "");
+  const hasBrochure = brochureUrl.length > 0;
 
   const headerNavLinks = [
     { href: "/projects", label: t.nav.about },
@@ -49,7 +79,7 @@ export default function Header() {
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center shrink-0">
             <Image
               src="/logo.svg"
               alt="EMAN RIVERSIDE"
@@ -61,12 +91,12 @@ export default function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-4 xl:gap-5 2xl:gap-8 min-w-0">
             {headerNavLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium tracking-wide text-foreground hover:text-primary/70 transition-colors"
+                className="text-sm font-medium tracking-wide text-foreground hover:text-primary/70 transition-colors whitespace-nowrap"
               >
                 {link.label}
               </Link>
@@ -74,22 +104,35 @@ export default function Header() {
             {/* Language Switcher */}
             <button
               onClick={toggleLanguage}
-              className="text-sm font-medium tracking-wide text-foreground hover:text-primary/70 transition-colors"
+              className="text-sm font-medium tracking-wide text-foreground hover:text-primary/70 transition-colors whitespace-nowrap"
             >
               {language === "ru" ? "РУС" : "UZB"}/{language === "ru" ? "УЗБ" : "RUS"}
             </button>
           </nav>
 
           {/* CTA Buttons */}
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-2 2xl:gap-3 shrink-0">
             <Button
-              className="rounded-full px-6 bg-primary text-white hover:bg-primary/90"
+              className="rounded-full px-4 2xl:px-6 bg-primary text-white hover:bg-primary/90 whitespace-nowrap"
               onClick={() => setIsRequestModalOpen(true)}
             >
               {t.requestModal.title}
             </Button>
+            {hasBrochure && (
+              <div className="hidden xl:block">
+                <Button
+                  className="rounded-full px-4 2xl:px-6 whitespace-nowrap"
+                  variant="outline"
+                  asChild
+                >
+                  <a href={brochureUrl} target="_blank" rel="noopener noreferrer" download>
+                    {t.nav.brochure}
+                  </a>
+                </Button>
+              </div>
+            )}
             <Button
-              className="rounded-full px-6"
+              className="rounded-full px-4 2xl:px-6 whitespace-nowrap"
               variant="outline"
               asChild
             >
@@ -109,11 +152,11 @@ export default function Header() {
 
         {/* Mobile Navigation */}
         <nav
-          className={`lg:hidden border-t bg-white absolute left-0 right-0 top-20 shadow-lg overflow-hidden transition-all duration-300 ease-in-out ${
-            isOpen ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"
+          className={`lg:hidden border-t bg-white absolute left-0 right-0 top-20 shadow-lg overflow-y-auto transition-all duration-300 ease-in-out ${
+            isOpen ? "max-h-[calc(100vh-5rem)] opacity-100" : "max-h-0 opacity-0"
           }`}
         >
-          <div className="container mx-auto px-4 py-4 flex flex-col gap-1">
+          <div className="container mx-auto px-4 pt-4 pb-8 flex flex-col gap-1">
             {headerNavLinks.map((link, index) => (
               <Link
                 key={link.href}
@@ -137,7 +180,7 @@ export default function Header() {
               {language === "ru" ? "РУС" : "UZB"}/{language === "ru" ? "УЗБ" : "RUS"}
             </button>
             <div
-              className={`mt-4 px-4 flex flex-col gap-2 transition-all duration-300 ${
+              className={`mt-4 px-4 pb-3 flex flex-col gap-2 transition-all duration-300 ${
                 isOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
               }`}
               style={{ transitionDelay: isOpen ? `${(headerNavLinks.length + 1) * 50}ms` : "0ms" }}
@@ -148,6 +191,17 @@ export default function Header() {
               >
                 {t.requestModal.title}
               </Button>
+              {hasBrochure && (
+                <Button
+                  variant="outline"
+                  className="w-full border-primary text-primary hover:bg-primary hover:text-white rounded-full"
+                  asChild
+                >
+                  <a href={brochureUrl} target="_blank" rel="noopener noreferrer" download>
+                    {t.nav.brochure}
+                  </a>
+                </Button>
+              )}
               <Button
                 variant="outline"
                 className="w-full border-primary text-primary hover:bg-primary hover:text-white rounded-full"

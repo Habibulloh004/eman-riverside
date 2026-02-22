@@ -5,14 +5,15 @@ export const ru = {
     catalog: "КАТАЛОГ",
     gallery: "ГАЛЕРЕЯ",
     contacts: "КОНТАКТЫ",
+    brochure: "СКАЧАТЬ БУКЛЕТ",
     call: "ПОЗВОНИТЬ",
   },
 
   // Hero
   hero: {
     title: "EMAN RIVERSIDE",
-    comingSoon: "Скоро",
-    comingSoonUz: "Tez Kunda",
+    comingSoon: "Новый стандарт жизни",
+    comingSoonUz: "Yashashning yangi standarti",
     subtitle: "Жилой комплекс нового уровня",
     selectApartment: "ВЫБРАТЬ КВАРТИРУ",
     building: "Дом",
