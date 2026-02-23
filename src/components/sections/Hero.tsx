@@ -203,7 +203,7 @@ export default function Hero() {
           {/* Right - Hero Image */}
           <div className="relative lg:w-[58%] aspect-[4/3] lg:aspect-auto min-h-[180px] sm:min-h-[220px] lg:min-h-[500px]">
             <Image
-              src="/images/hero/1.png"
+              src="/images/hero.webp"
               alt="EMAN RIVERSIDE"
               fill
               className="object-cover"

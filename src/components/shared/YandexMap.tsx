@@ -2,12 +2,24 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { Globe, X } from "lucide-react";
 import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
 import { mapIconsApi, MapIcon } from "@/lib/api/map-icons";
 import { settingsApi } from "@/lib/api/settings";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090";
+const TASHKENT_CENTER: [number, number] = [41.3111, 69.2401];
+const DEFAULT_MAP_ZOOM = 14;
+const PANORAMA_URL = "https://uzbekistan360.uz/ru/location/zhk-eman-riversideWwl";
 
 export interface YandexMapProps {
   coordinates?: [number, number];
@@ -17,6 +29,12 @@ export interface YandexMapProps {
 }
 
 type YandexMapInnerProps = Omit<YandexMapProps, "className" | "grayscale">;
+
+const buildYandexMapUrl = (center: [number, number], zoom: number) => {
+  const lat = center[0];
+  const lng = center[1];
+  return `https://yandex.ru/maps/?ll=${lng},${lat}&z=${zoom}&pt=${lng},${lat},pm2rdm`;
+};
 
 function YandexMapInner({ coordinates, zoom }: YandexMapInnerProps) {
   const [markers, setMarkers] = useState<MapIcon[]>([]);
@@ -71,9 +89,13 @@ function YandexMapInner({ coordinates, zoom }: YandexMapInnerProps) {
     };
   }, []);
 
-  const effectiveCenter = coordinates || defaultCenter || [41.3111, 69.2401];
-  const effectiveZoom = zoom ?? defaultZoom ?? 14;
+  const effectiveCenter = coordinates || defaultCenter || TASHKENT_CENTER;
+  const effectiveZoom = zoom ?? defaultZoom ?? DEFAULT_MAP_ZOOM;
   const mapKey = `${effectiveCenter[0]}-${effectiveCenter[1]}-${effectiveZoom}`;
+  const yandexMapUrl = useMemo(
+    () => buildYandexMapUrl(effectiveCenter, effectiveZoom),
+    [effectiveCenter, effectiveZoom]
+  );
 
   const resolvedMarkers = useMemo(() => {
     return markers.map((marker) => {
@@ -100,6 +122,9 @@ function YandexMapInner({ coordinates, zoom }: YandexMapInnerProps) {
         defaultState={{ center: effectiveCenter, zoom: effectiveZoom }}
         width="100%"
         height="100%"
+        onClick={() => {
+          window.open(yandexMapUrl, "_blank", "noopener,noreferrer");
+        }}
       >
         {resolvedMarkers.map((marker) => (
           <Placemark
@@ -141,14 +166,16 @@ export default function YandexMap({
   coordinates,
   zoom,
 }: YandexMapProps) {
+  const { t } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [isPanoramaOpen, setIsPanoramaOpen] = useState(false);
 
   useEffect(() => {
     if (isVisible) return;
     const node = containerRef.current;
     if (!node || typeof IntersectionObserver === "undefined") {
-      setIsVisible(true);
+      queueMicrotask(() => setIsVisible(true));
       return;
     }
     const observer = new IntersectionObserver(
@@ -165,16 +192,53 @@ export default function YandexMap({
   }, [isVisible]);
 
   return (
-    <div
-      ref={containerRef}
-      className={className}
-      style={grayscale ? { filter: "grayscale(100%)" } : undefined}
-    >
-      {isVisible ? (
-        <DynamicYandexMap coordinates={coordinates} zoom={zoom} />
-      ) : (
-        <div className="w-full h-full bg-muted animate-pulse rounded-lg" />
-      )}
-    </div>
+    <>
+      <div ref={containerRef} className={className}>
+        <div className="w-full h-full" style={grayscale ? { filter: "grayscale(100%)" } : undefined}>
+          {isVisible ? (
+            <DynamicYandexMap coordinates={coordinates} zoom={zoom} />
+          ) : (
+            <div className="w-full h-full bg-muted animate-pulse rounded-lg" />
+          )}
+        </div>
+        <Button
+          size="sm"
+          className="absolute bottom-4 right-4 z-10 rounded-full shadow-lg px-4"
+          onClick={() => setIsPanoramaOpen(true)}
+        >
+          <Globe className="w-4 h-4" />
+          {t.location.panoramaButton}
+        </Button>
+      </div>
+
+      <Dialog open={isPanoramaOpen} onOpenChange={setIsPanoramaOpen}>
+        <DialogContent className="w-[95vw] max-w-[1200px] h-[85vh] sm:h-[90vh] p-0 sm:rounded-2xl overflow-hidden flex flex-col [&>button]:hidden">
+          <DialogHeader className="flex-row items-center justify-between text-left gap-0 px-5 sm:px-6 py-4 border-b">
+            <DialogTitle className="text-lg sm:text-xl font-serif">
+              {t.location.panoramaTitle}
+            </DialogTitle>
+            <DialogClose
+              className="inline-flex items-center justify-center rounded-full border border-border bg-white size-9 text-muted-foreground transition-colors hover:text-foreground hover:bg-accent"
+              aria-label={t.common.close}
+            >
+              <X className="h-4 w-4" />
+            </DialogClose>
+          </DialogHeader>
+          <div className="flex-1 p-4 sm:p-5">
+            <div className="relative h-full w-full rounded-2xl overflow-hidden bg-muted border">
+              <iframe
+                src={PANORAMA_URL}
+                title={t.location.panoramaTitle}
+                className="absolute inset-0 h-full w-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="strict-origin-when-cross-origin"
+              />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

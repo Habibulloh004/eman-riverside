@@ -20,6 +20,10 @@ interface MapPickerProps {
   onSelect?: (coords: [number, number]) => void;
 }
 
+interface MapClickEvent {
+  get: (key: string) => unknown;
+}
+
 function MapPickerInner({
   className,
   center = [41.3111, 69.2401],
@@ -28,16 +32,26 @@ function MapPickerInner({
   selected,
   onSelect,
 }: MapPickerProps) {
+  const mapKey = `${center[0]}-${center[1]}-${zoom}`;
+
   return (
     <div className={className}>
       <YMaps query={{ apikey: process.env.NEXT_PUBLIC_YANDEX_API_KEY, lang: "ru_RU" }}>
         <Map
+          key={mapKey}
           defaultState={{ center, zoom }}
           width="100%"
           height="100%"
-          onClick={(e: any) => {
-            const coords = e.get("coords") as [number, number];
-            onSelect?.(coords);
+          onClick={(e: MapClickEvent) => {
+            const coords = e.get("coords");
+            if (
+              Array.isArray(coords) &&
+              coords.length === 2 &&
+              typeof coords[0] === "number" &&
+              typeof coords[1] === "number"
+            ) {
+              onSelect?.([coords[0], coords[1]]);
+            }
           }}
         >
           {markers.map((marker) => (

@@ -7,6 +7,8 @@ import { settingsApi } from "@/lib/api/settings";
 import { useAdminLanguage } from "@/contexts/AdminLanguageContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090";
+const TASHKENT_CENTER: [number, number] = [41.3111, 69.2401];
+const DEFAULT_MAP_ZOOM = 14;
 
 const resolveUrl = (url: string) => (url.startsWith("http") ? url : `${API_URL}${url}`);
 
@@ -41,11 +43,14 @@ export default function AdminMapsPage() {
     const coords = getValue("map_coordinates");
     const zoom = getValue("map_zoom");
     const [lat, lng] = coords.split(",").map((value) => value.trim());
+    const parsedLat = Number.parseFloat(lat);
+    const parsedLng = Number.parseFloat(lng);
+    const parsedZoom = Number.parseInt(zoom, 10);
 
     setMapDefaults({
-      lat: lat || "",
-      lng: lng || "",
-      zoom: zoom || "",
+      lat: Number.isFinite(parsedLat) ? `${parsedLat}` : `${TASHKENT_CENTER[0]}`,
+      lng: Number.isFinite(parsedLng) ? `${parsedLng}` : `${TASHKENT_CENTER[1]}`,
+      zoom: Number.isFinite(parsedZoom) ? `${parsedZoom}` : `${DEFAULT_MAP_ZOOM}`,
     });
   }, []);
 
@@ -79,6 +84,20 @@ export default function AdminMapsPage() {
       })),
     [lang, markers]
   );
+
+  const mapCenter = useMemo<[number, number]>(() => {
+    const lat = Number.parseFloat(mapDefaults.lat);
+    const lng = Number.parseFloat(mapDefaults.lng);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      return [lat, lng];
+    }
+    return TASHKENT_CENTER;
+  }, [mapDefaults.lat, mapDefaults.lng]);
+
+  const mapZoom = useMemo(() => {
+    const zoom = Number.parseInt(mapDefaults.zoom, 10);
+    return Number.isFinite(zoom) ? zoom : DEFAULT_MAP_ZOOM;
+  }, [mapDefaults.zoom]);
 
   const handleTypeIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -308,6 +327,8 @@ export default function AdminMapsPage() {
                   <div className="h-80 rounded-lg overflow-hidden border border-gray-200">
                     <MapPicker
                       className="w-full h-full"
+                      center={mapCenter}
+                      zoom={mapZoom}
                       markers={mapMarkers}
                       selected={selectedCoords}
                       onSelect={(coords) => setSelectedCoords(coords)}
