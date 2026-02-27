@@ -6,6 +6,7 @@ import { Header, Footer } from "@/components/sections";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { galleryApi, GalleryItem } from "@/lib/api/gallery";
 import { HeroVideoDialog } from "@/components/ui/hero-video-dialog";
+import { sanitizeRichTextHtml } from "@/lib/rich-text";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090";
 
@@ -71,7 +72,9 @@ export default function GalleryPage() {
             id: item.id,
             image: item.url.startsWith("http") ? item.url : `${API_URL}${item.url}`,
             title: language === "uz" ? (item.title_uz || item.title) : item.title,
-            description: language === "uz" ? (item.description_uz || item.description) : item.description,
+            description: sanitizeRichTextHtml(
+              language === "uz" ? (item.description_uz || item.description) : item.description
+            ),
             redirect_url: item.redirect_url,
           }));
           setGalleryItems(items);

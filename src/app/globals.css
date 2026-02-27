@@ -166,6 +166,13 @@
       transform: none;
     }
   }
+
+  body[data-admin-no-motion="true"] *,
+  body[data-admin-no-motion="true"] *::before,
+  body[data-admin-no-motion="true"] *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 /* Custom utilities */

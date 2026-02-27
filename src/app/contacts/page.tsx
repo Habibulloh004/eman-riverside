@@ -161,7 +161,7 @@ export default function ContactsPage() {
 
     const init = () => {
       const containers = [contactDetailsRef.current, locationItemsRef.current].filter(
-        (el): el is HTMLElement => Boolean(el)
+        (el): el is HTMLDivElement | HTMLUListElement => el !== null
       );
       if (containers.length === 0) return;
 

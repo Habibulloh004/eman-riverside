@@ -14,6 +14,7 @@ import { YandexMap } from "@/components/shared";
 import { submissionsApi } from "@/lib/api/submissions";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
+import { sanitizeRichTextHtml } from "@/lib/rich-text";
 
 export default function ApartmentRequestPage() {
   const params = useParams();
@@ -58,9 +59,9 @@ export default function ApartmentRequestPage() {
   // Dynamic payment plans from settings
   const paymentPlans = language === "uz" ? settings.payment_plans_uz : settings.payment_plans;
   const paymentOptions = paymentPlans.length > 0
-    ? paymentPlans.map((plan, idx) => ({
+      ? paymentPlans.map((plan, idx) => ({
         title: plan.title,
-        description: plan.description,
+        description: sanitizeRichTextHtml(plan.description),
         price: plan.price,
         priceNote: plan.period,
         color: idx === 0 ? "primary" : "white",

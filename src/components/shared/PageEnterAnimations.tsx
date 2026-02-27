@@ -120,6 +120,7 @@ export default function PageEnterAnimations() {
   const pathname = usePathname();
 
   useEffect(() => {
+    if (pathname.startsWith("/admin")) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const main = document.querySelector("main");

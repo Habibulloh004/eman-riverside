@@ -250,7 +250,9 @@ function CatalogContent() {
       0.12
     );
 
-    return () => tl.kill();
+    return () => {
+      tl.kill();
+    };
   }, [isLoading, paginatedApartments.length]);
 
   useEffect(() => {
@@ -267,7 +269,9 @@ function CatalogContent() {
       }
     );
 
-    return () => fade.kill();
+    return () => {
+      fade.kill();
+    };
   }, []);
 
   const filterContent = (

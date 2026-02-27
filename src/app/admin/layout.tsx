@@ -13,6 +13,13 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    document.body.dataset.adminNoMotion = "true";
+    return () => {
+      delete document.body.dataset.adminNoMotion;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!isLoading && !isAuthenticated && pathname !== "/admin/login") {
       router.push("/admin/login");
     }
