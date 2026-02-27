@@ -29,6 +29,7 @@ interface ContentSettings {
   map_coordinates: string;
   background_music_url: string;
   brochure_file_url: string;
+  brochure_file_name: string;
 }
 
 interface SiteSettings {
@@ -78,6 +79,7 @@ const defaultSettings: SiteSettings = {
     map_coordinates: "41.3111,69.2401",
     background_music_url: "",
     brochure_file_url: "",
+    brochure_file_name: "",
   },
   payment_plans: [],
   payment_plans_uz: [],
@@ -109,6 +111,21 @@ function getJSONValue<T>(data: SettingsResponse, category: string, key: string, 
   return parseSettingValue(setting, defaultValue);
 }
 
+function extractFileNameFromUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+
+  const cleanPath = trimmed.split(/[?#]/)[0];
+  const rawName = cleanPath.substring(cleanPath.lastIndexOf("/") + 1);
+  if (!rawName) return "";
+
+  try {
+    return decodeURIComponent(rawName);
+  } catch {
+    return rawName;
+  }
+}
+
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -120,6 +137,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setError(null);
 
       const data = await settingsApi.getAll();
+      const brochureFileUrl = getValue(
+        data,
+        "content",
+        "brochure_file_url",
+        defaultSettings.content.brochure_file_url
+      );
+      const brochureFileName =
+        getValue(data, "content", "brochure_file_name", "") ||
+        extractFileNameFromUrl(brochureFileUrl);
 
       const parsed: SiteSettings = {
         contact: {
@@ -150,12 +176,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             "background_music_url",
             defaultSettings.content.background_music_url
           ),
-          brochure_file_url: getValue(
-            data,
-            "content",
-            "brochure_file_url",
-            defaultSettings.content.brochure_file_url
-          ),
+          brochure_file_url: brochureFileUrl,
+          brochure_file_name: brochureFileName,
         },
         payment_plans: getJSONValue<PaymentPlan[]>(data, "pricing", "payment_plans", []),
         payment_plans_uz: getJSONValue<PaymentPlan[]>(data, "pricing", "payment_plans_uz", []),

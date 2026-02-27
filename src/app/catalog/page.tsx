@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, Suspense, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import { gsap } from "gsap";
 import { PageHero } from "@/components/shared";
 import { Header, Footer } from "@/components/sections";
 import { Button } from "@/components/ui/button";
@@ -78,6 +79,8 @@ export default function CatalogPage() {
 function CatalogContent() {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
+  const catalogListRef = useRef<HTMLDivElement | null>(null);
+  const desktopFilterRef = useRef<HTMLDivElement | null>(null);
 
   // React Query - get all data once with caching
   const { data: allApartments = [], isLoading } = useEstates({ type: "living" });
@@ -205,8 +208,70 @@ function CatalogContent() {
     return "/images/hero/planirovka1.png";
   };
 
+  useEffect(() => {
+    if (isLoading) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!catalogListRef.current) return;
+
+    const root = catalogListRef.current;
+    const cards = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-catalog-item]")
+    );
+    const titles = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-catalog-item-title]")
+    );
+
+    if (cards.length === 0) return;
+
+    const tl = gsap.timeline({ defaults: { ease: "none" } });
+
+    tl.set(titles, { autoAlpha: 0 });
+
+    tl.fromTo(
+      cards,
+      { y: 20, autoAlpha: 0 },
+      {
+        y: 0,
+        autoAlpha: 1,
+        duration: 0.58,
+        stagger: 0.07,
+        clearProps: "opacity,visibility,transform",
+      }
+    ).fromTo(
+      titles,
+      { y: 8, autoAlpha: 0 },
+      {
+        y: 0,
+        autoAlpha: 1,
+        duration: 0.34,
+        stagger: 0.07,
+        clearProps: "opacity,visibility,transform",
+      },
+      0.12
+    );
+
+    return () => tl.kill();
+  }, [isLoading, paginatedApartments.length]);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!desktopFilterRef.current) return;
+
+    const fade = gsap.fromTo(
+      desktopFilterRef.current,
+      { autoAlpha: 0 },
+      {
+        autoAlpha: 1,
+        duration: 0.45,
+        clearProps: "opacity,visibility",
+      }
+    );
+
+    return () => fade.kill();
+  }, []);
+
   const filterContent = (
-    <>
+    <div data-no-page-text-anim="true" data-no-page-ui-anim="true">
       {/* Floor Filter */}
       <FilterSection
         title={t.catalog.floorFilter}
@@ -293,7 +358,7 @@ function CatalogContent() {
           {t.catalog.resetFilters}
         </Button>
       </div>
-    </>
+    </div>
   );
 
   return (
@@ -311,7 +376,7 @@ function CatalogContent() {
             <div className="flex gap-6">
               {/* Desktop Sidebar Filters */}
               <aside className="hidden lg:block w-64 shrink-0">
-                <div className="bg-white rounded-lg p-5 sticky top-24">
+                <div ref={desktopFilterRef} className="bg-white rounded-lg p-5 sticky top-24">
                   {filterContent}
                 </div>
               </aside>
@@ -357,11 +422,17 @@ function CatalogContent() {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 min-[1700px]:grid-cols-2 gap-4">
+                  <div
+                    ref={catalogListRef}
+                    className="grid grid-cols-1 min-[1700px]:grid-cols-2 gap-4"
+                    data-no-page-text-anim="true"
+                    data-no-page-media-anim="true"
+                  >
                     {paginatedApartments.map((apartment) => (
                       <div
                         key={apartment.id}
                         className="bg-white rounded-lg p-3 sm:p-4 overflow-hidden"
+                        data-catalog-item
                       >
                         <div className="flex gap-3 sm:gap-4">
                           {/* Image */}
@@ -383,7 +454,10 @@ function CatalogContent() {
                             {/* Title + info row */}
                             <div className="min-w-0">
                               <Link href={`/catalog/${apartment.id}`}>
-                                <h3 className="text-sm sm:text-base font-semibold text-gray-900 hover:text-primary transition-colors truncate">
+                                <h3
+                                  className="text-sm sm:text-base font-semibold text-gray-900 hover:text-primary transition-colors truncate"
+                                  data-catalog-item-title
+                                >
                                   {apartment.title || "Люкс Экстра"}
                                 </h3>
                               </Link>

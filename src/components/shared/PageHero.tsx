@@ -10,7 +10,7 @@ export default function PageHero({ title, subtitle, image }: PageHeroProps) {
   return (
     <section className="relative h-[100px] sm:h-[120px] lg:h-[140px] mt-20">
       {/* Background Image */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0" data-no-page-media-anim="true">
         {image ? (
           <Image
             src={image}

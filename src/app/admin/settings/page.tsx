@@ -63,6 +63,21 @@ interface ProjectItem {
   features?: string[];
 }
 
+function extractFileNameFromUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+
+  const cleanPath = trimmed.split(/[?#]/)[0];
+  const rawName = cleanPath.substring(cleanPath.lastIndexOf("/") + 1);
+  if (!rawName) return "";
+
+  try {
+    return decodeURIComponent(rawName);
+  } catch {
+    return rawName;
+  }
+}
+
 export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -83,6 +98,7 @@ export default function SettingsPage() {
     working_hours_uz: "",
     background_music_url: "",
     brochure_file_url: "",
+    brochure_file_name: "",
   });
 
   const [socialForm, setSocialForm] = useState({
@@ -109,6 +125,8 @@ export default function SettingsPage() {
       const data = await settingsApi.list();
 
       const getValue = (key: string) => data.find(s => s.key === key)?.value || "";
+      const brochureFileUrl = getValue("brochure_file_url");
+      const brochureFileName = getValue("brochure_file_name") || extractFileNameFromUrl(brochureFileUrl);
 
       setContactForm({
         phone: getValue("phone"),
@@ -118,7 +136,8 @@ export default function SettingsPage() {
         working_hours: getValue("working_hours"),
         working_hours_uz: getValue("working_hours_uz"),
         background_music_url: getValue("background_music_url"),
-        brochure_file_url: getValue("brochure_file_url"),
+        brochure_file_url: brochureFileUrl,
+        brochure_file_name: brochureFileName,
       });
 
       setSocialForm({
@@ -208,6 +227,7 @@ export default function SettingsPage() {
         { key: "working_hours_uz", value: contactForm.working_hours_uz },
         { key: "background_music_url", value: contactForm.background_music_url },
         { key: "brochure_file_url", value: contactForm.brochure_file_url },
+        { key: "brochure_file_name", value: contactForm.brochure_file_name },
       ];
       await settingsApi.bulkUpdate(updates);
       showNotification("success", t.settings.contactSaved);
@@ -226,7 +246,11 @@ export default function SettingsPage() {
     setIsUploadingBrochure(true);
     try {
       const result = await apiClient.upload("/api/admin/upload", file);
-      setContactForm((prev) => ({ ...prev, brochure_file_url: result.url }));
+      setContactForm((prev) => ({
+        ...prev,
+        brochure_file_url: result.url,
+        brochure_file_name: file.name,
+      }));
       showNotification("success", t.settings.brochureUploaded);
     } catch (err) {
       console.error("Failed to upload brochure:", err);
@@ -701,11 +725,17 @@ export default function SettingsPage() {
                   {contactForm.brochure_file_url ? (
                     <div className="flex items-center justify-between gap-3 px-4 py-3 border border-gray-200 rounded-xl bg-gray-50">
                       <p className="text-xs text-gray-600 truncate">
-                        {t.settings.brochureCurrent}: {contactForm.brochure_file_url}
+                        {t.settings.brochureCurrent}: {contactForm.brochure_file_name || extractFileNameFromUrl(contactForm.brochure_file_url)}
                       </p>
                       <button
                         type="button"
-                        onClick={() => setContactForm({ ...contactForm, brochure_file_url: "" })}
+                        onClick={() =>
+                          setContactForm({
+                            ...contactForm,
+                            brochure_file_url: "",
+                            brochure_file_name: "",
+                          })
+                        }
                         className="text-xs font-medium text-red-600 hover:text-red-700"
                       >
                         {t.settings.brochureClear}

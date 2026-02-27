@@ -148,6 +148,24 @@
   .font-serif {
     font-family: var(--font-playfair), Georgia, serif;
   }
+
+  @media (hover: hover) and (pointer: fine) {
+    main img:not([alt=""]):not([data-no-hover-scale="true"]) {
+      transition: transform 260ms linear;
+      transform-origin: center;
+    }
+
+    main img:not([alt=""]):not([data-no-hover-scale="true"]):hover {
+      transform: scale(1.018);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    main img:not([alt=""]):not([data-no-hover-scale="true"]) {
+      transition: none;
+      transform: none;
+    }
+  }
 }
 
 /* Custom utilities */

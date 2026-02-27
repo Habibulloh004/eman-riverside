@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Header, Footer } from "@/components/sections";
 import { PageHero } from "@/components/shared";
 import { Input } from "@/components/ui/input";
@@ -11,10 +11,15 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
 import { submissionsApi } from "@/lib/api/submissions";
 import { toast } from "sonner";
+import { gsap } from "gsap";
 
 export default function ContactsPage() {
   const { t, language } = useLanguage();
   const { settings } = useSiteSettings();
+  const contactDetailsRef = useRef<HTMLDivElement | null>(null);
+  const locationItemsRef = useRef<HTMLUListElement | null>(null);
+  const animatedRowsRef = useRef(new WeakSet<HTMLElement>());
+  const pendingRowsRef = useRef(new WeakSet<HTMLElement>());
 
   // Dynamic contact info from settings
   const address = language === "uz" ? settings.contact.address_uz : settings.contact.address;
@@ -102,6 +107,116 @@ export default function ContactsPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const activeTweens: Array<{ tween: gsap.core.Tween; items: HTMLElement[] }> = [];
+    const mutationObservers: MutationObserver[] = [];
+    const visibleContainers = new WeakSet<HTMLElement>();
+    let observer: IntersectionObserver | null = null;
+
+    const isElementInView = (element: HTMLElement) => {
+      const rect = element.getBoundingClientRect();
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      return rect.top < viewportHeight * 0.9 && rect.bottom > 0;
+    };
+
+    const animatePendingItems = (container: HTMLElement) => {
+      const items = Array.from(container.children).filter((el): el is HTMLElement => {
+        return (
+          el instanceof HTMLElement &&
+          el.offsetParent !== null &&
+          !animatedRowsRef.current.has(el) &&
+          !pendingRowsRef.current.has(el)
+        );
+      });
+      if (items.length === 0) return;
+
+      items.forEach((item) => pendingRowsRef.current.add(item));
+      const tween = gsap.fromTo(
+        items,
+        { y: 12, autoAlpha: 0 },
+        {
+          y: 0,
+          autoAlpha: 1,
+          duration: 0.42,
+          stagger: 0.12,
+          clearProps: "opacity,visibility,transform",
+          ease: "none",
+          onComplete: () => {
+            items.forEach((item) => {
+              pendingRowsRef.current.delete(item);
+              animatedRowsRef.current.add(item);
+            });
+          },
+          onInterrupt: () => {
+            items.forEach((item) => {
+              pendingRowsRef.current.delete(item);
+            });
+          },
+        }
+      );
+      activeTweens.push({ tween, items });
+    };
+
+    const init = () => {
+      const containers = [contactDetailsRef.current, locationItemsRef.current].filter(
+        (el): el is HTMLElement => Boolean(el)
+      );
+      if (containers.length === 0) return;
+
+      observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            const container = entry.target as HTMLElement;
+            if (entry.isIntersecting) {
+              visibleContainers.add(container);
+              animatePendingItems(container);
+              return;
+            }
+            if (visibleContainers.has(container)) {
+              visibleContainers.delete(container);
+            }
+          });
+        },
+        { threshold: 0.2, rootMargin: "0px 0px -10% 0px" }
+      );
+
+      containers.forEach((container) => {
+        observer?.observe(container);
+        if (isElementInView(container)) {
+          visibleContainers.add(container);
+          animatePendingItems(container);
+        }
+
+        const mo = new MutationObserver(() => {
+          if (visibleContainers.has(container) || isElementInView(container)) {
+            animatePendingItems(container);
+          }
+        });
+        mo.observe(container, { childList: true, subtree: false });
+        mutationObservers.push(mo);
+      });
+    };
+
+    // Defer setup to avoid mount-time race with browser scroll restoration and strict-mode probe mounts.
+    let raf2 = 0;
+    const raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(init);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      window.cancelAnimationFrame(raf2);
+      observer?.disconnect();
+      mutationObservers.forEach((mo) => mo.disconnect());
+      activeTweens.forEach(({ tween, items }) => {
+        tween.kill();
+        gsap.set(items, { clearProps: "opacity,visibility,transform" });
+      });
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -147,32 +262,37 @@ export default function ContactsPage() {
                 </p>
 
                 {/* Contact details */}
-                <div className="space-y-3 mb-8">
+                <div
+                  className="space-y-3 mb-8"
+                  ref={contactDetailsRef}
+                  data-no-page-text-anim="true"
+                  data-no-page-ui-anim="true"
+                >
                   {address && (
-                    <div className="flex items-center gap-2 text-sm">
+                    <p className="flex items-center gap-2 text-sm">
                       <MapPin className="w-4 h-4 text-primary shrink-0" />
                       <span>{address}</span>
-                    </div>
+                    </p>
                   )}
                   {settings.contact.phone && (
-                    <div className="flex items-center gap-2 text-sm">
+                    <p className="flex items-center gap-2 text-sm">
                       <Phone className="w-4 h-4 text-primary shrink-0" />
                       <a href={phoneHref}>{settings.contact.phone}</a>
-                    </div>
+                    </p>
                   )}
                   {settings.contact.email && (
-                    <div className="flex items-center gap-2 text-sm">
+                    <p className="flex items-center gap-2 text-sm">
                       <svg className="w-4 h-4 text-primary shrink-0" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
                       </svg>
                       <a href={`mailto:${settings.contact.email}`}>{settings.contact.email}</a>
-                    </div>
+                    </p>
                   )}
                   {workingHours && (
-                    <div className="flex items-center gap-2 text-sm">
+                    <p className="flex items-center gap-2 text-sm">
                       <Clock className="w-4 h-4 text-primary shrink-0" />
                       <span>{t.contacts.workingHours}: {workingHours}</span>
-                    </div>
+                    </p>
                   )}
                 </div>
 
@@ -287,7 +407,12 @@ export default function ContactsPage() {
                 </p>
 
                 {/* Location items */}
-                <ul className="space-y-3">
+                <ul
+                  className="space-y-3"
+                  ref={locationItemsRef}
+                  data-no-page-text-anim="true"
+                  data-no-page-ui-anim="true"
+                >
                   {t.contacts.locationItems.map((item, index) => (
                     <li key={index} className="flex items-center gap-3 text-sm">
                       <span className="text-primary">•</span>

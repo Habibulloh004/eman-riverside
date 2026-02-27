@@ -2,15 +2,19 @@
 
 import Image from "next/image";
 import { AtSign, Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { gsap } from "gsap";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
+
+let hasAnimatedHeroInRuntime = false;
 
 export default function Hero() {
   const { t } = useLanguage();
   const { settings } = useSiteSettings();
   const router = useRouter();
+  const heroRef = useRef<HTMLElement | null>(null);
   const heroHeadline = t.hero.comingSoon;
   const isLongHeadline = heroHeadline.length > 20;
   const [selectedFloor, setSelectedFloor] = useState("");
@@ -69,10 +73,103 @@ export default function Hero() {
     router.push(`/catalog${query ? `?${query}` : ""}`);
   };
 
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!heroRef.current) return;
+
+    const root = heroRef.current;
+    const social = root.querySelector<HTMLElement>("[data-hero-social]");
+    const card = root.querySelector<HTMLElement>("[data-hero-card]");
+    const textTargets = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-hero-text]")
+    ).filter((el) => el.offsetParent !== null);
+    const form = root.querySelector<HTMLElement>("[data-hero-form]");
+
+    const allTargets = [social, card, ...textTargets, form].filter(
+      (el): el is HTMLElement => Boolean(el)
+    );
+    if (allTargets.length === 0) return;
+    if (hasAnimatedHeroInRuntime) {
+      gsap.set(allTargets, { clearProps: "opacity,visibility,transform" });
+      return;
+    }
+    hasAnimatedHeroInRuntime = true;
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "none" } });
+
+      if (social && social.offsetParent !== null) {
+        tl.fromTo(
+          social,
+          { x: -16, autoAlpha: 0 },
+          {
+            x: 0,
+            autoAlpha: 1,
+            duration: 0.5,
+            clearProps: "opacity,visibility,transform",
+          }
+        );
+      }
+
+      if (card) {
+        tl.fromTo(
+          card,
+          { y: 26, scale: 0.995, autoAlpha: 0 },
+          {
+            y: 0,
+            scale: 1,
+            autoAlpha: 1,
+            duration: 0.78,
+            clearProps: "opacity,visibility,transform",
+          },
+          social && social.offsetParent !== null ? "-=0.12" : 0
+        );
+      }
+
+      if (textTargets.length > 0) {
+        tl.fromTo(
+          textTargets,
+          { y: 18, autoAlpha: 0 },
+          {
+            y: 0,
+            autoAlpha: 1,
+            duration: 0.58,
+            stagger: 0.085,
+            clearProps: "opacity,visibility,transform",
+          },
+          card ? "-=0.55" : 0
+        );
+      }
+
+      if (form) {
+        tl.fromTo(
+          form,
+          { y: 14, autoAlpha: 0 },
+          {
+            y: 0,
+            autoAlpha: 1,
+            duration: 0.55,
+            clearProps: "opacity,visibility,transform",
+          },
+          textTargets.length > 0 ? "-=0.35" : 0
+        );
+      }
+    }, heroRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section id="hero" className="relative min-h-screen lg:min-h-0 flex items-center justify-center pt-20 pb-4 lg:pt-32 lg:pb-16">
+    <section
+      id="hero"
+      ref={heroRef}
+      className="relative min-h-screen lg:min-h-0 flex items-center justify-center pt-20 pb-4 lg:pt-32 lg:pb-16"
+    >
       {/* Left Side Social Links - Desktop only */}
-      <div className="absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20 hidden lg:flex flex-col items-center gap-4">
+      <div
+        data-hero-social
+        className="absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20 hidden lg:flex flex-col items-center gap-4"
+      >
         <span className="text-xs text-muted-foreground tracking-widest rotate-180" style={{ writingMode: "vertical-rl" }}>
           {t.hero.socialLinks}
         </span>
@@ -96,11 +193,15 @@ export default function Hero() {
       {/* Content */}
       <div className="container mx-auto px-3 lg:px-8 relative z-10">
         {/* Main Hero Card - Green box + Image side by side */}
-        <div className="flex flex-col lg:flex-row rounded-xl overflow-hidden shadow-2xl w-full lg:w-11/12 max-w-[1400px] mx-auto">
+        <div
+          data-hero-card
+          className="flex flex-col lg:flex-row rounded-xl overflow-hidden shadow-2xl w-full lg:w-11/12 max-w-[1400px] mx-auto"
+        >
           {/* Left - Green Box with text and search form */}
           <div className="bg-primary p-5 sm:p-6 lg:p-14 text-white lg:w-[44%] xl:w-[42%] flex flex-col gap-4 lg:gap-0 lg:justify-between min-h-[260px] sm:min-h-[300px] lg:min-h-[500px]">
             <div>
               <h1
+                data-hero-text
                 className={`font-serif font-light mb-2 leading-[0.95] break-normal [overflow-wrap:normal] ${
                   isLongHeadline
                     ? "text-[clamp(2rem,5vw,4.2rem)]"
@@ -109,13 +210,13 @@ export default function Hero() {
               >
                 {heroHeadline}
               </h1>
-              <p className="text-white/80 text-sm sm:text-base lg:text-xl my-3">
+              <p data-hero-text className="text-white/80 text-sm sm:text-base lg:text-xl my-3">
                 {t.hero.subtitle}
               </p>
             </div>
 
             {/* Search Form inside green box */}
-            <div className="bg-white rounded-lg p-3 sm:p-4 lg:p-5 mt-4 lg:mt-0">
+            <div data-hero-form className="bg-white rounded-lg p-3 sm:p-4 lg:p-5 mt-4 lg:mt-0">
               <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-2 sm:mb-4">
                 {t.hero.selectApartment}
               </p>
@@ -201,7 +302,10 @@ export default function Hero() {
           </div>
 
           {/* Right - Hero Image */}
-          <div className="relative lg:w-[58%] aspect-[4/3] lg:aspect-auto min-h-[180px] sm:min-h-[220px] lg:min-h-[500px]">
+          <div
+            data-hero-image
+            className="relative lg:w-[58%] aspect-[4/3] lg:aspect-auto min-h-[180px] sm:min-h-[220px] lg:min-h-[500px]"
+          >
             <Image
               src="/images/hero.webp"
               alt="EMAN RIVERSIDE"

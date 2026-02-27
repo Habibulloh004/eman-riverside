@@ -3,7 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { siteConfig } from "@/lib/constants";
-import { ScrollToTop } from "@/components/shared";
+import { PageEnterAnimations, ScrollToTop } from "@/components/shared";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { QueryProvider } from "@/lib/query-provider";
@@ -133,6 +133,7 @@ export default function RootLayout({
             <LanguageProvider>
               <BackgroundMusicPlayer />
               <ScrollToTop />
+              <PageEnterAnimations />
               {children}
               <Toaster
                 position="top-center"

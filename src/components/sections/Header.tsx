@@ -1,13 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
+import { gsap } from "gsap";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
 import { RequestModal } from "@/components/shared";
+
+let hasAnimatedHeaderInRuntime = false;
 
 function resolveHeaderFileUrl(value: string): string {
   const trimmed = value.trim();
@@ -37,16 +40,42 @@ function resolveHeaderFileUrl(value: string): string {
   return trimmed;
 }
 
+function extractFileNameFromUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+
+  const cleanPath = trimmed.split(/[?#]/)[0];
+  const rawName = cleanPath.substring(cleanPath.lastIndexOf("/") + 1);
+  if (!rawName) return "";
+
+  try {
+    return decodeURIComponent(rawName);
+  } catch {
+    return rawName;
+  }
+}
+
+function getDownloadFileName(explicitName: string, fileUrl: string): string {
+  const name = explicitName.trim();
+  if (name) return name;
+  return extractFileNameFromUrl(fileUrl);
+}
+
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const desktopHeaderRef = useRef<HTMLDivElement | null>(null);
   const { language, setLanguage, t } = useLanguage();
-  const { settings } = useSiteSettings();
+  const { settings, isLoading: isSettingsLoading } = useSiteSettings();
 
   // Format phone for tel: href
   const phoneHref = `tel:${settings.contact.phone.replace(/\s/g, "")}`;
   const brochureUrl = resolveHeaderFileUrl(settings.content.brochure_file_url || "");
+  const brochureDownloadName = getDownloadFileName(
+    settings.content.brochure_file_name || "",
+    brochureUrl
+  );
   const hasBrochure = brochureUrl.length > 0;
 
   const headerNavLinks = [
@@ -64,6 +93,65 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (isSettingsLoading) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.innerWidth < 1024) return;
+    if (!desktopHeaderRef.current) return;
+
+    const headerEl = desktopHeaderRef.current;
+    const logo = headerEl.querySelector<HTMLElement>("[data-anim-header-logo]");
+    const sequenceItems = Array.from(
+      headerEl.querySelectorAll<HTMLElement>("[data-anim-header-seq]")
+    ).filter((el) => el.offsetParent !== null);
+    const allTargets = [logo, ...sequenceItems].filter(
+      (el): el is HTMLElement => Boolean(el)
+    );
+
+    if (allTargets.length === 0) return;
+    if (hasAnimatedHeaderInRuntime) {
+      gsap.set(allTargets, { clearProps: "opacity,visibility,transform" });
+      return;
+    }
+    hasAnimatedHeaderInRuntime = true;
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "none" } });
+
+      if (logo) {
+        tl.fromTo(
+          logo,
+          { y: -10, autoAlpha: 0 },
+          {
+            y: 0,
+            autoAlpha: 1,
+            duration: 0.42,
+            clearProps: "opacity,visibility,transform",
+          }
+        );
+      }
+
+      if (sequenceItems.length > 0) {
+        tl.fromTo(
+          sequenceItems,
+          { y: -10, autoAlpha: 0 },
+          {
+            y: 0,
+            autoAlpha: 1,
+            duration: 0.34,
+            stagger: 0.035,
+            clearProps: "opacity,visibility,transform",
+          },
+          logo ? "-=0.26" : 0
+        );
+      }
+    }, desktopHeaderRef);
+
+    return () => {
+      ctx.revert();
+    };
+  }, [isSettingsLoading]);
+
   const toggleLanguage = () => {
     setLanguage(language === "ru" ? "uz" : "ru");
   };
@@ -77,9 +165,9 @@ export default function Header() {
       }`}
     >
       <div className="container mx-auto px-4 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div ref={desktopHeaderRef} className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center shrink-0">
+          <Link href="/" className="flex items-center shrink-0" data-anim-header-logo>
             <Image
               src="/logo.svg"
               alt="EMAN RIVERSIDE"
@@ -96,6 +184,7 @@ export default function Header() {
               <Link
                 key={link.href}
                 href={link.href}
+                data-anim-header-seq
                 className="text-sm font-medium tracking-wide text-foreground hover:text-primary/70 transition-colors whitespace-nowrap"
               >
                 {link.label}
@@ -104,6 +193,7 @@ export default function Header() {
             {/* Language Switcher */}
             <button
               onClick={toggleLanguage}
+              data-anim-header-seq
               className="text-sm font-medium tracking-wide text-foreground hover:text-primary/70 transition-colors whitespace-nowrap"
             >
               {language === "ru" ? "РУС" : "UZB"}/{language === "ru" ? "УЗБ" : "RUS"}
@@ -112,32 +202,39 @@ export default function Header() {
 
           {/* CTA Buttons */}
           <div className="hidden lg:flex items-center gap-2 2xl:gap-3 shrink-0">
-            <Button
-              className="rounded-full px-4 2xl:px-6 bg-primary text-white hover:bg-primary/90 whitespace-nowrap"
-              onClick={() => setIsRequestModalOpen(true)}
-            >
-              {t.requestModal.title}
-            </Button>
+            <div data-anim-header-seq>
+              <Button
+                className="rounded-full px-4 2xl:px-6 bg-primary text-white hover:bg-primary/90 whitespace-nowrap"
+                onClick={() => setIsRequestModalOpen(true)}
+              >
+                {t.requestModal.title}
+              </Button>
+            </div>
             {hasBrochure && (
-              <div className="hidden xl:block">
+              <div className="hidden xl:block" data-anim-header-seq>
                 <Button
                   className="rounded-full px-4 2xl:px-6 whitespace-nowrap"
                   variant="outline"
                   asChild
                 >
-                  <a href={brochureUrl} target="_blank" rel="noopener noreferrer" download>
+                  <a
+                    href={brochureUrl}
+                    download={brochureDownloadName || true}
+                  >
                     {t.nav.brochure}
                   </a>
                 </Button>
               </div>
             )}
-            <Button
-              className="rounded-full px-4 2xl:px-6 whitespace-nowrap"
-              variant="outline"
-              asChild
-            >
-              <a href={phoneHref}>{t.nav.call}</a>
-            </Button>
+            <div data-anim-header-seq>
+              <Button
+                className="rounded-full px-4 2xl:px-6 whitespace-nowrap"
+                variant="outline"
+                asChild
+              >
+                <a href={phoneHref}>{t.nav.call}</a>
+              </Button>
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
@@ -197,7 +294,10 @@ export default function Header() {
                   className="w-full border-primary text-primary hover:bg-primary hover:text-white rounded-full"
                   asChild
                 >
-                  <a href={brochureUrl} target="_blank" rel="noopener noreferrer" download>
+                  <a
+                    href={brochureUrl}
+                    download={brochureDownloadName || true}
+                  >
                     {t.nav.brochure}
                   </a>
                 </Button>
