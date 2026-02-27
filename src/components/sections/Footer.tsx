@@ -136,9 +136,9 @@ export default function Footer() {
 
           {/* Request */}
           <div>
-            <h3 className="text-xs font-semibold text-foreground mb-3">{t.requestModal.title}</h3>
+            <h3 className="text-xs font-semibold text-foreground mb-3">{t.footer.requestTitle}</h3>
             <p className="text-[10px] text-muted-foreground mb-3">
-              {t.requestModal.description}
+              {t.footer.requestDescription}
             </p>
 
             <button

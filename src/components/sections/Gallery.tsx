@@ -198,7 +198,7 @@ export default function Gallery() {
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif mb-4">
               {t.gallerySection.title}
             </h2>
-            <p className="text-muted-foreground text-sm uppercase tracking-wider max-w-xs">
+            <p className="text-muted-foreground text-sm leading-relaxed max-w-sm">
               {t.gallerySection.description}
             </p>
           </div>

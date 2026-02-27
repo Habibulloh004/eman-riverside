@@ -10,14 +10,11 @@ export default function AboutHeader() {
       <div className="flex items-center gap-4 mb-6">
         <div className="w-12 h-px bg-primary" />
         <span className="text-xl text-primary font-medium uppercase tracking-[0.2em]">
-          EMAN RIVERSIDE
+          {t.aboutHeader.label}
         </span>
       </div>
       <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif">
-        {t.aboutHeader.whyEman}{" "}
-        <span className="text-primary">EMAN</span>
-        <br />
-        <span className="text-primary">RIVERSIDE?</span>
+        {t.aboutHeader.question}
       </h2>
     </div>
   );

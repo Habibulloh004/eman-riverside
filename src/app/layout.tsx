@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { siteConfig } from "@/lib/constants";
 import { ScrollToTop } from "@/components/shared";
@@ -8,6 +9,8 @@ import { SettingsProvider } from "@/contexts/SettingsContext";
 import { QueryProvider } from "@/lib/query-provider";
 import { Toaster } from "sonner";
 import { BackgroundMusicPlayer } from "@/components/shared/BackgroundMusicPlayer";
+
+const GOOGLE_ADS_TAG_ID = "AW-17976329118";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -28,11 +31,15 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
   title: {
     default: `${siteConfig.name} - Zamonaviy Turar-joy Majmuasi`,
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
+  alternates: {
+    canonical: "/",
+  },
   keywords: [
     "turar-joy",
     "kvartira",
@@ -91,6 +98,13 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
@@ -102,6 +116,18 @@ export default function RootLayout({
   return (
     <html lang="ru" className="scroll-smooth" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased`} suppressHydrationWarning>
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_TAG_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-ads-gtag" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GOOGLE_ADS_TAG_ID}');
+          `}
+        </Script>
         <QueryProvider>
           <SettingsProvider>
             <LanguageProvider>

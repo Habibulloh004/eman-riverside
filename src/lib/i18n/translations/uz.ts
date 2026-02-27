@@ -14,9 +14,9 @@ export const uz: Translations = {
   // Hero
   hero: {
     title: "EMAN RIVERSIDE",
-    comingSoon: "Yashashning yangi standarti",
-    comingSoonUz: "Yashashning yangi standarti",
-    subtitle: "Yangi darajadagi turar-joy majmuasi",
+    comingSoon: "Sizning kvartirangiz allaqachon sizni kutmoqda",
+    comingSoonUz: "Sizning kvartirangiz allaqachon sizni kutmoqda",
+    subtitle: "Oilangizga aynan mos keladigan reja yechimini tanlang",
     selectApartment: "KVARTIRA TANLASH",
     building: "Uy",
     floor: "Qavat",
@@ -32,6 +32,8 @@ export const uz: Translations = {
 
   // About Header
   aboutHeader: {
+    label: "Eman Development",
+    question: "Nega oilalar Eman Riverside'ni tanlaydi?",
     whyEman: "Nega Aynan",
   },
 
@@ -85,23 +87,25 @@ export const uz: Translations = {
 
   // Location
   location: {
-    title: "Bizning joylashuvimiz",
-    subtitle: "Joylashuv tabiat va shahar infratuzilmasini birlashtiradi — ideal muvozanat",
+    title: "Qulay joylashuvdagi sizning uyingiz",
+    subtitle: "Eman Riverside'da yashab, tabiat va shahar infratuzilmasining ideal muvozanatidan bahramand bo'lasiz.",
+    listIntro: "Kerakli barcha xizmatlar yaqin atrofda:",
     panoramaButton: "Panorama 360",
     panoramaTitle: "Panorama 360",
     places: [
-      "Korzinka supermarketi",
-      "Team University",
-      "Milliy bolalar tibbiyot markazi",
-      "4-son shahar klinik kasalxonasi",
-      "Maktablar va bolalar bog'chalari",
+      "Korzinka supermarketi — ortiqcha qatnovlarsiz xaridlar",
+      "Team University — uyga yaqin ta'lim",
+      "Milliy bolalar tibbiyot markazi — bolalar salomatligi nazoratda",
+      "4-son shahar klinik kasalxonasi — oila uchun g'amxo'rlik",
+      "Maktablar va bolalar bog'chalari — ota-onalar uchun qulaylik",
+      "Yaqin metro shaharning istalgan nuqtasiga tez yetib borishni ta'minlaydi",
     ],
   },
 
   // Gallery Section (Home)
   gallerySection: {
-    title: "GALEREYA",
-    description: "Qurilish jarayoni va tayyor yechimlar galereyasi: fasadlar, hovlilar va jamoat hududlari.",
+    title: "Galereya",
+    description: "Qurilish jarayoni va tayyor yechimlar suratlari: fasadlar, hovlilar va Eman Riverside jamoat zonalari. Kelajakdagi uyingiz qanday barpo etilayotganini ko'ring.",
   },
 
   // Floor Plans
@@ -126,12 +130,12 @@ export const uz: Translations = {
 
   // Contact Section (Home)
   contactSection: {
-    label: "BIZ BILAN BO'GLANING!",
-    title: "Kontaktlar",
-    description: "SAVOLLARINGIZ, IZOHLARINGIZ YOKI TAKLIFLARINGIZ BORMI? SHUNCHAKI SO'ROVNOMANI TO'LDIRING VA BIZ SIZ BILAN BOG'LANAMIZ!",
-    findApartment: "O'ZINGIZ ORZU QILGAN",
-    dream: "XONADONINGIZNI TOPING!",
-    formDesc: "SO'ROVNOMANI TO'LDIRING VA MENEJERLARIMIZ SIZ BILAN BOG'LANADI!",
+    label: "Aloqada bo'lamiz",
+    title: "Savollaringiz qoldimi?",
+    description: "Ko'proq ma'lumot olishni yoki fikringizni bildirishni xohlaysizmi? Shunchaki formani to'ldiring va biz tez orada siz bilan bog'lanamiz.",
+    findApartment: "Kvartirangiz sizni kutmoqda",
+    dream: "",
+    formDesc: "Ariza qoldiring, biz oilangizga aynan mos keladigan kvartirani tanlashda yordam beramiz",
     name: "ISM",
     phone: "TELEFON RAQAMI",
     comments: "IZOHLAR",
@@ -313,8 +317,10 @@ export const uz: Translations = {
 
   // Footer
   footer: {
-    description: "Toshkentning ekologik hududida yangi darajadagi turar-joy majmuasi.",
+    description: "Toshkentning ekologik va osoyishta hududida qulay hayot",
     navigation: "Navigatsiya",
+    requestTitle: "Ariza qoldiring",
+    requestDescription: "Siz uchun eng maqbul reja yechimi va xarid shartlarini tanlab beramiz",
     info: "Ma'lumot",
     aboutProject: "Loyiha haqida",
     aboutUs: "Biz haqimizda",

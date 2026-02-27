@@ -113,7 +113,7 @@ export default function Contact() {
         <div className="mb-12">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-px bg-primary" />
-            <span className="text-xs text-primary font-medium uppercase tracking-[0.2em]">
+            <span className="text-xs text-primary font-medium tracking-[0.12em]">
               {t.contactSection.label}
             </span>
           </div>
@@ -125,7 +125,7 @@ export default function Contact() {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
           {/* Left Side - Contact Info */}
           <div>
-            <p className="text-sm text-muted-foreground uppercase tracking-wider mb-8">
+            <p className="text-sm text-muted-foreground leading-relaxed mb-8">
               {t.contactSection.description}
             </p>
 
@@ -188,9 +188,15 @@ export default function Contact() {
           {/* Right Side - Form */}
           <div>
             <h3 className="text-2xl lg:text-3xl font-serif mb-2">
-              {t.contactSection.findApartment}<br />{t.contactSection.dream}
+              {t.contactSection.findApartment}
+              {t.contactSection.dream ? (
+                <>
+                  <br />
+                  {t.contactSection.dream}
+                </>
+              ) : null}
             </h3>
-            <p className="text-sm text-muted-foreground uppercase tracking-wider mb-8">
+            <p className="text-sm text-muted-foreground leading-relaxed mb-8">
               {t.contactSection.formDesc}
             </p>
 

@@ -27,8 +27,12 @@ export default function Location() {
               {t.location.title}
             </h2>
 
-            <p className="text-muted-foreground mb-8 italic">
+            <p className="text-muted-foreground mb-4">
               {t.location.subtitle}
+            </p>
+
+            <p className="text-foreground font-medium mb-5">
+              {t.location.listIntro}
             </p>
 
             {/* Nearby Places */}
