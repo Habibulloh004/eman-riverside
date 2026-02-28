@@ -1,16 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MapPin, Phone, Mail, Clock, AtSign } from "lucide-react";
 import { YandexMap } from "@/components/shared";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
 import { submissionsApi } from "@/lib/api/submissions";
 import { toast } from "sonner";
+import { gsap } from "gsap";
 
 export default function Contact() {
   const { t, language } = useLanguage();
   const { settings } = useSiteSettings();
+  const contactDetailsRef = useRef<HTMLDivElement | null>(null);
+  const socialLinksRef = useRef<HTMLDivElement | null>(null);
+  const animatedRowsRef = useRef(new WeakSet<HTMLElement>());
+  const pendingRowsRef = useRef(new WeakSet<HTMLElement>());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -85,6 +90,115 @@ export default function Contact() {
     },
   ].filter(Boolean) as { key: string; href: string; label: string; icon: React.ReactNode }[];
 
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const activeTweens: Array<{ tween: gsap.core.Tween; items: HTMLElement[] }> = [];
+    const mutationObservers: MutationObserver[] = [];
+    const visibleContainers = new WeakSet<HTMLElement>();
+    let observer: IntersectionObserver | null = null;
+
+    const isElementInView = (element: HTMLElement) => {
+      const rect = element.getBoundingClientRect();
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      return rect.top < viewportHeight * 0.9 && rect.bottom > 0;
+    };
+
+    const animatePendingItems = (container: HTMLElement) => {
+      const items = Array.from(container.children).filter((el): el is HTMLElement => {
+        return (
+          el instanceof HTMLElement &&
+          el.offsetParent !== null &&
+          !animatedRowsRef.current.has(el) &&
+          !pendingRowsRef.current.has(el)
+        );
+      });
+      if (items.length === 0) return;
+
+      items.forEach((item) => pendingRowsRef.current.add(item));
+      const tween = gsap.fromTo(
+        items,
+        { y: 12, autoAlpha: 0 },
+        {
+          y: 0,
+          autoAlpha: 1,
+          duration: 0.42,
+          stagger: 0.12,
+          clearProps: "opacity,visibility,transform",
+          ease: "none",
+          onComplete: () => {
+            items.forEach((item) => {
+              pendingRowsRef.current.delete(item);
+              animatedRowsRef.current.add(item);
+            });
+          },
+          onInterrupt: () => {
+            items.forEach((item) => {
+              pendingRowsRef.current.delete(item);
+            });
+          },
+        }
+      );
+      activeTweens.push({ tween, items });
+    };
+
+    const init = () => {
+      const containers = [contactDetailsRef.current, socialLinksRef.current].filter(
+        (el): el is HTMLDivElement => el !== null
+      );
+      if (containers.length === 0) return;
+
+      observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            const container = entry.target as HTMLElement;
+            if (entry.isIntersecting) {
+              visibleContainers.add(container);
+              animatePendingItems(container);
+              return;
+            }
+            if (visibleContainers.has(container)) {
+              visibleContainers.delete(container);
+            }
+          });
+        },
+        { threshold: 0.2, rootMargin: "0px 0px -10% 0px" }
+      );
+
+      containers.forEach((container) => {
+        observer?.observe(container);
+        if (isElementInView(container)) {
+          visibleContainers.add(container);
+          animatePendingItems(container);
+        }
+
+        const mo = new MutationObserver(() => {
+          if (visibleContainers.has(container) || isElementInView(container)) {
+            animatePendingItems(container);
+          }
+        });
+        mo.observe(container, { childList: true, subtree: false });
+        mutationObservers.push(mo);
+      });
+    };
+
+    let raf2 = 0;
+    const raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(init);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      window.cancelAnimationFrame(raf2);
+      observer?.disconnect();
+      mutationObservers.forEach((mo) => mo.disconnect());
+      activeTweens.forEach(({ tween, items }) => {
+        tween.kill();
+        gsap.set(items, { clearProps: "opacity,visibility,transform" });
+      });
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -130,7 +244,12 @@ export default function Contact() {
             </p>
 
             {/* Contact Details */}
-            <div className="space-y-4 mb-6">
+            <div
+              className="space-y-4 mb-6"
+              ref={contactDetailsRef}
+              data-no-page-text-anim="true"
+              data-no-page-ui-anim="true"
+            >
               {address && (
                 <div className="flex items-start gap-3">
                   <MapPin className="h-5 w-5 text-primary mt-0.5 shrink-0" />
@@ -163,7 +282,11 @@ export default function Contact() {
 
             {/* Social Links */}
             {socialLinks.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-8">
+              <div
+                className="flex flex-wrap gap-2 mb-8"
+                ref={socialLinksRef}
+                data-no-page-ui-anim="true"
+              >
                 {socialLinks.map((social) => (
                   <a
                     key={social.key}

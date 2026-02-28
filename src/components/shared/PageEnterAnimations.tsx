@@ -126,8 +126,15 @@ export default function PageEnterAnimations() {
     const main = document.querySelector("main");
     if (!main) return;
 
+    type SectionTargets = {
+      textTargets: HTMLElement[];
+      uiTargets: HTMLElement[];
+      hidden: boolean;
+    };
+
     const timelines: gsap.core.Timeline[] = [];
     const observedSections = new WeakSet<HTMLElement>();
+    const preparedSectionTargets = new WeakMap<HTMLElement, SectionTargets>();
     const getSectionRuntimeKey = (section: HTMLElement, index: number) =>
       `${pathname}::${section.id || section.dataset.animKey || `idx-${index}`}`;
 
@@ -145,6 +152,59 @@ export default function PageEnterAnimations() {
       return rect.bottom > 0 && rect.top < triggerLine;
     };
 
+    const mergeTargets = (
+      existing: HTMLElement[],
+      incoming: HTMLElement[],
+      max: number
+    ) => {
+      if (incoming.length === 0 || existing.length >= max) return;
+
+      const seen = new Set(existing);
+      incoming.forEach((target) => {
+        if (seen.has(target) || existing.length >= max) return;
+        existing.push(target);
+        seen.add(target);
+      });
+    };
+
+    const prepareSectionTargets = (section: HTMLElement, hideTargets: boolean) => {
+      let prepared = preparedSectionTargets.get(section);
+      if (!prepared) {
+        prepared = { textTargets: [], uiTargets: [], hidden: false };
+        preparedSectionTargets.set(section, prepared);
+      }
+
+      const newTextTargets = collectTextTargets(section);
+      const newUiTargets = collectUiTargets(section);
+      const newTargets = [...newTextTargets, ...newUiTargets];
+
+      if (newTargets.length > 0) {
+        newTargets.forEach((target) => {
+          animatedRuntimeTargets.add(target);
+        });
+      }
+
+      mergeTargets(prepared.textTargets, newTextTargets, MAX_TEXT_TARGETS_PER_SECTION);
+      mergeTargets(prepared.uiTargets, newUiTargets, MAX_UI_TARGETS_PER_SECTION);
+
+      const shouldHide = hideTargets || prepared.hidden;
+      if (shouldHide) {
+        const textToHide = prepared.hidden ? newTextTargets : prepared.textTargets;
+        const uiToHide = prepared.hidden ? newUiTargets : prepared.uiTargets;
+
+        if (textToHide.length > 0) {
+          gsap.set(textToHide, { y: 18, autoAlpha: 0 });
+        }
+        if (uiToHide.length > 0) {
+          gsap.set(uiToHide, { y: 10, autoAlpha: 0 });
+        }
+
+        prepared.hidden = true;
+      }
+
+      return prepared;
+    };
+
     const animateSection = (section: HTMLElement, sectionIndex: number) => {
       const runtimeKey = getSectionRuntimeKey(section, sectionIndex);
       if (animatedSectionRuntimeKeys.has(runtimeKey)) {
@@ -155,13 +215,9 @@ export default function PageEnterAnimations() {
       // Mark immediately to avoid duplicate triggers during fast observer callbacks.
       animatedSectionRuntimeKeys.add(runtimeKey);
 
-      const textTargets = collectTextTargets(section);
-      const uiTargets = collectUiTargets(section);
-      const targetsToMark = [...textTargets, ...uiTargets];
-
-      targetsToMark.forEach((target) => {
-        animatedRuntimeTargets.add(target);
-      });
+      const preparedTargets = prepareSectionTargets(section, false);
+      const textTargets = preparedTargets.textTargets;
+      const uiTargets = preparedTargets.uiTargets;
 
       if (
         textTargets.length === 0 &&
@@ -174,34 +230,59 @@ export default function PageEnterAnimations() {
       const timeline = gsap.timeline({ defaults: { ease: "none" } });
 
       if (textTargets.length > 0) {
-        timeline.fromTo(
-          textTargets,
-          { y: 18, autoAlpha: 0 },
-          {
+        if (preparedTargets.hidden) {
+          timeline.to(textTargets, {
             y: 0,
             autoAlpha: 1,
             duration: 0.62,
             stagger: 0.028,
             clearProps: "opacity,visibility,transform",
-          }
-        );
+          });
+        } else {
+          timeline.fromTo(
+            textTargets,
+            { y: 18, autoAlpha: 0 },
+            {
+              y: 0,
+              autoAlpha: 1,
+              duration: 0.62,
+              stagger: 0.028,
+              clearProps: "opacity,visibility,transform",
+            }
+          );
+        }
       }
 
       if (uiTargets.length > 0) {
-        timeline.fromTo(
-          uiTargets,
-          { y: 10, autoAlpha: 0 },
-          {
-            y: 0,
-            autoAlpha: 1,
-            duration: 0.45,
-            stagger: 0.03,
-            clearProps: "opacity,visibility,transform",
-          },
-          textTargets.length > 0 ? "-=0.3" : 0
-        );
+        if (preparedTargets.hidden) {
+          timeline.to(
+            uiTargets,
+            {
+              y: 0,
+              autoAlpha: 1,
+              duration: 0.45,
+              stagger: 0.03,
+              clearProps: "opacity,visibility,transform",
+            },
+            textTargets.length > 0 ? "-=0.3" : 0
+          );
+        } else {
+          timeline.fromTo(
+            uiTargets,
+            { y: 10, autoAlpha: 0 },
+            {
+              y: 0,
+              autoAlpha: 1,
+              duration: 0.45,
+              stagger: 0.03,
+              clearProps: "opacity,visibility,transform",
+            },
+            textTargets.length > 0 ? "-=0.3" : 0
+          );
+        }
       }
 
+      preparedTargets.hidden = false;
       timelines.push(timeline);
       observer.unobserve(section);
     };
@@ -234,6 +315,8 @@ export default function PageEnterAnimations() {
           observer.observe(section);
           observedSections.add(section);
         }
+
+        prepareSectionTargets(section, !isSectionInViewNow(section));
 
         // Ensure first viewport animations start immediately without requiring user input.
         if (isSectionInViewNow(section)) {
