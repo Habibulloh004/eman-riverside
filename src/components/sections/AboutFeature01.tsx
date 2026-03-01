@@ -18,7 +18,7 @@ export default function AboutFeature01() {
   ];
 
   return (
-    <div id="feature-01" className="scroll-mt-20 pb-24 lg:pb-32 pt-20">
+    <div id="feature-01" className="scroll-mt-20 pb-24 lg:pb-32 pt-20" data-page-section-anim="true">
       <div className="container mx-auto px-4 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-start">
           {/* Content */}

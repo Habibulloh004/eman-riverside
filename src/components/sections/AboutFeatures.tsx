@@ -36,6 +36,7 @@ function FeatureItem({ project, index, language, t }: FeatureItemProps) {
   return (
     <div
       id={`feature-${number}`}
+      data-page-section-anim="true"
       className={`scroll-mt-20 ${index === 0 ? "pb-24 lg:pb-32 pt-20" : "py-24 lg:py-32"} bg-[#F9EFE7] relative overflow-hidden`}
     >
       <div className="absolute inset-0 z-0">
@@ -69,6 +70,7 @@ function FeatureItem({ project, index, language, t }: FeatureItemProps) {
 
               {descriptionHtml && (
                 <div
+                  data-page-body-anim="true"
                   className="text-sm text-muted-foreground leading-relaxed [&_h1]:mb-3 [&_h1]:text-xl [&_h1]:font-semibold [&_h2]:mb-3 [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-semibold [&_p]:mb-3 [&_p:last-child]:mb-0 [&_ul]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_a]:underline"
                   dangerouslySetInnerHTML={{ __html: descriptionHtml }}
                 />

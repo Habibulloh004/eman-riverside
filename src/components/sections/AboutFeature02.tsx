@@ -19,7 +19,7 @@ export default function AboutFeature02() {
   ];
 
   return (
-    <section id="feature-02" className="relative py-24 lg:py-32 scroll-mt-20 bg-[#F9EFE7] overflow-hidden">
+    <section id="feature-02" className="relative py-24 lg:py-32 scroll-mt-20 bg-[#F9EFE7] overflow-hidden" data-page-section-anim="true">
       {/* Background image with low opacity */}
       <div className="absolute inset-0 z-0">
         <Image

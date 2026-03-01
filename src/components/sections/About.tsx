@@ -35,7 +35,7 @@ export default function About() {
     <section id="about" className="py-16 lg:py-24">
       <div className="container mx-auto px-4 lg:px-8">
         {/* Section Header */}
-        <div className="mb-16 lg:mb-24">
+        <div className="mb-16 lg:mb-24" data-page-section-anim="true" data-anim-key="about-header">
           <div className="flex items-center gap-4 mb-6">
             <div className="w-12 h-px bg-primary" />
             <span className="text-sm text-primary font-medium uppercase tracking-[0.2em]">
@@ -51,7 +51,7 @@ export default function About() {
         </div>
 
         {/* Feature 01 - Architecture */}
-        <div id="feature-01" className="mb-24 lg:mb-32 scroll-mt-20">
+        <div id="feature-01" className="mb-24 lg:mb-32 scroll-mt-20" data-page-section-anim="true">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-start">
             {/* Content */}
             <div className="relative">
@@ -115,7 +115,7 @@ export default function About() {
         </div>
 
         {/* Feature 02 - Courtyard */}
-        <div id="feature-02" className="mb-24 lg:mb-32 scroll-mt-20">
+        <div id="feature-02" className="mb-24 lg:mb-32 scroll-mt-20" data-page-section-anim="true">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-start">
             {/* Image */}
             <div className="relative aspect-[4/5] rounded-lg overflow-hidden lg:order-1 bg-muted">
@@ -181,7 +181,7 @@ export default function About() {
         </div>
 
         {/* Feature 03 - Apartment */}
-        <div id="feature-03" className="scroll-mt-20">
+        <div id="feature-03" className="scroll-mt-20" data-page-section-anim="true">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-start">
             {/* Content */}
             <div className="relative">

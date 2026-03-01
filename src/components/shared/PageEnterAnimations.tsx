@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { gsap } from "gsap";
 
 const MAX_TEXT_TARGETS_PER_SECTION = 60;
+const MAX_MEDIA_TARGETS_PER_SECTION = 18;
 const MAX_UI_TARGETS_PER_SECTION = 12;
 const animatedSectionRuntimeKeys = new Set<string>();
 const animatedRuntimeTargets = new WeakSet<HTMLElement>();
@@ -57,7 +58,10 @@ function createWaveTargets(element: HTMLElement): HTMLElement[] | null {
   return waveWords;
 }
 
-function collectTextTargets(section: HTMLElement): HTMLElement[] {
+function collectTitleAndTextTargets(section: HTMLElement): {
+  titleTargets: HTMLElement[];
+  textTargets: HTMLElement[];
+} {
   const isEligibleText = (el: HTMLElement) =>
     el.offsetParent !== null &&
     !el.closest('[data-no-page-text-anim="true"]') &&
@@ -67,41 +71,73 @@ function collectTextTargets(section: HTMLElement): HTMLElement[] {
     section.querySelectorAll<HTMLElement>("h1, h2, h3")
   ).filter(isEligibleText);
   const sentenceNodes = Array.from(
-    section.querySelectorAll<HTMLElement>("p, li")
+    section.querySelectorAll<HTMLElement>("p, li, [data-page-body-anim='true']")
   ).filter(isEligibleText);
 
-  const headingTargets: HTMLElement[] = [];
-  for (const node of headingNodes) {
+  const [titleNode, ...otherHeadingNodes] = headingNodes;
+  const titleTargets: HTMLElement[] = [];
+  const textTargets: HTMLElement[] = [];
+
+  if (titleNode) {
+    const waveTargets = createWaveTargets(titleNode);
+    if (waveTargets) {
+      animatedRuntimeTargets.add(titleNode);
+      if (waveTargets.length > 0) {
+        titleTargets.push(...waveTargets);
+      }
+    } else {
+      titleTargets.push(titleNode);
+    }
+  }
+
+  const processAsText = (node: HTMLElement) => {
     const waveTargets = createWaveTargets(node);
     if (waveTargets) {
       animatedRuntimeTargets.add(node);
       if (waveTargets.length > 0) {
-        headingTargets.push(...waveTargets);
+        textTargets.push(...waveTargets);
       }
-      continue;
+      return;
     }
 
-    headingTargets.push(node);
-  }
+    textTargets.push(node);
+  };
 
-  const sentenceTargets: HTMLElement[] = [];
-  for (const node of sentenceNodes) {
-    const waveTargets = createWaveTargets(node);
-    if (waveTargets) {
-      animatedRuntimeTargets.add(node);
-      if (waveTargets.length > 0) {
-        sentenceTargets.push(...waveTargets);
-      }
-      continue;
-    }
+  otherHeadingNodes.forEach(processAsText);
+  sentenceNodes.forEach(processAsText);
 
-    sentenceTargets.push(node);
-  }
+  return {
+    titleTargets: titleTargets.slice(0, 18),
+    textTargets: textTargets.slice(0, MAX_TEXT_TARGETS_PER_SECTION),
+  };
+}
 
-  return [...headingTargets, ...sentenceTargets].slice(
-    0,
-    MAX_TEXT_TARGETS_PER_SECTION
+function collectMediaTargets(section: HTMLElement): HTMLElement[] {
+  const mediaCandidates = Array.from(
+    section.querySelectorAll<HTMLElement>(
+      "img:not([alt='']), video, iframe, [data-page-media-anim='true']"
+    )
   );
+
+  const uniqueTargets: HTMLElement[] = [];
+  const seen = new Set<HTMLElement>();
+
+  mediaCandidates.forEach((el) => {
+    if (el.offsetParent === null) return;
+    if (el.closest('[data-no-page-media-anim="true"]')) return;
+    // Gallery sections manage their own reveal timeline/classes.
+    if (el.classList.contains("gallery-reveal") || el.closest(".gallery-reveal")) return;
+    if (animatedRuntimeTargets.has(el)) return;
+    if (seen.has(el)) return;
+
+    const rect = el.getBoundingClientRect();
+    if (rect.width < 48 || rect.height < 48) return;
+
+    uniqueTargets.push(el);
+    seen.add(el);
+  });
+
+  return uniqueTargets.slice(0, MAX_MEDIA_TARGETS_PER_SECTION);
 }
 
 function collectUiTargets(section: HTMLElement): HTMLElement[] {
@@ -127,7 +163,9 @@ export default function PageEnterAnimations() {
     if (!main) return;
 
     type SectionTargets = {
+      titleTargets: HTMLElement[];
       textTargets: HTMLElement[];
+      mediaTargets: HTMLElement[];
       uiTargets: HTMLElement[];
       hidden: boolean;
     };
@@ -138,12 +176,28 @@ export default function PageEnterAnimations() {
     const getSectionRuntimeKey = (section: HTMLElement, index: number) =>
       `${pathname}::${section.id || section.dataset.animKey || `idx-${index}`}`;
 
-    const getEligibleSections = () =>
-      Array.from(main.querySelectorAll<HTMLElement>("section")).filter(
+    const getEligibleSections = () => {
+      const explicitSections = Array.from(
+        main.querySelectorAll<HTMLElement>('[data-page-section-anim="true"]')
+      );
+      const explicitSet = new Set(explicitSections);
+
+      const structuralSections = Array.from(
+        main.querySelectorAll<HTMLElement>("section")
+      ).filter(
+        (section) => !section.querySelector('[data-page-section-anim="true"]')
+      );
+      const structuralSet = new Set(structuralSections);
+
+      return Array.from(
+        main.querySelectorAll<HTMLElement>('section, [data-page-section-anim="true"]')
+      ).filter(
         (section) =>
+          (explicitSet.has(section) || structuralSet.has(section)) &&
           section.id !== "hero" &&
           !section.closest('[data-no-page-section-anim="true"]')
       );
+    };
 
     const isSectionInViewNow = (section: HTMLElement) => {
       const rect = section.getBoundingClientRect();
@@ -170,13 +224,15 @@ export default function PageEnterAnimations() {
     const prepareSectionTargets = (section: HTMLElement, hideTargets: boolean) => {
       let prepared = preparedSectionTargets.get(section);
       if (!prepared) {
-        prepared = { textTargets: [], uiTargets: [], hidden: false };
+        prepared = { titleTargets: [], textTargets: [], mediaTargets: [], uiTargets: [], hidden: false };
         preparedSectionTargets.set(section, prepared);
       }
 
-      const newTextTargets = collectTextTargets(section);
+      const { titleTargets: newTitleTargets, textTargets: newTextTargets } =
+        collectTitleAndTextTargets(section);
+      const newMediaTargets = collectMediaTargets(section);
       const newUiTargets = collectUiTargets(section);
-      const newTargets = [...newTextTargets, ...newUiTargets];
+      const newTargets = [...newTitleTargets, ...newTextTargets, ...newMediaTargets, ...newUiTargets];
 
       if (newTargets.length > 0) {
         newTargets.forEach((target) => {
@@ -184,16 +240,26 @@ export default function PageEnterAnimations() {
         });
       }
 
+      mergeTargets(prepared.titleTargets, newTitleTargets, 18);
       mergeTargets(prepared.textTargets, newTextTargets, MAX_TEXT_TARGETS_PER_SECTION);
+      mergeTargets(prepared.mediaTargets, newMediaTargets, MAX_MEDIA_TARGETS_PER_SECTION);
       mergeTargets(prepared.uiTargets, newUiTargets, MAX_UI_TARGETS_PER_SECTION);
 
       const shouldHide = hideTargets || prepared.hidden;
       if (shouldHide) {
+        const titleToHide = prepared.hidden ? newTitleTargets : prepared.titleTargets;
         const textToHide = prepared.hidden ? newTextTargets : prepared.textTargets;
+        const mediaToHide = prepared.hidden ? newMediaTargets : prepared.mediaTargets;
         const uiToHide = prepared.hidden ? newUiTargets : prepared.uiTargets;
 
+        if (titleToHide.length > 0) {
+          gsap.set(titleToHide, { y: 16, autoAlpha: 0 });
+        }
         if (textToHide.length > 0) {
           gsap.set(textToHide, { y: 18, autoAlpha: 0 });
+        }
+        if (mediaToHide.length > 0) {
+          gsap.set(mediaToHide, { autoAlpha: 0 });
         }
         if (uiToHide.length > 0) {
           gsap.set(uiToHide, { y: 10, autoAlpha: 0 });
@@ -216,11 +282,15 @@ export default function PageEnterAnimations() {
       animatedSectionRuntimeKeys.add(runtimeKey);
 
       const preparedTargets = prepareSectionTargets(section, false);
+      const titleTargets = preparedTargets.titleTargets;
       const textTargets = preparedTargets.textTargets;
+      const mediaTargets = preparedTargets.mediaTargets;
       const uiTargets = preparedTargets.uiTargets;
 
       if (
+        titleTargets.length === 0 &&
         textTargets.length === 0 &&
+        mediaTargets.length === 0 &&
         uiTargets.length === 0
       ) {
         observer.unobserve(section); // animate once per page load
@@ -228,6 +298,32 @@ export default function PageEnterAnimations() {
       }
 
       const timeline = gsap.timeline({ defaults: { ease: "none" } });
+
+      if (titleTargets.length > 0) {
+        if (preparedTargets.hidden) {
+          timeline.to(titleTargets, {
+            y: 0,
+            autoAlpha: 1,
+            duration: 0.58,
+            stagger: 0.026,
+            clearProps: "opacity,visibility,transform",
+          });
+        } else {
+          timeline.fromTo(
+            titleTargets,
+            { y: 16, autoAlpha: 0 },
+            {
+              y: 0,
+              autoAlpha: 1,
+              duration: 0.58,
+              stagger: 0.026,
+              clearProps: "opacity,visibility,transform",
+            }
+          );
+        }
+      }
+
+      const contentStart = titleTargets.length > 0 ? 0.18 : 0;
 
       if (textTargets.length > 0) {
         if (preparedTargets.hidden) {
@@ -237,7 +333,7 @@ export default function PageEnterAnimations() {
             duration: 0.62,
             stagger: 0.028,
             clearProps: "opacity,visibility,transform",
-          });
+          }, contentStart);
         } else {
           timeline.fromTo(
             textTargets,
@@ -248,7 +344,35 @@ export default function PageEnterAnimations() {
               duration: 0.62,
               stagger: 0.028,
               clearProps: "opacity,visibility,transform",
-            }
+            },
+            contentStart
+          );
+        }
+      }
+
+      if (mediaTargets.length > 0) {
+        if (preparedTargets.hidden) {
+          timeline.to(
+            mediaTargets,
+            {
+              autoAlpha: 1,
+              duration: 0.56,
+              stagger: 0.05,
+              clearProps: "opacity,visibility",
+            },
+            titleTargets.length > 0 ? 0.22 : 0.04
+          );
+        } else {
+          timeline.fromTo(
+            mediaTargets,
+            { autoAlpha: 0 },
+            {
+              autoAlpha: 1,
+              duration: 0.56,
+              stagger: 0.05,
+              clearProps: "opacity,visibility",
+            },
+            titleTargets.length > 0 ? 0.22 : 0.04
           );
         }
       }
@@ -264,7 +388,7 @@ export default function PageEnterAnimations() {
               stagger: 0.03,
               clearProps: "opacity,visibility,transform",
             },
-            textTargets.length > 0 ? "-=0.3" : 0
+            titleTargets.length > 0 ? 0.26 : textTargets.length > 0 ? "-=0.3" : 0
           );
         } else {
           timeline.fromTo(
@@ -277,7 +401,7 @@ export default function PageEnterAnimations() {
               stagger: 0.03,
               clearProps: "opacity,visibility,transform",
             },
-            textTargets.length > 0 ? "-=0.3" : 0
+            titleTargets.length > 0 ? 0.26 : textTargets.length > 0 ? "-=0.3" : 0
           );
         }
       }

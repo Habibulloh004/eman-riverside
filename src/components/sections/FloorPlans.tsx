@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useRandomEstates } from "@/hooks/useEstates";
@@ -75,9 +75,10 @@ function PlanCarousel({ images, alt }: { images: string[]; alt: string }) {
         src={images[current]}
         alt={alt}
         fill
-        className="object-contain p-4 transition-transform group-hover:scale-105"
+        className="object-contain p-4 transition-transform duration-300 group-hover:scale-[1.02]"
         sizes="(max-width: 768px) 100vw, 50vw"
         unoptimized={images[current].startsWith("http")}
+        data-no-hover-scale="true"
       />
 
       {images.length > 1 && (
@@ -119,6 +120,7 @@ function PlanCarousel({ images, alt }: { images: string[]; alt: string }) {
 export default function FloorPlans() {
   const { t } = useLanguage();
   const { data: estates, isLoading } = useRandomEstates(2);
+  const sectionRef = useRef<HTMLElement | null>(null);
 
   const estatePlans = estates.map(mapEstateToPlan);
   const fallbackPlans: PlanItem[] = t.floorPlans.plans.map((p, i) => ({
@@ -134,8 +136,54 @@ export default function FloorPlans() {
     ? estatePlans.slice(0, MIN_PLANS)
     : [...estatePlans, ...fallbackPlans.slice(0, MIN_PLANS - estatePlans.length)];
 
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section || isLoading) return;
+
+    const targets = Array.from(
+      section.querySelectorAll<HTMLElement>(".gallery-reveal:not(.gallery-reveal-visible)")
+    );
+    if (targets.length === 0) return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      targets.forEach((target) => target.classList.add("gallery-reveal-visible"));
+      return;
+    }
+
+    const isInView = (element: HTMLElement) => {
+      const rect = element.getBoundingClientRect();
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      const triggerLine = viewportHeight * 0.9;
+      return rect.bottom > 0 && rect.top < triggerLine;
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("gallery-reveal-visible");
+          observer.unobserve(entry.target);
+        });
+      },
+      {
+        threshold: 0.2,
+        rootMargin: "0px 0px -10% 0px",
+      }
+    );
+
+    targets.forEach((target) => {
+      observer.observe(target);
+      if (isInView(target)) {
+        target.classList.add("gallery-reveal-visible");
+        observer.unobserve(target);
+      }
+    });
+
+    return () => observer.disconnect();
+  }, [isLoading, plans.length]);
+
   return (
-    <section id="plans" className="py-16 lg:py-24 bg-[#F9EFE7]">
+    <section id="plans" ref={sectionRef} className="py-16 lg:py-24 bg-[#F9EFE7]">
       <div className="container mx-auto px-4 lg:px-8">
         {/* Section Header */}
         <div className="mb-12 lg:mb-16 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
@@ -183,7 +231,7 @@ export default function FloorPlans() {
               <Link
                 key={`${plan.key}-${index}`}
                 href={plan.href}
-                className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center group cursor-pointer"
+                className={`grid lg:grid-cols-2 gap-8 lg:gap-16 items-center group cursor-pointer gallery-reveal gallery-reveal-step gallery-step-${(index * 2) % 10} ${index % 2 === 0 ? "gallery-enter-from-left-bottom" : "gallery-enter-from-right-bottom"}`}
               >
                 {/* Plan Image Carousel */}
                 <div className={`relative ${index % 2 === 1 ? "lg:order-2" : ""}`}>
