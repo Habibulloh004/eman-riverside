@@ -10,7 +10,8 @@ import { FloorPlanSkeleton } from "@/components/ui/skeleton";
 import { Estate } from "@/lib/api/estates";
 
 interface PlanItem {
-  id: number;
+  key: string;
+  href: string;
   type: string;
   area: string;
   description: string;
@@ -44,7 +45,8 @@ function getEstateImages(estate: Estate): string[] {
 
 function mapEstateToPlan(estate: Estate): PlanItem {
   return {
-    id: estate.id,
+    key: `estate-${estate.id}-${estate.estate_floor}-${estate.estate_rooms}-${estate.estate_area}`,
+    href: `/catalog/${estate.id}`,
     type: `${estate.estate_rooms}-комнатная`,
     area: `${estate.estate_area} м²`,
     description: estate.title || `Этаж ${estate.estate_floor}`,
@@ -118,17 +120,19 @@ export default function FloorPlans() {
   const { t } = useLanguage();
   const { data: estates, isLoading } = useRandomEstates(2);
 
-  const validEstates = estates.filter((estate) => estate.estate_floor > 0);
-
-  const plans: PlanItem[] = validEstates.length > 0
-    ? validEstates.map(mapEstateToPlan)
-    : t.floorPlans.plans.map((p, i) => ({
-        id: i,
-        type: p.type,
-        area: p.area,
-        description: p.description,
-        images: ["/images/hero/planirovka1.png"],
-      }));
+  const estatePlans = estates.map(mapEstateToPlan);
+  const fallbackPlans: PlanItem[] = t.floorPlans.plans.map((p, i) => ({
+    key: `fallback-${i}`,
+    href: "/catalog",
+    type: p.type,
+    area: p.area,
+    description: p.description,
+    images: ["/images/hero/planirovka1.png"],
+  }));
+  const MIN_PLANS = 2;
+  const plans: PlanItem[] = estatePlans.length >= MIN_PLANS
+    ? estatePlans.slice(0, MIN_PLANS)
+    : [...estatePlans, ...fallbackPlans.slice(0, MIN_PLANS - estatePlans.length)];
 
   return (
     <section id="plans" className="py-16 lg:py-24 bg-[#F9EFE7]">
@@ -177,8 +181,8 @@ export default function FloorPlans() {
           ) : (
             plans.map((plan, index) => (
               <Link
-                key={plan.id}
-                href={estates.length > 0 ? `/catalog/${plan.id}` : "/catalog"}
+                key={`${plan.key}-${index}`}
+                href={plan.href}
                 className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center group cursor-pointer"
               >
                 {/* Plan Image Carousel */}

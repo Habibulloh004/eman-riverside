@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Header, Footer } from "@/components/sections";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -30,6 +30,7 @@ const defaultGalleryItems = {
 
 export default function GalleryPage() {
   const { t, language } = useLanguage();
+  const mainRef = useRef<HTMLElement | null>(null);
   const [galleryItems, setGalleryItems] = useState<
     Array<{ id: number | string; image: string; title: string; description: string; redirect_url?: string }>
   >([]);
@@ -37,11 +38,14 @@ export default function GalleryPage() {
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  const renderVideoThumbnail = (item: { url: string; thumbnail: string; title: string; redirect_url?: string }) => {
+  const renderVideoThumbnail = (
+    item: { url: string; thumbnail: string; title: string; redirect_url?: string },
+    stepClass: string = "gallery-step-0"
+  ) => {
     const thumbnailSrc = item.thumbnail || "/images/hero/1.png";
 
     return (
-      <div className="relative">
+      <div className={`relative gallery-reveal gallery-reveal-step ${stepClass}`}>
         <HeroVideoDialog
           animationStyle="from-center"
           videoSrc={item.url}
@@ -112,10 +116,47 @@ export default function GalleryPage() {
     loadGallery();
   }, [language]);
 
+  useEffect(() => {
+    const root = mainRef.current;
+    if (!root) return;
+
+    const targets = Array.from(
+      root.querySelectorAll<HTMLElement>(".gallery-reveal:not(.gallery-reveal-visible)")
+    );
+    if (targets.length === 0) return;
+
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const isInitiallyVisible = (el: HTMLElement) => {
+      const rect = el.getBoundingClientRect();
+      return rect.top <= viewportHeight * 0.92 && rect.bottom >= 0;
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("gallery-reveal-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.2, rootMargin: "0px 0px -8% 0px" }
+    );
+
+    targets.forEach((target) => {
+      if (isInitiallyVisible(target)) {
+        target.classList.add("gallery-reveal-visible");
+      } else {
+        observer.observe(target);
+      }
+    });
+    return () => observer.disconnect();
+  }, [isLoading, galleryItems.length, videoItems.length, activeVideoIndex]);
+
   return (
     <>
       <Header />
-      <main className="pt-20 lg:pt-24 bg-[#F5ECE4]">
+      <main ref={mainRef} className="pt-20 lg:pt-24 bg-[#F5ECE4]">
         {/* Hero Section */}
         <section className="relative bg-[#F5ECE4] overflow-hidden">
           <div className="relative h-screen max-h-[900px] max-w-[1920px] mx-auto">
@@ -130,7 +171,7 @@ export default function GalleryPage() {
             </div>
 
             {/* Logo - positioned right of vertical text, near top */}
-            <div className="absolute max-md:hidden left-24 sm:left-32 lg:left-44 top-28 lg:top-32 z-10">
+            <div className="absolute max-md:hidden left-24 sm:left-32 lg:left-44 top-28 lg:top-32 z-10 gallery-reveal gallery-reveal-step gallery-step-0">
               <Image
                 src="/darklogo.png"
                 alt="EMAN RIVERSIDE"
@@ -141,7 +182,7 @@ export default function GalleryPage() {
             </div>
 
             {/* Main diagonal image - right side with diagonal left edge */}
-            <div className="absolute top-0 right-0 w-[75%] lg:w-[70%] h-full">
+            <div className="absolute top-0 right-0 w-[75%] lg:w-[70%] h-full gallery-reveal gallery-reveal-step gallery-step-1 hero-enter-right">
               <Image
                 src="/images/03.webp"
                 alt="EMAN RIVERSIDE Building"
@@ -177,7 +218,7 @@ export default function GalleryPage() {
                 </div>
 
                 {/* Decorative Arc lines between steps */}
-                <div className="hidden lg:block absolute top-[40%] left-1/5 py-4">
+                <div className="hidden lg:block absolute top-[40%] left-1/5 py-4 gallery-reveal gallery-reveal-step gallery-step-2">
                   <Image
                     src="/images/galeryCrcle.svg"
                     alt=""
@@ -204,7 +245,7 @@ export default function GalleryPage() {
                 <div
                   className="absolute bottom-[25%] left-0 w-[45%] lg:w-[35%] z-30"
                 >
-                  <div className="relative aspect-square rounded-lg overflow-hidden shadow-2xl">
+                  <div className="relative aspect-square rounded-lg overflow-hidden shadow-2xl gallery-reveal gallery-reveal-step gallery-step-3 gallery-motion gallery-motion-from-left">
                     <Image
                       src="/images/02.3.webp"
                       alt="Construction 1"
@@ -219,7 +260,7 @@ export default function GalleryPage() {
                 <div
                   className="absolute top-0 left-[30%] lg:left-[25%] w-[45%] lg:w-[35%] z-20"
                 >
-                  <div className="relative aspect-square rounded-lg overflow-hidden shadow-2xl">
+                  <div className="relative aspect-square rounded-lg overflow-hidden shadow-2xl gallery-reveal gallery-reveal-step gallery-step-4 gallery-motion gallery-motion-from-bottom">
                     <Image
                       src="/images/02.2.webp"
                       alt="Construction 2"
@@ -234,7 +275,7 @@ export default function GalleryPage() {
                 <div
                   className="absolute top-[-20%] right-0 lg:right-20 w-[45%] lg:w-[35%] z-30"
                 >
-                  <div className="relative aspect-square rounded-lg overflow-hidden shadow-2xl">
+                  <div className="relative aspect-square rounded-lg overflow-hidden shadow-2xl gallery-reveal gallery-reveal-step gallery-step-5 gallery-motion gallery-motion-from-right">
                     <Image
                       src="/images/02.1.webp"
                       alt="Construction 3"
@@ -275,11 +316,11 @@ export default function GalleryPage() {
                   className="flex gap-4 lg:gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4 -mx-4 px-4 lg:-mx-8 lg:px-8"
                   style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
-                  {galleryItems.map((item) => {
+                  {galleryItems.map((item, index) => {
                     const tileClassName = "flex-shrink-0 w-[70%] sm:w-[45%] lg:w-[280px] snap-center flex flex-col";
                     const content = (
                       <>
-                        <div className="relative aspect-[3/4] rounded-sm overflow-hidden mb-3 lg:mb-4">
+                        <div className={`relative aspect-[3/4] rounded-sm overflow-hidden mb-3 lg:mb-4 gallery-reveal gallery-reveal-step gallery-step-${index % 10}`}>
                           <Image
                             src={item.image}
                             alt={item.title}
@@ -342,7 +383,7 @@ export default function GalleryPage() {
                 <div className="relative">
                   {/* Image with rounded corner */}
                   <div
-                    className="relative w-full aspect-4/3 overflow-hidden z-10"
+                    className="relative w-full aspect-4/3 overflow-hidden z-10 gallery-reveal gallery-reveal-step gallery-step-0 interior-enter-left-top"
                     style={{ borderRadius: "0 0 396px 0" }}
                   >
                     <Image
@@ -378,7 +419,7 @@ export default function GalleryPage() {
 
               {/* Right side image */}
               <div className="lg:col-span-4 relative h-72 lg:h-80">
-                <div className="absolute inset-0 overflow-hidden"
+                <div className="absolute inset-0 overflow-hidden gallery-reveal gallery-reveal-step gallery-step-1 interior-enter-right-top"
                   style={{ borderRadius: "0 0 0 396px" }}
 
                 >
@@ -409,7 +450,7 @@ export default function GalleryPage() {
               <div className="lg:col-span-9 relative h-80 lg:h-96">
                 {/* Main organic/bean shape image */}
                 <div
-                  className="z-20 absolute left-[5%] top-[10%] w-[55%] lg:w-[50%] h-[85%] overflow-hidden"
+                  className="z-20 absolute left-[5%] top-[10%] w-[55%] lg:w-[50%] h-[85%] overflow-hidden gallery-reveal gallery-reveal-step gallery-step-2 exterior-enter-left-bottom"
                   style={{ rotate: "-45deg", borderRadius: "50% 50% 50% 50% / 50% 50% 50% 50%" }}
                 >
                   <Image
@@ -439,7 +480,7 @@ export default function GalleryPage() {
                   <ellipse cx="160" cy="130" rx="155" ry="125" stroke="#B91C1C" strokeWidth="1" fill="none" />
                 </svg>
                 {/* Small circular image - inside the ellipse */}
-                <div className="rotate-45 absolute left-[50%] top-[60%] w-50 h-50 rounded-full overflow-hidden">
+                <div className="rotate-45 absolute left-[50%] top-[60%] w-50 h-50 rounded-full overflow-hidden gallery-reveal gallery-reveal-step gallery-step-3 exterior-enter-right-bottom">
                   <Image
                     src="/images/04.webp"
                     alt={t.gallery.exteriorTitle}
@@ -469,7 +510,7 @@ export default function GalleryPage() {
             />
           </svg>
 
-          <div className="container mx-auto px-4 lg:px-8">
+          <div className="container mx-auto px-4 lg:px-8 gallery-reveal gallery-reveal-step gallery-step-0 video-enter-bottom">
             {/* Section title */}
             <h2 className="text-2xl lg:text-4xl xl:text-5xl font-serif text-white mb-6 lg:mb-8">
               {t.gallery.videoTitle}
@@ -481,7 +522,7 @@ export default function GalleryPage() {
                 {/* Single video or carousel */}
                 {videoItems.length === 1 ? (
                   <div>
-                    {renderVideoThumbnail(videoItems[0])}
+                    {renderVideoThumbnail(videoItems[0], "gallery-step-0")}
                     {videoItems[0].title && (
                       <p className="text-white/80 text-sm lg:text-base mt-4 text-center">
                         {videoItems[0].title}
@@ -492,7 +533,7 @@ export default function GalleryPage() {
                   <>
                     {/* Video carousel container */}
                     <div className="relative">
-                      {renderVideoThumbnail(videoItems[activeVideoIndex])}
+                      {renderVideoThumbnail(videoItems[activeVideoIndex], `gallery-step-${activeVideoIndex % 10}`)}
                     </div>
                     {/* Navigation arrows */}
                     <button
@@ -527,7 +568,7 @@ export default function GalleryPage() {
                 )}
               </div>
             ) : (
-              <div className="relative aspect-video rounded-lg overflow-hidden">
+              <div className="relative aspect-video rounded-lg overflow-hidden gallery-reveal gallery-reveal-step gallery-step-0">
                 <Image
                   src="/images/hero/1.png"
                   alt={t.gallery.videoTitle}
@@ -548,6 +589,74 @@ export default function GalleryPage() {
         </section>
       </main>
       <Footer />
+      <style jsx global>{`
+        .hero-enter-right {
+          opacity: 0;
+          transform: translateX(38px);
+          transition: transform 760ms cubic-bezier(0.22, 1, 0.36, 1), opacity 560ms ease;
+        }
+
+        .gallery-reveal-visible.hero-enter-right {
+          opacity: 1;
+          transform: translateX(0);
+        }
+
+        .interior-enter-left-top {
+          opacity: 0;
+          transform: translate(-34px, -28px);
+          transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1), opacity 520ms ease;
+        }
+
+        .interior-enter-right-top {
+          opacity: 0;
+          transform: translate(34px, -28px);
+          transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1), opacity 520ms ease;
+        }
+
+        .gallery-reveal-visible.interior-enter-left-top,
+        .gallery-reveal-visible.interior-enter-right-top {
+          opacity: 1;
+          transform: translate(0, 0);
+        }
+
+        .exterior-enter-left-bottom {
+          opacity: 0;
+          transform: translate(-32px, 30px);
+          transition: transform 760ms cubic-bezier(0.22, 1, 0.36, 1), opacity 560ms ease;
+        }
+
+        .exterior-enter-right-bottom {
+          opacity: 0;
+          transform: translate(32px, 30px);
+          transition: transform 760ms cubic-bezier(0.22, 1, 0.36, 1), opacity 560ms ease;
+        }
+
+        .video-enter-bottom {
+          opacity: 0;
+          transform: translateY(34px);
+          transition: transform 760ms cubic-bezier(0.22, 1, 0.36, 1), opacity 560ms ease;
+        }
+
+        .gallery-reveal-visible.exterior-enter-left-bottom,
+        .gallery-reveal-visible.exterior-enter-right-bottom,
+        .gallery-reveal-visible.video-enter-bottom {
+          opacity: 1;
+          transform: translate(0, 0);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .hero-enter-right,
+          .interior-enter-left-top,
+          .interior-enter-right-top,
+          .exterior-enter-left-bottom,
+          .exterior-enter-right-bottom,
+          .video-enter-bottom {
+            opacity: 1;
+            transform: none;
+            transition: none;
+          }
+        }
+      `}</style>
     </>
   );
 }

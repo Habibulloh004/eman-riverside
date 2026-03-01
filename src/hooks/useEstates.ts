@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { estatesApi, Estate, EstateFilters } from "@/lib/api/estates";
 
@@ -54,12 +55,61 @@ export function useEstate(id: number) {
 export function useRandomEstates(count: number = 2) {
   const { data: estates, ...rest } = useEstates({ type: "living" });
 
-  const randomEstates = estates
-    ? [...estates]
-        .filter(e => e.estate_floor > 0 && e.estate_area >= 35)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, count)
-    : [];
+  // Keep selection stable to avoid intermittent UI changes between renders/routes.
+  const randomEstates = useMemo(() => {
+    if (!estates) return [];
+
+    const seen = new Set<number>();
+    const uniqueEstates = estates.filter((e) => {
+      const id = Number(e.id);
+      if (Number.isNaN(id) || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+
+    const sorted = [...uniqueEstates].sort((a, b) => Number(b.id) - Number(a.id));
+
+    const selected: Estate[] = [];
+    const selectedIds = new Set<number>();
+    const pushIfNeeded = (estate: Estate) => {
+      const id = Number(estate.id);
+      if (selected.length >= count || selectedIds.has(id)) return;
+      selected.push(estate);
+      selectedIds.add(id);
+    };
+
+    // Priority buckets: preferred -> valid floor -> any published estate from response
+    sorted.filter((e) => e.estate_floor > 0 && e.estate_area >= 35).forEach(pushIfNeeded);
+    sorted.filter((e) => e.estate_floor > 0).forEach(pushIfNeeded);
+    sorted.forEach(pushIfNeeded);
+
+    if (typeof window === "undefined") {
+      return selected.slice(0, count);
+    }
+
+    const key = `floor-plans-selected-ids-${count}`;
+    const savedRaw = sessionStorage.getItem(key);
+    if (savedRaw) {
+      try {
+        const savedIds = JSON.parse(savedRaw) as number[];
+        if (Array.isArray(savedIds) && savedIds.length > 0) {
+          const pinned = savedIds
+            .map((id) => sorted.find((estate) => Number(estate.id) === Number(id)))
+            .filter((estate): estate is Estate => Boolean(estate))
+            .slice(0, count);
+          if (pinned.length === count) {
+            return pinned;
+          }
+        }
+      } catch {
+        // Ignore parse errors and overwrite below
+      }
+    }
+
+    const next = selected.slice(0, count);
+    sessionStorage.setItem(key, JSON.stringify(next.map((estate) => Number(estate.id))));
+    return next;
+  }, [estates, count]);
 
   return { data: randomEstates, ...rest };
 }

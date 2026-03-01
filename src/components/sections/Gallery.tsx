@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -124,6 +124,7 @@ export default function Gallery() {
   const { t, language } = useLanguage();
   const { data, isLoading } = useGalleryPublic({ type: "image" });
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
 
   const images = (data?.items || []).map((item) => ({
     url: item.url.startsWith("http") ? item.url : `${API_URL}${item.url}`,
@@ -143,6 +144,41 @@ export default function Gallery() {
       setLightboxIndex(index);
     }
   };
+
+  useEffect(() => {
+    const root = sectionRef.current;
+    if (!root) return;
+
+    const targets = Array.from(root.querySelectorAll<HTMLElement>(".gallery-reveal"));
+    if (targets.length === 0) return;
+
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const isInitiallyVisible = (el: HTMLElement) => {
+      const rect = el.getBoundingClientRect();
+      return rect.top <= viewportHeight * 0.92 && rect.bottom >= 0;
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("gallery-reveal-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.2, rootMargin: "0px 0px -8% 0px" }
+    );
+
+    targets.forEach((target) => {
+      if (isInitiallyVisible(target)) {
+        target.classList.add("gallery-reveal-visible");
+      } else {
+        observer.observe(target);
+      }
+    });
+    return () => observer.disconnect();
+  }, [images.length, isLoading]);
 
   if (isLoading) {
     return (
@@ -180,7 +216,7 @@ export default function Gallery() {
   const tileClasses = ["tile-a", "tile-b", "tile-c", "tile-d", "tile-e", "tile-f", "tile-g", "tile-h", "tile-i"];
 
   return (
-    <section id="gallery" className="relative py-16 lg:py-24 overflow-hidden">
+    <section ref={sectionRef} id="gallery" className="relative py-16 lg:py-24 overflow-hidden">
       {/* Background image with low opacity */}
       <div className="absolute inset-0 z-0 bg-[#F9EFE7]">
         <Image
@@ -206,14 +242,15 @@ export default function Gallery() {
           {tileIndices.map((i) => (
             <div
               key={tileClasses[i]}
-              className={`gallery-tile ${tileClasses[i]}`}
+              className={`gallery-tile gallery-reveal gallery-reveal-step gallery-step-${i % 10} ${tileClasses[i]}`}
               onClick={() => handleTileClick(i)}
             >
               <Image
                 src={getImageUrl(i)}
                 alt={getImageTitle(i)}
                 fill
-                className="object-cover transition-transform duration-500 hover:scale-105"
+                className="object-cover"
+                data-no-hover-scale="true"
                 sizes={i === 0 ? "(max-width: 1024px) 100vw, 25vw" : "(max-width: 1024px) 50vw, 25vw"}
               />
             </div>
@@ -248,11 +285,15 @@ export default function Gallery() {
         }
 
         .gallery-tile :global(img) {
-          transition: transform 0.5s ease;
+          transition:
+            transform 780ms cubic-bezier(0.22, 1, 0.36, 1),
+            filter 780ms cubic-bezier(0.22, 1, 0.36, 1);
+          will-change: transform, filter;
         }
 
         .gallery-tile:hover :global(img) {
-          transform: scale(1.05);
+          transform: scale(1.028);
+          filter: saturate(1.04) contrast(1.02);
         }
 
         .gallery-title {
