@@ -26,6 +26,8 @@ export interface YandexMapProps {
   zoom?: number;
   className?: string;
   grayscale?: boolean;
+  showPanoramaButton?: boolean;
+  openPanoramaSignal?: number;
 }
 
 type YandexMapInnerProps = Omit<YandexMapProps, "className" | "grayscale">;
@@ -165,6 +167,8 @@ export default function YandexMap({
   grayscale = true,
   coordinates,
   zoom,
+  showPanoramaButton = true,
+  openPanoramaSignal,
 }: YandexMapProps) {
   const { t } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -191,6 +195,17 @@ export default function YandexMap({
     return () => observer.disconnect();
   }, [isVisible]);
 
+  const prevSignalRef = useRef(openPanoramaSignal);
+  useEffect(() => {
+    if (openPanoramaSignal === undefined || openPanoramaSignal === 0) return;
+    if (openPanoramaSignal === prevSignalRef.current) return;
+    prevSignalRef.current = openPanoramaSignal;
+    const timeoutId = window.setTimeout(() => {
+      setIsPanoramaOpen(true);
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [openPanoramaSignal]);
+
   return (
     <>
       <div ref={containerRef} className={className}>
@@ -201,14 +216,16 @@ export default function YandexMap({
             <div className="w-full h-full bg-muted animate-pulse rounded-lg" />
           )}
         </div>
-        <Button
-          size="sm"
-          className="absolute bottom-4 right-4 z-10 rounded-full shadow-lg px-4"
-          onClick={() => setIsPanoramaOpen(true)}
-        >
-          <Globe className="w-4 h-4" />
-          {t.location.panoramaButton}
-        </Button>
+        {showPanoramaButton ? (
+          <Button
+            size="sm"
+            className="absolute bottom-4 right-4 z-10 rounded-full shadow-lg px-4"
+            onClick={() => setIsPanoramaOpen(true)}
+          >
+            <Globe className="w-4 h-4" />
+            {t.location.panoramaButton}
+          </Button>
+        ) : null}
       </div>
 
       <Dialog open={isPanoramaOpen} onOpenChange={setIsPanoramaOpen}>

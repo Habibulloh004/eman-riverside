@@ -11,6 +11,11 @@ export interface GalleryItem {
   redirect_url?: string;
   thumbnail: string;
   category: string;
+  home_section: string;
+  home_section_uz: string;
+  home_desc: string;
+  home_desc_uz: string;
+  home_order: number;
   sort_order: number;
   is_published: boolean;
   created_at: string;
@@ -32,6 +37,11 @@ export interface CreateGalleryRequest {
   redirect_url?: string;
   thumbnail: string;
   category: string;
+  home_section: string;
+  home_section_uz: string;
+  home_desc: string;
+  home_desc_uz: string;
+  home_order: number;
   sort_order: number;
   is_published: boolean;
 }

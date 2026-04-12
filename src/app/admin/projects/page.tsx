@@ -2,34 +2,16 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { projectsApi, Project, CreateProjectRequest } from "@/lib/api/projects";
+import Link from "next/link";
+import { projectsApi, Project } from "@/lib/api/projects";
 import { useAdminLanguage } from "@/contexts/AdminLanguageContext";
-import RichTextEditor from "@/components/ui/rich-text-editor";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8090';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090";
 
 export default function ProjectsPage() {
   const [items, setItems] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<Project | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const { t } = useAdminLanguage();
-
-  const [modalLangTab, setModalLangTab] = useState<"ru" | "uz">("ru");
-
-  const [formData, setFormData] = useState<CreateProjectRequest>({
-    type_ru: "",
-    type_uz: "",
-    area_ru: "",
-    area_uz: "",
-    description_ru: "",
-    description_uz: "",
-    image: "",
-    sort_order: 0,
-    is_published: true,
-  });
 
   const loadItems = useCallback(async () => {
     setIsLoading(true);
@@ -47,124 +29,14 @@ export default function ProjectsPage() {
     loadItems();
   }, [loadItems]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    try {
-      const result = await projectsApi.upload(file);
-      setFormData({ ...formData, image: result.url });
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Upload failed");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.type_ru.trim()) {
-      alert(t.projects.typeRuRequired);
-      return;
-    }
-
-    if (!formData.type_uz.trim()) {
-      alert(t.projects.typeUzRequired);
-      return;
-    }
-
-    if (!formData.area_ru.trim()) {
-      alert(t.projects.areaRuRequired);
-      return;
-    }
-
-    if (!formData.area_uz.trim()) {
-      alert(t.projects.areaUzRequired);
-      return;
-    }
-
-    if (!formData.description_ru.trim()) {
-      alert(t.projects.descRuRequired);
-      return;
-    }
-
-    if (!formData.description_uz.trim()) {
-      alert(t.projects.descUzRequired);
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      if (editingItem) {
-        await projectsApi.update(editingItem.id, formData);
-      } else {
-        await projectsApi.create(formData);
-      }
-      setIsModalOpen(false);
-      setEditingItem(null);
-      resetForm();
-      loadItems();
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to save");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleEdit = (item: Project) => {
-    setEditingItem(item);
-    setFormData({
-      type_ru: item.type_ru,
-      type_uz: item.type_uz,
-      area_ru: item.area_ru,
-      area_uz: item.area_uz,
-      description_ru: item.description_ru,
-      description_uz: item.description_uz,
-      image: item.image,
-      sort_order: item.sort_order,
-      is_published: item.is_published,
-    });
-    setIsModalOpen(true);
-  };
-
   const handleDelete = async (id: number) => {
     if (!confirm(t.projects.confirmDelete)) return;
-
     try {
       await projectsApi.delete(id);
       loadItems();
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to delete");
     }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      type_ru: "",
-      type_uz: "",
-      area_ru: "",
-      area_uz: "",
-      description_ru: "",
-      description_uz: "",
-      image: "",
-      sort_order: 0,
-      is_published: true,
-    });
-  };
-
-  const openNewModal = () => {
-    setEditingItem(null);
-    resetForm();
-    setModalLangTab("ru");
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditingItem(null);
-    setModalLangTab("ru");
   };
 
   return (
@@ -175,15 +47,15 @@ export default function ProjectsPage() {
           <h1 className="text-2xl font-bold text-gray-900">{t.projects.title}</h1>
           <p className="text-gray-500 text-sm mt-1">{t.projects.subtitle}</p>
         </div>
-        <button
-          onClick={openNewModal}
+        <Link
+          href="/admin/projects/new"
           className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           {t.projects.addProject}
-        </button>
+        </Link>
       </div>
 
       {/* Content */}
@@ -197,12 +69,12 @@ export default function ProjectsPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
           <p className="text-gray-500 mb-4">{t.projects.noProjects}</p>
-          <button
-            onClick={openNewModal}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+          <Link
+            href="/admin/projects/new"
+            className="inline-block px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
           >
             {t.projects.addFirst}
-          </button>
+          </Link>
         </div>
       ) : (
         <>
@@ -235,12 +107,12 @@ export default function ProjectsPage() {
                     dangerouslySetInnerHTML={{ __html: item.description_ru || "" }}
                   />
                   <div className="flex gap-2 mt-4">
-                    <button
-                      onClick={() => handleEdit(item)}
-                      className="flex-1 px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+                    <Link
+                      href={`/admin/projects/${item.id}/edit`}
+                      className="flex-1 px-3 py-1.5 text-sm text-center bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
                     >
                       {t.projects.edit}
-                    </button>
+                    </Link>
                     <button
                       onClick={() => handleDelete(item.id)}
                       className="px-3 py-1.5 text-sm bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors"
@@ -255,249 +127,6 @@ export default function ProjectsPage() {
             ))}
           </div>
         </>
-      )}
-
-      {/* Modal */}
-      {isModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={closeModal}
-        >
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/50" />
-
-          {/* Modal Content */}
-          <div
-            className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">
-                {editingItem ? t.projects.editProject : t.projects.addNew}
-              </h2>
-              <button
-                onClick={closeModal}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {/* Preview Box */}
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <p className="text-xs text-amber-700 font-medium mb-2">{t.projects.previewLabel}</p>
-                <div className="flex gap-4 items-start">
-                  <div className="w-24 h-20 bg-white rounded flex items-center justify-center text-gray-400 text-xs shrink-0">
-                    {formData.image ? (
-                      <Image
-                        src={formData.image.startsWith("http") ? formData.image : `${API_URL}${formData.image}`}
-                        alt="Preview"
-                        width={96}
-                        height={80}
-                        className="object-contain"
-                      />
-                    ) : (
-                      t.projects.imageLabel
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-serif text-lg text-gray-900">{formData.type_ru || "3-комнатные"}</h4>
-                    <p className="text-xs text-gray-500">{formData.area_ru || "от 56.79 до 61 м²"}</p>
-                    <div
-                      className="text-xs text-gray-600 italic mt-1 prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: formData.description_ru || "Tavsif..." }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Language Tabs */}
-              <div className="border rounded-lg overflow-hidden">
-                <div className="flex border-b bg-gray-50">
-                  <button
-                    type="button"
-                    onClick={() => setModalLangTab("ru")}
-                    className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
-                      modalLangTab === "ru"
-                        ? "bg-white text-green-600 border-b-2 border-green-600 -mb-px"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                  >
-                    {t.settings.russian}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setModalLangTab("uz")}
-                    className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
-                      modalLangTab === "uz"
-                        ? "bg-white text-green-600 border-b-2 border-green-600 -mb-px"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                  >
-                    {t.settings.uzbek}
-                  </button>
-                </div>
-
-                <div className="p-4 space-y-4">
-                  {modalLangTab === "ru" ? (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {t.projects.roomTypeRu}
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.type_ru}
-                          onChange={(e) => setFormData({ ...formData, type_ru: e.target.value })}
-                          className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          placeholder="3-комнатные"
-                        />
-                        <p className="text-xs text-gray-400 mt-1">{t.projects.roomTypeHint}</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {t.projects.areaRu}
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.area_ru}
-                          onChange={(e) => setFormData({ ...formData, area_ru: e.target.value })}
-                          className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          placeholder="от 56.79 до 61 м²"
-                        />
-                        <p className="text-xs text-gray-400 mt-1">{t.projects.areaHint}</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {t.projects.descriptionRu}
-                        </label>
-                        <RichTextEditor
-                          value={formData.description_ru}
-                          onChange={(value) => setFormData({ ...formData, description_ru: value })}
-                          placeholder="Оптимально для семьи с двумя детьми"
-                        />
-                        <p className="text-xs text-gray-400 mt-1">{t.projects.descHint}</p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {t.projects.roomTypeUz}
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.type_uz}
-                          onChange={(e) => setFormData({ ...formData, type_uz: e.target.value })}
-                          className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          placeholder="3-xonali"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {t.projects.areaUz}
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.area_uz}
-                          onChange={(e) => setFormData({ ...formData, area_uz: e.target.value })}
-                          className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          placeholder="56.79 dan 61 m² gacha"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {t.projects.descriptionUz}
-                        </label>
-                        <RichTextEditor
-                          value={formData.description_uz}
-                          onChange={(value) => setFormData({ ...formData, description_uz: value })}
-                          placeholder="Ikki bolali oila uchun optimal"
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Image Upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t.projects.imageUpload}
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-green-500 transition-colors">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    disabled={isUploading}
-                    className="hidden"
-                    id="file-upload"
-                  />
-                  <label htmlFor="file-upload" className="cursor-pointer">
-                    {isUploading ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600"></div>
-                        <span>{t.projects.uploading}</span>
-                      </div>
-                    ) : formData.image ? (
-                      <div className="text-green-600">
-                        <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <p>{t.projects.imageUploaded}</p>
-                        <p className="text-sm text-gray-500 mt-1">{t.projects.selectAnother}</p>
-                      </div>
-                    ) : (
-                      <div className="text-gray-500">
-                        <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
-                        <p>{t.projects.clickToUpload}</p>
-                        <p className="text-sm mt-1">PNG, JPG, WEBP</p>
-                      </div>
-                    )}
-                  </label>
-                </div>
-              </div>
-
-              {/* Published checkbox */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="is_published"
-                  checked={formData.is_published}
-                  onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
-                  className="w-4 h-4 rounded text-green-600 focus:ring-green-500"
-                />
-                <label htmlFor="is_published" className="text-sm text-gray-700">
-                  {t.projects.publishLabel}
-                </label>
-              </div>
-
-              {/* Buttons */}
-              <div className="flex gap-3 pt-4 border-t">
-                <button
-                  type="submit"
-                  disabled={isSaving || isUploading}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isSaving ? t.projects.saving : t.projects.saveBtn}
-                </button>
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-                >
-                  {t.projects.cancel}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
       )}
     </div>
   );

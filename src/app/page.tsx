@@ -6,6 +6,7 @@ import {
   AboutFeatures,
   Location,
   Gallery,
+  GalleryShowcase,
   FloorPlans,
   Contact,
   Footer,
@@ -67,6 +68,7 @@ export default function Home() {
 
         <Location />
         <Gallery />
+        <GalleryShowcase />
         <FloorPlans />
         <Contact />
       </main>

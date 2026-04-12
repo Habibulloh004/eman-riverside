@@ -48,6 +48,11 @@ export default function GalleryPage() {
     redirect_url: "",
     thumbnail: "",
     category: "construction",
+    home_section: "",
+    home_section_uz: "",
+    home_desc: "",
+    home_desc_uz: "",
+    home_order: 0,
     sort_order: 0,
     is_published: true,
   });
@@ -183,6 +188,11 @@ export default function GalleryPage() {
       redirect_url: item.redirect_url || "",
       thumbnail: item.thumbnail,
       category: item.category,
+      home_section: item.home_section || "",
+      home_section_uz: item.home_section_uz || "",
+      home_desc: item.home_desc || "",
+      home_desc_uz: item.home_desc_uz || "",
+      home_order: item.home_order || 0,
       sort_order: item.sort_order,
       is_published: item.is_published,
     });
@@ -211,6 +221,11 @@ export default function GalleryPage() {
       redirect_url: "",
       thumbnail: "",
       category: "construction",
+      home_section: "",
+      home_section_uz: "",
+      home_desc: "",
+      home_desc_uz: "",
+      home_order: 0,
       sort_order: 0,
       is_published: true,
     });
@@ -465,21 +480,34 @@ export default function GalleryPage() {
 
               {/* Category - only for images */}
               {formData.type === "image" && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t.gallery.category} *
-                  </label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  >
-                    {categories.filter(c => c.value).map((cat) => (
-                      <option key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </option>
-                    ))}
-                  </select>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t.gallery.category} *
+                    </label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    >
+                      {categories.filter(c => c.value).map((cat) => (
+                        <option key={cat.value} value={cat.value}>
+                          {cat.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t.gallery.homeOrder}
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.home_order}
+                      onChange={(e) => setFormData({ ...formData, home_order: Number(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
                 </div>
               )}
 
@@ -535,6 +563,33 @@ export default function GalleryPage() {
                           placeholder={t.gallery.descriptionPlaceholder}
                         />
                       </div>
+                      {formData.type === "image" && (
+                        <>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              {t.gallery.homeSectionRu}
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.home_section}
+                              onChange={(e) => setFormData({ ...formData, home_section: e.target.value })}
+                              className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                              placeholder={t.gallery.homeSectionPlaceholder}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              {t.gallery.homeDescRu}
+                            </label>
+                            <textarea
+                              value={formData.home_desc}
+                              onChange={(e) => setFormData({ ...formData, home_desc: e.target.value })}
+                              className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent min-h-24"
+                              placeholder={t.gallery.homeDescPlaceholder}
+                            />
+                          </div>
+                        </>
+                      )}
                     </>
                   ) : (
                     <>
@@ -560,6 +615,33 @@ export default function GalleryPage() {
                           placeholder={t.gallery.descriptionPlaceholder}
                         />
                       </div>
+                      {formData.type === "image" && (
+                        <>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              {t.gallery.homeSectionUz}
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.home_section_uz}
+                              onChange={(e) => setFormData({ ...formData, home_section_uz: e.target.value })}
+                              className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                              placeholder={t.gallery.homeSectionPlaceholder}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              {t.gallery.homeDescUz}
+                            </label>
+                            <textarea
+                              value={formData.home_desc_uz}
+                              onChange={(e) => setFormData({ ...formData, home_desc_uz: e.target.value })}
+                              className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent min-h-24"
+                              placeholder={t.gallery.homeDescPlaceholder}
+                            />
+                          </div>
+                        </>
+                      )}
                     </>
                   )}
                 </div>

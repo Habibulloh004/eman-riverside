@@ -204,31 +204,7 @@ export default function Header() {
           <div className="hidden lg:flex items-center gap-2 2xl:gap-3 shrink-0">
             <div data-anim-header-seq>
               <Button
-                className="rounded-full px-4 2xl:px-6 bg-primary text-white hover:bg-primary/90 whitespace-nowrap"
-                onClick={() => setIsRequestModalOpen(true)}
-              >
-                {t.requestModal.title}
-              </Button>
-            </div>
-            {hasBrochure && (
-              <div className="hidden xl:block" data-anim-header-seq>
-                <Button
-                  className="rounded-full px-4 2xl:px-6 whitespace-nowrap"
-                  variant="outline"
-                  asChild
-                >
-                  <a
-                    href={brochureUrl}
-                    download={brochureDownloadName || true}
-                  >
-                    {t.nav.brochure}
-                  </a>
-                </Button>
-              </div>
-            )}
-            <div data-anim-header-seq>
-              <Button
-                className="rounded-full px-4 2xl:px-6 whitespace-nowrap"
+                className="rounded-full px-6 2xl:px-8 whitespace-nowrap border-primary text-primary hover:bg-primary hover:text-white"
                 variant="outline"
                 asChild
               >

@@ -53,6 +53,7 @@ function DrawerContent({
   return (
     <DrawerPortal data-slot="drawer-portal">
       <DrawerOverlay />
+      <DrawerPrimitive.Title className="sr-only">Menu</DrawerPrimitive.Title>
       <DrawerPrimitive.Content
         data-slot="drawer-content"
         className={cn(

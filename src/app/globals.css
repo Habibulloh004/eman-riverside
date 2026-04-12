@@ -48,6 +48,12 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
+@layer base {
+  .container {
+    max-width: 1920px !important;
+  }
+}
+
 :root {
   --radius: 0.5rem;
 

@@ -14,98 +14,174 @@ interface FeatureItemProps {
   project: Project;
   index: number;
   language: string;
-  t: Record<string, unknown>;
 }
 
-function FeatureItem({ project, index, language, t }: FeatureItemProps) {
-  const number = String(index + 1).padStart(2, "0");
-  const isEven = index % 2 === 1;
+const fallbackContent = {
+  ru: [
+    {
+      title: "Архитектура и",
+      subtitle: "материалы",
+      description:
+        "<h3>Фасады</h3><ul><li>Декоративная покраска</li><li>Фрезерованный металл</li><li>Природные оттенки</li><li>Современные формы</li></ul><h3>Общие зоны</h3><ul><li>Керамогранит</li><li>Травертин</li><li>Износостойкие материалы</li></ul>",
+    },
+    {
+      title: "Дворовое",
+      subtitle: "пространство",
+      description:
+        "<h3>Озеленение</h3><p>Территория наполнена деревьями, газонами и растениями, создающими ощущение свежести и приватности.</p><h3>Комфорт</h3><p>Безопасные маршруты, зоны отдыха и продуманное освещение объединены в единый семейный двор.</p><h3>Активность</h3><p>Детские и спортивные площадки расположены рядом, но не конфликтуют с тихими зонами.</p>",
+    },
+    {
+      title: "Ваша",
+      subtitle: "квартира",
+      description:
+        "<p>Квартиры Eman Riverside созданы с учетом семейного сценария жизни: больше света, воздуха и полезного пространства.</p><ul><li>Высота потолков 3 метра</li><li>Панорамные окна</li><li>Функциональные планировки</li><li>Просторные кухни-гостиные</li><li>Подготовка под white box</li></ul>",
+    },
+  ],
+  uz: [
+    {
+      title: "Arxitektura va",
+      subtitle: "materiallar",
+      description:
+        "<h3>Fasadlar</h3><ul><li>Dekorativ bo'yash</li><li>Frezerlangan metall</li><li>Tabiiy ranglar</li><li>Zamonaviy shakllar</li></ul><h3>Umumiy zonalar</h3><ul><li>Keramogranit</li><li>Travertin</li><li>Bardoshli materiallar</li></ul>",
+    },
+    {
+      title: "Hovli",
+      subtitle: "makoni",
+      description:
+        "<h3>Ko'kalamzor</h3><p>Hudud daraxtlar, maysazor va o'simliklar bilan to'ldirilib, salqin va sokin muhit yaratadi.</p><h3>Qulaylik</h3><p>Dam olish zonalari, yoritish va xavfsiz ichki yo'laklar oilaviy kundalik hayot uchun uyg'unlashtirilgan.</p><h3>Faollik</h3><p>Bolalar va sport maydonlari tinch hududlar bilan muvozanatli joylashtirilgan.</p>",
+    },
+    {
+      title: "Sizning",
+      subtitle: "kvartirangiz",
+      description:
+        "<p>Eman Riverside kvartiralari oilaviy yashash ssenariysi uchun loyihalangan: ko'proq yorug'lik, havo va foydali maydon.</p><ul><li>3 metr shift balandligi</li><li>Panoramali derazalar</li><li>Qulay rejalashtirish</li><li>Keng oshxona-mehmonxona</li><li>White box tayyorgarligi</li></ul>",
+    },
+  ],
+} as const;
 
-  const title = language === "uz" ? project.type_uz : project.type_ru;
-  const titleLine2 = language === "uz" ? project.area_uz : project.area_ru;
-  const rawDescription = language === "uz" ? project.description_uz : project.description_ru;
-  const descriptionHtml = useMemo(() => sanitizeRichTextHtml(rawDescription || ""), [rawDescription]);
+function FeatureItem({ project, index, language }: FeatureItemProps) {
+  const number = String(index + 1).padStart(2, "0");
+  const isTextFirst = index % 2 === 0;
+  const fallback = fallbackContent[language === "uz" ? "uz" : "ru"][
+    index % fallbackContent.ru.length
+  ];
+
+  const title = (language === "uz" ? project.type_uz : project.type_ru)?.trim();
+  const subtitle = (language === "uz" ? project.area_uz : project.area_ru)?.trim();
+  const rawDescription =
+    language === "uz" ? project.description_uz : project.description_ru;
+  const resolvedDescription =
+    rawDescription && rawDescription.replace(/<[^>]+>/g, "").trim().length > 24
+      ? rawDescription
+      : fallback.description;
+  const descriptionHtml = useMemo(
+    () => sanitizeRichTextHtml(resolvedDescription || ""),
+    [resolvedDescription]
+  );
   const image = project.image
-    ? (project.image.startsWith("http") ? project.image : `${API_URL}${project.image}`)
+    ? project.image.startsWith("http")
+      ? project.image
+      : `${API_URL}${project.image}`
     : "/images/hero/1.png";
 
-  const featureKey = `feature0${index + 1}` as keyof typeof t;
-  const featureT = (t[featureKey] || {}) as Record<string, unknown>;
-  const label = (featureT.label as string) || `Feature ${number}`;
-
   return (
-    <div
+    <article
       id={`feature-${number}`}
       data-page-section-anim="true"
-      className={`scroll-mt-20 ${index === 0 ? "pb-24 lg:pb-32 pt-20" : "py-24 lg:py-32"} bg-[#F9EFE7] relative overflow-hidden`}
+      className="scroll-mt-20"
     >
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/images/hero/1.png"
-          alt=""
-          fill
-          className="object-cover opacity-[0.04]"
-          sizes="100vw"
-        />
-      </div>
-      <div className="container mx-auto px-4 lg:px-8 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-start">
-          {/* Content */}
-          <div className={`relative ${isEven ? "lg:order-2" : ""}`}>
-            <span className="absolute -top-8 -left-4 text-[120px] lg:text-[180px] font-serif font-bold text-primary/10 leading-none select-none pointer-events-none">
-              {number}
-            </span>
-
-            <div className="relative z-10 pt-16 lg:pt-24">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-8 h-px bg-primary" />
-                <span className="text-xs text-primary font-medium uppercase tracking-[0.2em]">
-                  {label}
-                </span>
-              </div>
-
-              <h3 className="text-2xl lg:text-4xl font-serif mb-8">
-                {titleLine2}
-              </h3>
-
-              {descriptionHtml && (
-                <div
-                  data-page-body-anim="true"
-                  className="text-sm text-muted-foreground leading-relaxed [&_h1]:mb-3 [&_h1]:text-xl [&_h1]:font-semibold [&_h2]:mb-3 [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-semibold [&_p]:mb-3 [&_p:last-child]:mb-0 [&_ul]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_a]:underline"
-                  dangerouslySetInnerHTML={{ __html: descriptionHtml }}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Image */}
-          <div className={`relative aspect-4/3 rounded-lg overflow-hidden bg-muted ${isEven ? "lg:order-1" : ""}`}>
-            <Image
-              src={image}
-              alt={title || "Feature"}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 50vw"
-            />
-          </div>
+      <div className="overflow-hidden rounded-[18px] bg-white/55 shadow-[0_18px_44px_rgba(86,83,75,0.08)] ring-1 ring-[#EFE4D9]">
+        <div className="grid lg:grid-cols-2">
+          {isTextFirst ? (
+            <>
+              <FeatureCopy
+                number={number}
+                title={title || fallback.title}
+                subtitle={subtitle || fallback.subtitle}
+                descriptionHtml={descriptionHtml}
+              />
+              <FeatureImage image={image} title={title || fallback.title} />
+            </>
+          ) : (
+            <>
+              <FeatureImage image={image} title={title || fallback.title} />
+              <FeatureCopy
+                number={number}
+                title={title || fallback.title}
+                subtitle={subtitle || fallback.subtitle}
+                descriptionHtml={descriptionHtml}
+              />
+            </>
+          )}
         </div>
+      </div>
+    </article>
+  );
+}
+
+function FeatureCopy({
+  number,
+  title,
+  subtitle,
+  descriptionHtml,
+}: {
+  number: string;
+  title: string;
+  subtitle: string;
+  descriptionHtml: string;
+}) {
+  return (
+    <div className="relative flex min-h-[220px] flex-col justify-center overflow-hidden bg-primary px-5 py-5 text-white sm:px-6 sm:py-6 lg:min-h-[390px] lg:px-7 lg:py-7">
+      <div className="absolute left-4 top-3 text-[68px] font-semibold leading-none text-white/10 sm:text-[80px] lg:left-5 lg:top-4 lg:text-[92px]">
+        {number}
+      </div>
+
+      <div className="relative z-10 max-w-[320px] pt-10 lg:pt-12">
+        <h3 className="max-w-[250px] text-[1.75rem] font-light leading-[0.98] tracking-[-0.04em] sm:text-[2rem] lg:text-[2.35rem]">
+          {title}
+          {subtitle ? <span className="block">{subtitle}</span> : null}
+        </h3>
+
+        {descriptionHtml ? (
+          <div
+            data-page-body-anim="true"
+            className="mt-3 text-[11px] leading-4.5 text-white/76 lg:text-[12px] lg:leading-5 [&_h1]:mb-2 [&_h1]:text-base [&_h1]:font-medium [&_h2]:mb-2 [&_h2]:text-sm [&_h2]:font-medium [&_h3]:mb-1 [&_h3]:text-[10px] [&_h3]:font-semibold [&_h3]:uppercase [&_h3]:tracking-[0.2em] [&_p]:mb-2.5 [&_p:last-child]:mb-0 [&_ul]:grid [&_ul]:gap-y-1 [&_ul]:pl-0 [&_li]:list-none [&_li]:pl-3 [&_li]:relative [&_li]:text-white/72 [&_li]:before:absolute [&_li]:before:left-0 [&_li]:before:top-[0.42rem] [&_li]:before:h-1 [&_li]:before:w-1 [&_li]:before:rounded-full [&_li]:before:bg-white/60"
+            dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+          />
+        ) : null}
       </div>
     </div>
   );
 }
 
+function FeatureImage({ image, title }: { image: string; title: string }) {
+  return (
+    <div className="relative min-h-[220px] lg:min-h-[390px]">
+      <Image
+        src={image}
+        alt={title || "Feature"}
+        fill
+        className="object-cover"
+        sizes="(max-width: 1024px) 100vw, 50vw"
+      />
+    </div>
+  );
+}
+
 export default function AboutFeatures() {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const { data, isLoading } = useProjectsPublic();
 
   const projects = data?.items || [];
 
   if (isLoading) {
     return (
-      <>
-        <FeatureSkeleton />
-        <FeatureSkeleton />
-      </>
+      <div className="bg-[#F9EFE7] pb-24">
+        <div className="container mx-auto space-y-4 px-4 lg:px-8">
+          <FeatureSkeleton />
+          <FeatureSkeleton />
+        </div>
+      </div>
     );
   }
 
@@ -114,16 +190,17 @@ export default function AboutFeatures() {
   }
 
   return (
-    <>
-      {projects.map((project, index) => (
-        <FeatureItem
-          key={project.id}
-          project={project}
-          index={index}
-          language={language}
-          t={t as Record<string, unknown>}
-        />
-      ))}
-    </>
+    <section className="bg-[#F9EFE7] pb-16 lg:pb-20">
+      <div className="container mx-auto space-y-3 px-4 lg:space-y-4 lg:px-8">
+        {projects.slice(0, 3).map((project, index) => (
+          <FeatureItem
+            key={project.id}
+            project={project}
+            index={index}
+            language={language}
+          />
+        ))}
+      </div>
+    </section>
   );
 }

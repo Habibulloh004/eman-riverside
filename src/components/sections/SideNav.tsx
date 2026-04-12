@@ -76,6 +76,7 @@ export default function SideNav() {
     >
       {/* Labels column */}
       <div className="flex flex-col items-end gap-4">
+        <span className="text-xs font-semibold text-primary">Старт</span>
         {sideNavItems.map((item) => (
           <button
             key={item.id}

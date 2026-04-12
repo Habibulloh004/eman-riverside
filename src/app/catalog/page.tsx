@@ -9,6 +9,7 @@ import { PageHero } from "@/components/shared";
 import { Header, Footer } from "@/components/sections";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
 import {
   Drawer,
   DrawerContent,
@@ -17,9 +18,9 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
-  ChevronUp,
   ChevronDown,
   SlidersHorizontal,
+  X,
 } from "lucide-react";
 import { useEstates } from "@/hooks/useEstates";
 import { Estate } from "@/lib/api/estates";
@@ -38,28 +39,32 @@ const typeOptions = ["Все", "Эконом", "Стандарт"];
 
 const ITEMS_PER_PAGE = 10;
 
-interface FilterSectionProps {
-  title: string;
-  isOpen: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}
+function FilterDropdown({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-function FilterSection({ title, isOpen, onToggle, children }: FilterSectionProps) {
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   return (
-    <div className="border-b border-gray-200 py-3">
+    <div ref={ref} className={`relative ${className}`}>
       <button
-        onClick={onToggle}
-        className="flex items-center justify-between w-full text-left"
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between gap-2 w-full rounded-full border border-gray-100 bg-white shadow-sm px-4 py-2.5 text-sm text-gray-700 hover:border-gray-200 transition-colors"
       >
-        <span className="text-sm font-medium text-gray-900">{title}</span>
-        {isOpen ? (
-          <ChevronUp className="w-4 h-4 text-gray-500" />
-        ) : (
-          <ChevronDown className="w-4 h-4 text-gray-500" />
-        )}
+        <span className="truncate">{label}</span>
+        <ChevronDown className={`w-4 h-4 shrink-0 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
-      {isOpen && <div className="mt-3">{children}</div>}
+      {open && (
+        <div className="absolute top-full left-0 mt-1 w-full min-w-[180px] bg-white rounded-xl border border-gray-100 shadow-lg z-50 p-3">
+          {children}
+        </div>
+      )}
     </div>
   );
 }
@@ -77,7 +82,7 @@ export default function CatalogPage() {
 }
 
 function CatalogContent() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const searchParams = useSearchParams();
   const catalogListRef = useRef<HTMLDivElement | null>(null);
   const desktopFilterRef = useRef<HTMLDivElement | null>(null);
@@ -92,6 +97,8 @@ function CatalogContent() {
   const initialFloor = searchParams.get("floor");
   const initialRooms = searchParams.get("rooms");
   const initialArea = searchParams.get("area");
+  const initialBuilding = searchParams.get("building");
+  const initialApartment = searchParams.get("apartment");
 
   // Map area param (e.g. "0-50") to areaOptions label (e.g. "< 50")
   const getInitialArea = (): string[] => {
@@ -110,14 +117,11 @@ function CatalogContent() {
   );
   const [selectedAreas, setSelectedAreas] = useState<string[]>(getInitialArea);
   const [selectedType, setSelectedType] = useState("Все");
+  const [selectedFinishing, setSelectedFinishing] = useState("Все");
 
-  // Section states
-  const [openSections, setOpenSections] = useState({
-    floor: true,
-    rooms: true,
-    area: true,
-    type: true,
-  });
+  // Range sliders
+  const [priceRange, setPriceRange] = useState([0, 500_000_000]);
+  const [areaRange, setAreaRange] = useState([0, 400]);
 
   // Memoized filtered apartments (frontend filtering)
   const filteredApartments = useMemo(() => {
@@ -148,14 +152,44 @@ function CatalogContent() {
       filtered = filtered.filter(a => selectedFloors.includes(a.estate_floor));
     }
 
+    if (initialBuilding) {
+      filtered = filtered.filter(
+        a => String(a.parent_id) === String(initialBuilding)
+      );
+    }
+
+    if (initialApartment) {
+      filtered = filtered.filter(
+        a =>
+          String(a.id) === String(initialApartment) ||
+          a.title?.toLowerCase().includes(initialApartment.toLowerCase())
+      );
+    }
+
+    // Price filter
+    if (priceRange[0] > 0) {
+      filtered = filtered.filter(a => (a.estate_price || 0) >= priceRange[0]);
+    }
+    if (priceRange[1] < 500_000_000) {
+      filtered = filtered.filter(a => (a.estate_price || 0) <= priceRange[1]);
+    }
+
+    // Area range filter
+    if (areaRange[0] > 0 || areaRange[1] < 400) {
+      filtered = filtered.filter(a => a.estate_area >= areaRange[0] && a.estate_area <= areaRange[1]);
+    }
+
     return filtered;
-  }, [allApartments, selectedRooms, selectedAreas, selectedFloors]);
+  }, [allApartments, selectedRooms, selectedAreas, selectedFloors, priceRange, areaRange, initialBuilding, initialApartment]);
 
   const resetFilters = () => {
     setSelectedFloors([]);
     setSelectedRooms([]);
     setSelectedAreas([]);
     setSelectedType("Все");
+    setSelectedFinishing("Все");
+    setPriceRange([0, 500_000_000]);
+    setAreaRange([0, 400]);
     setCurrentPage(1);
   };
 
@@ -189,9 +223,7 @@ function CatalogContent() {
     return pages;
   };
 
-  const toggleSection = (section: keyof typeof openSections) => {
-    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
+  const hasActiveFilters = selectedFloors.length > 0 || selectedRooms.length > 0 || selectedAreas.length > 0 || selectedType !== "Все" || selectedFinishing !== "Все" || priceRange[0] > 0 || priceRange[1] < 500_000_000 || areaRange[0] > 0 || areaRange[1] < 400;
 
   const toggleFilter = <T,>(value: T, selected: T[], setSelected: React.Dispatch<React.SetStateAction<T[]>>) => {
     if (selected.includes(value)) {
@@ -274,93 +306,158 @@ function CatalogContent() {
     };
   }, []);
 
-  const filterContent = (
-    <div data-no-page-text-anim="true" data-no-page-ui-anim="true">
-      {/* Floor Filter */}
-      <FilterSection
-        title={t.catalog.floorFilter}
-        isOpen={openSections.floor}
-        onToggle={() => toggleSection("floor")}
-      >
-        <div className="grid grid-cols-4 gap-1">
-          {floorOptions.map((floor) => (
-            <label key={floor} className="flex items-center gap-1.5 cursor-pointer">
-              <Checkbox
-                checked={selectedFloors.includes(floor)}
-                onCheckedChange={() => toggleFilter(floor, selectedFloors, setSelectedFloors)}
-                className="w-4 h-4"
-              />
-              <span className="text-xs text-gray-700">{floor}</span>
-            </label>
-          ))}
-        </div>
-      </FilterSection>
+  const finishingOptions = [
+    { label: language === "uz" ? "Hammasi" : "Все", value: "Все" },
+    { label: language === "uz" ? "Pardozli" : "С отделкой", value: "С отделкой" },
+    { label: language === "uz" ? "Pardozsiz" : "Без отделки", value: "Без отделки" },
+  ];
 
-      {/* Rooms Filter */}
-      <FilterSection
-        title={t.catalog.roomsFilter}
-        isOpen={openSections.rooms}
-        onToggle={() => toggleSection("rooms")}
-      >
-        <div className="space-y-1">
-          {roomOptions.map((room) => (
-            <label key={room} className="flex items-center gap-2 cursor-pointer">
-              <Checkbox
-                checked={selectedRooms.includes(room)}
-                onCheckedChange={() => toggleFilter(room, selectedRooms, setSelectedRooms)}
-                className="w-4 h-4"
-              />
-              <span className="text-xs text-gray-700">{room}</span>
-            </label>
-          ))}
-        </div>
-      </FilterSection>
+  const filterBar = (
+    <div data-no-page-text-anim="true" data-no-page-ui-anim="true" ref={desktopFilterRef} className="space-y-4">
+      {/* Row 1: Floor, Rooms, Price range, Area */}
+      <div className="flex flex-wrap items-center gap-3">
+        <FilterDropdown
+          label={`${t.catalog.floorFilter}${selectedFloors.length > 0 ? `  ${selectedFloors.join(", ")}` : ""}`}
+          className="w-[calc(50%-6px)] sm:w-auto sm:min-w-[130px]"
+        >
+          <div className="grid grid-cols-4 gap-1">
+            {floorOptions.map((floor) => (
+              <label key={floor} className="flex items-center gap-1.5 cursor-pointer py-0.5">
+                <Checkbox checked={selectedFloors.includes(floor)} onCheckedChange={() => toggleFilter(floor, selectedFloors, setSelectedFloors)} className="w-4 h-4" />
+                <span className="text-xs text-gray-700">{floor}</span>
+              </label>
+            ))}
+          </div>
+        </FilterDropdown>
 
-      {/* Area Filter */}
-      <FilterSection
-        title={t.catalog.areaFilter}
-        isOpen={openSections.area}
-        onToggle={() => toggleSection("area")}
-      >
-        <div className="space-y-1">
-          {areaOptions.map((option) => (
-            <label key={option.label} className="flex items-center gap-2 cursor-pointer">
-              <Checkbox
-                checked={selectedAreas.includes(option.label)}
-                onCheckedChange={() => toggleFilter(option.label, selectedAreas, setSelectedAreas)}
-                className="w-4 h-4"
-              />
-              <span className="text-xs text-gray-700">{option.label} {t.catalog.sqm}</span>
-            </label>
-          ))}
-        </div>
-      </FilterSection>
+        <FilterDropdown
+          label={`${t.catalog.roomsFilter}${selectedRooms.length > 0 ? `  ${selectedRooms.join(", ")}` : ""}`}
+          className="w-[calc(50%-6px)] sm:w-auto sm:min-w-[180px]"
+        >
+          <div className="space-y-1">
+            {roomOptions.map((room) => (
+              <label key={room} className="flex items-center gap-2 cursor-pointer py-0.5">
+                <Checkbox checked={selectedRooms.includes(room)} onCheckedChange={() => toggleFilter(room, selectedRooms, setSelectedRooms)} className="w-4 h-4" />
+                <span className="text-xs text-gray-700">{room}</span>
+              </label>
+            ))}
+          </div>
+        </FilterDropdown>
 
-      {/* Type Filter */}
-      <FilterSection
-        title={t.catalog.typeFilter}
-        isOpen={openSections.type}
-        onToggle={() => toggleSection("type")}
-      >
-        <div className="space-y-1">
-          {typeOptions.map((type) => (
-            <label key={type} className="flex items-center gap-2 cursor-pointer">
-              <Checkbox
-                checked={selectedType === type}
-                onCheckedChange={() => setSelectedType(type)}
-                className="w-4 h-4"
-              />
-              <span className="text-xs text-gray-700">{type}</span>
-            </label>
-          ))}
+        {/* Price range slider */}
+        <div className="rounded-2xl bg-white shadow-sm border border-gray-100 px-4 py-2 w-full sm:w-auto sm:flex-1 lg:max-w-[380px]">
+          <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
+            <span>{t.catalog.from} {priceRange[0].toLocaleString()} {language === "uz" ? "so'm" : "сум"}</span>
+            <span>{t.catalog.priceTo} {priceRange[1].toLocaleString()} {language === "uz" ? "so'm" : "сум"}</span>
+          </div>
+          <Slider
+            min={0}
+            max={500_000_000}
+            step={5_000_000}
+            value={priceRange}
+            onValueChange={(val) => { setPriceRange(val); setCurrentPage(1); }}
+          />
         </div>
-      </FilterSection>
 
-      {/* Reset Filters */}
-      <div className="pt-4 space-y-2">
-        <Button variant="outline" className="w-full text-xs" onClick={resetFilters}>
-          {t.catalog.resetFilters}
-        </Button>
+        {/* Area range slider */}
+        <div className="rounded-2xl bg-white shadow-sm border border-gray-100 px-4 py-2 w-[calc(50%-6px)] sm:w-auto sm:min-w-[180px]">
+          <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
+            <span>{t.catalog.areaFilter}</span>
+            <span>{areaRange[1]}{t.catalog.sqm}</span>
+          </div>
+          <Slider
+            min={0}
+            max={400}
+            step={5}
+            value={areaRange}
+            onValueChange={(val) => { setAreaRange(val); setCurrentPage(1); }}
+          />
+        </div>
+      </div>
+
+      {/* Row 2: Type + Finishing + actions */}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Type dropdown + pills */}
+        <FilterDropdown
+          label={t.catalog.typeFilter}
+          className="w-auto min-w-[140px]"
+        >
+          <div className="space-y-1">
+            {typeOptions.map((type) => (
+              <button
+                key={type}
+                onClick={() => { setSelectedType(type); setCurrentPage(1); }}
+                className={`block w-full text-left px-3 py-1.5 rounded text-xs transition-colors ${selectedType === type ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        </FilterDropdown>
+
+        {typeOptions.filter(t => t !== "Все").map((type) => (
+          <button
+            key={type}
+            onClick={() => { setSelectedType(selectedType === type ? "Все" : type); setCurrentPage(1); }}
+            className={`rounded-full px-4 py-2 text-xs font-medium border transition-colors ${
+              selectedType === type
+                ? "bg-primary text-white border-primary"
+                : "bg-white text-gray-500 border-gray-100 shadow-sm hover:border-gray-200"
+            }`}
+          >
+            {type}
+          </button>
+        ))}
+
+        <div className="w-px h-6 bg-gray-200 hidden sm:block" />
+
+        {/* Finishing dropdown + pills */}
+        <FilterDropdown
+          label={language === "uz" ? "Pardoz" : "Отделка"}
+          className="w-auto min-w-[130px]"
+        >
+          <div className="space-y-1">
+            {finishingOptions.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => { setSelectedFinishing(opt.value); setCurrentPage(1); }}
+                className={`block w-full text-left px-3 py-1.5 rounded text-xs transition-colors ${selectedFinishing === opt.value ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </FilterDropdown>
+
+        {finishingOptions.filter(o => o.value !== "Все").map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => { setSelectedFinishing(selectedFinishing === opt.value ? "Все" : opt.value); setCurrentPage(1); }}
+            className={`rounded-full px-4 py-2 text-xs font-medium border transition-colors ${
+              selectedFinishing === opt.value
+                ? "bg-primary text-white border-primary"
+                : "bg-white text-gray-500 border-gray-100 shadow-sm hover:border-gray-200"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+
+        {/* Actions */}
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={resetFilters}
+            className="rounded-full px-5 py-2 text-xs font-medium border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors uppercase tracking-wider"
+          >
+            {t.catalog.resetFilters}
+          </button>
+          <button
+            onClick={() => setCurrentPage(1)}
+            className="rounded-full px-5 py-2 text-xs font-medium bg-primary text-white hover:bg-primary/90 transition-colors uppercase tracking-wider"
+          >
+            {language === "uz" ? "Filtr bo'yicha qidirish" : "Поиск по фильтру"}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -377,35 +474,32 @@ function CatalogContent() {
 
         <section className="py-6 lg:py-10 bg-beige min-h-screen">
           <div className="container mx-auto px-4 lg:px-8">
-            <div className="flex gap-6">
-              {/* Desktop Sidebar Filters */}
-              <aside className="hidden lg:block w-64 shrink-0">
-                <div ref={desktopFilterRef} className="bg-white rounded-lg p-5 sticky top-24">
-                  {filterContent}
-                </div>
-              </aside>
+            {/* Horizontal Filter Bar */}
+            <div className="hidden md:block mb-6">
+              {filterBar}
+            </div>
 
-              {/* Mobile Filter Drawer */}
-              <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
-                <Drawer>
-                  <DrawerTrigger asChild>
-                    <Button className="rounded-full shadow-lg px-6">
-                      <SlidersHorizontal className="w-4 h-4 mr-2" />
-                      {t.catalog.filter}
-                    </Button>
-                  </DrawerTrigger>
-                  <DrawerContent>
-                    <div className="mx-auto w-full max-w-lg">
-                      <div className="p-4 overflow-y-auto max-h-[70vh]">
-                        {filterContent}
-                      </div>
+            {/* Mobile Filter Drawer */}
+            <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+              <Drawer>
+                <DrawerTrigger asChild>
+                  <Button className="rounded-full shadow-lg px-6">
+                    <SlidersHorizontal className="w-4 h-4 mr-2" />
+                    {t.catalog.filter}
+                  </Button>
+                </DrawerTrigger>
+                <DrawerContent>
+                  <div className="mx-auto w-full max-w-lg">
+                    <div className="p-4 overflow-y-auto max-h-[70vh]">
+                      {filterBar}
                     </div>
-                  </DrawerContent>
-                </Drawer>
-              </div>
+                  </div>
+                </DrawerContent>
+              </Drawer>
+            </div>
 
-              {/* Apartments List */}
-              <div className="flex-1 min-w-0">
+            {/* Apartments List */}
+            <div>
                 {isLoading ? (
                   <div className="space-y-3 sm:space-y-4">
                     {[...Array(6)].map((_, i) => (
@@ -428,7 +522,7 @@ function CatalogContent() {
                 ) : (
                   <div
                     ref={catalogListRef}
-                    className="grid grid-cols-1 min-[1700px]:grid-cols-2 gap-4"
+                    className="grid grid-cols-1 md:grid-cols-2 gap-4"
                     data-no-page-text-anim="true"
                     data-no-page-media-anim="true"
                   >
@@ -558,7 +652,6 @@ function CatalogContent() {
                   </div>
                 )}
               </div>
-            </div>
           </div>
         </section>
       </main>
