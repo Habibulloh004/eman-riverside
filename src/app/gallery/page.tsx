@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
 import { Header, Footer } from "@/components/sections";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -32,7 +32,16 @@ export default function GalleryPage() {
   const { t, language } = useLanguage();
   const mainRef = useRef<HTMLElement | null>(null);
   const [galleryItems, setGalleryItems] = useState<
-    Array<{ id: number | string; image: string; title: string; description: string; redirect_url?: string }>
+    Array<{
+      id: number | string;
+      image: string;
+      title: string;
+      description: string;
+      redirect_url?: string;
+      category: string;
+      home_section?: string;
+      home_desc?: string;
+    }>
   >([]);
   const [videoItems, setVideoItems] = useState<Array<{ url: string; thumbnail: string; title: string; redirect_url?: string }>>([]);
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
@@ -80,12 +89,18 @@ export default function GalleryPage() {
               language === "uz" ? (item.description_uz || item.description) : item.description
             ),
             redirect_url: item.redirect_url,
+            category: item.category || "construction",
+            home_section: language === "uz" ? (item.home_section_uz || item.home_section) : item.home_section,
+            home_desc: language === "uz" ? (item.home_desc_uz || item.home_desc) : item.home_desc,
           }));
           setGalleryItems(items);
         } else {
           const defaults = (language === "uz" ? defaultGalleryItems.uz : defaultGalleryItems.ru).map((item) => ({
             id: `${item.title}-${item.image}`,
             ...item,
+            category: "construction",
+            home_section: "",
+            home_desc: "",
           }));
           setGalleryItems(defaults);
         }
@@ -106,6 +121,9 @@ export default function GalleryPage() {
         const defaults = (language === "uz" ? defaultGalleryItems.uz : defaultGalleryItems.ru).map((item) => ({
           id: `${item.title}-${item.image}`,
           ...item,
+          category: "construction",
+          home_section: "",
+          home_desc: "",
         }));
         setGalleryItems(defaults);
       } finally {
@@ -152,6 +170,42 @@ export default function GalleryPage() {
     });
     return () => observer.disconnect();
   }, [isLoading, galleryItems.length, videoItems.length, activeVideoIndex]);
+
+  const plainText = (html?: string) =>
+    (html || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+
+  const normalizeCategory = (value?: string) => {
+    const raw = (value || "").trim().toLowerCase();
+    if (!raw) return "";
+    if (["interior", "interier", "интерьер"].includes(raw)) return "interior";
+    if (["exterior", "extreir", "экстерьер"].includes(raw)) return "exterior";
+    if (["construction", "стройка", "қурилиш", "курилиш жараёни"].includes(raw)) return "construction";
+    return raw;
+  };
+
+  const interiorItems = useMemo(
+    () => galleryItems.filter((item) => normalizeCategory(item.category) === "interior"),
+    [galleryItems]
+  );
+
+  const exteriorItems = useMemo(
+    () => galleryItems.filter((item) => normalizeCategory(item.category) === "exterior"),
+    [galleryItems]
+  );
+
+  const mainGalleryItems = useMemo(
+    () =>
+      galleryItems.filter((item) => {
+        const cat = normalizeCategory(item.category);
+        return cat === "construction" || cat === "infrastructure";
+      }),
+    [galleryItems]
+  );
+
+  const interiorMain = interiorItems[0];
+  const interiorSecond = interiorItems[1];
+  const exteriorMain = exteriorItems[0];
+  const exteriorSecond = exteriorItems[1];
 
   return (
     <>
@@ -291,6 +345,7 @@ export default function GalleryPage() {
         </section>
 
         {/* Gallery Section - Green background */}
+        {(isLoading || mainGalleryItems.length > 0) && (
         <section className="relative py-12 lg:py-24 bg-primary overflow-hidden">
           {/* Background text */}
           <div className="absolute inset-0 flex items-start justify-center pt-8 pointer-events-none">
@@ -316,7 +371,7 @@ export default function GalleryPage() {
                   className="flex gap-4 lg:gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4 -mx-4 px-4 lg:-mx-8 lg:px-8"
                   style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
-                  {galleryItems.map((item, index) => {
+                  {mainGalleryItems.map((item, index) => {
                     const tileClassName = "flex-shrink-0 w-[70%] sm:w-[45%] lg:w-[280px] snap-center flex flex-col";
                     const content = (
                       <>
@@ -365,13 +420,16 @@ export default function GalleryPage() {
             )}
 
             {/* Decorative ellipse */}
-            <div className="flex justify-center mt-8 lg:mt-16">
-              <svg width="120" height="40" viewBox="0 0 120 40" fill="none">
-                <ellipse cx="60" cy="20" rx="58" ry="18" stroke="white" strokeWidth="1" fill="none" opacity="0.3" />
-              </svg>
-            </div>
+            {mainGalleryItems.length > 0 && (
+              <div className="flex justify-center mt-8 lg:mt-16">
+                <svg width="120" height="40" viewBox="0 0 120 40" fill="none">
+                  <ellipse cx="60" cy="20" rx="58" ry="18" stroke="white" strokeWidth="1" fill="none" opacity="0.3" />
+                </svg>
+              </div>
+            )}
           </div>
         </section>
+        )}
 
         {/* Interior & Exterior Section */}
         <section className="relative py-16 lg:py-24 bg-[#F5ECE4] overflow-hidden">
@@ -387,8 +445,8 @@ export default function GalleryPage() {
                     style={{ borderRadius: "0 0 396px 0" }}
                   >
                     <Image
-                      src="/images/05.jpg"
-                      alt={t.gallery.interiorTitle}
+                      src={interiorSecond?.image || "/images/05.jpg"}
+                      alt={interiorSecond?.title || t.gallery.interiorTitle}
                       fill
                       className="object-cover"
                       sizes="(max-width: 1024px) 100vw, 33vw"
@@ -406,13 +464,10 @@ export default function GalleryPage() {
               <div className="lg:col-span-4 flex flex-col justify-start pt-4">
                 <div className="lg:pl-8 lg:pr-4">
                   <h2 className="text-3xl lg:text-4xl xl:text-5xl font-serif italic mb-6">
-                    {t.gallery.interiorTitle}
+                    {interiorMain?.home_section || t.gallery.interiorTitle}
                   </h2>
                   <p className="text-sm text-gray-600 leading-relaxed mb-4">
-                    {t.gallery.interiorDesc}
-                  </p>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    {t.gallery.interiorDesc}
+                    {interiorMain?.home_desc || plainText(interiorMain?.description) || t.gallery.interiorDesc}
                   </p>
                 </div>
               </div>
@@ -424,8 +479,8 @@ export default function GalleryPage() {
 
                 >
                   <Image
-                    src="/images/01.webp"
-                    alt={t.gallery.interiorTitle}
+                    src={interiorMain?.image || "/images/01.webp"}
+                    alt={interiorMain?.title || t.gallery.interiorTitle}
                     fill
                     className="object-cover"
                     sizes="(max-width: 1024px) 100vw, 33vw"
@@ -439,10 +494,10 @@ export default function GalleryPage() {
               {/* Left - Content */}
               <div className="lg:col-span-3">
                 <h2 className="text-3xl lg:text-4xl xl:text-5xl font-serif mb-6">
-                  {t.gallery.exteriorTitle}
+                  {exteriorMain?.home_section || t.gallery.exteriorTitle}
                 </h2>
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  {t.gallery.exteriorDesc}
+                  {exteriorMain?.home_desc || plainText(exteriorMain?.description) || t.gallery.exteriorDesc}
                 </p>
               </div>
 
@@ -454,8 +509,8 @@ export default function GalleryPage() {
                   style={{ rotate: "-45deg", borderRadius: "50% 50% 50% 50% / 50% 50% 50% 50%" }}
                 >
                   <Image
-                    src="/images/02.2.webp"
-                    alt={t.gallery.exteriorTitle}
+                    src={exteriorMain?.image || "/images/02.2.webp"}
+                    alt={exteriorMain?.title || t.gallery.exteriorTitle}
                     fill
                     className="object-cover"
                     sizes="(max-width: 1024px) 100vw, 40vw"
@@ -482,8 +537,8 @@ export default function GalleryPage() {
                 {/* Small circular image - inside the ellipse */}
                 <div className="rotate-45 absolute left-[50%] top-[60%] w-50 h-50 rounded-full overflow-hidden gallery-reveal gallery-reveal-step gallery-step-3 exterior-enter-right-bottom">
                   <Image
-                    src="/images/04.webp"
-                    alt={t.gallery.exteriorTitle}
+                    src={exteriorSecond?.image || "/images/04.webp"}
+                    alt={exteriorSecond?.title || t.gallery.exteriorTitle}
                     fill
                     className="object-cover -rotate-45"
                     sizes="200px"

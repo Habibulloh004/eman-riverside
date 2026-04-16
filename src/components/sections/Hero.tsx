@@ -51,18 +51,36 @@ export default function Hero() {
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
 
   const buildingOptions = useMemo(() => {
-    const unique = Array.from(
-      new Set(
-        estates
-          .map((estate) => Number(estate.parent_id))
-          .filter((id) => Number.isFinite(id) && id > 0)
-      )
-    ).sort((a, b) => a - b);
+    const byParent = new Map<number, string>();
 
-    return unique.map((id) => ({
-      value: String(id),
-      label: language === "ru" ? `Дом ${id}` : `${id}-uy`,
-    }));
+    for (const estate of estates) {
+      const parentId = Number(estate.parent_id);
+      if (!Number.isFinite(parentId) || parentId <= 0 || byParent.has(parentId)) {
+        continue;
+      }
+
+      const houseTitle = typeof estate.house_title === "string" ? estate.house_title.trim() : "";
+      const houseHuman = typeof estate.geo_house_human === "string" ? estate.geo_house_human.trim() : "";
+      const parentAddressShort =
+        typeof estate.parent_address_short === "string"
+          ? estate.parent_address_short.trim()
+          : "";
+
+      const label =
+        houseTitle ||
+        houseHuman ||
+        parentAddressShort ||
+        (language === "ru" ? `Дом ${parentId}` : `${parentId}-uy`);
+
+      byParent.set(parentId, label);
+    }
+
+    return Array.from(byParent.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([id, label]) => ({
+        value: String(id),
+        label,
+      }));
   }, [estates, language]);
 
   const floorOptions = useMemo(() => {
@@ -87,14 +105,26 @@ export default function Hero() {
         )
       : filteredByBuilding;
 
-    return filteredByFloor.slice(0, 80).map((estate) => ({
-      value: String(estate.id),
-      label:
-        estate.title?.trim() ||
-        (language === "ru"
-          ? `Квартира ${estate.id}`
-          : `Kvartira ${estate.id}`),
-    }));
+    return filteredByFloor.slice(0, 10).map((estate) => {
+      const fallback =
+        language === "ru" ? `Квартира ${estate.id}` : `Kvartira ${estate.id}`;
+      const fullTitle = estate.title?.trim() || fallback;
+      const rooms = Number(estate.estate_rooms);
+      const area = Number(estate.estate_area);
+      const floor = Number(estate.estate_floor);
+
+      const shortTitle =
+        Number.isFinite(rooms) && Number.isFinite(area) && Number.isFinite(floor)
+          ? language === "ru"
+            ? `${rooms}к • ${area} м² • ${floor} эт`
+            : `${rooms}x • ${area} m² • ${floor}-qavat`
+          : fullTitle;
+
+      return {
+        value: String(estate.id),
+        label: shortTitle,
+      };
+    });
   }, [estates, selectedBuilding, selectedFloor, language]);
 
   const socialItems = [
@@ -439,10 +469,10 @@ export default function Hero() {
 
                   <button
                     onClick={handleSearch}
-                    className="flex h-14 w-14 items-center justify-center self-center rounded-[16px] bg-white text-primary shadow-[0_8px_24px_rgba(63,112,77,0.12)] transition-colors hover:bg-[#f5efe8]"
+                    className="flex h-11 w-11 items-center justify-center self-center rounded-[14px] bg-white text-primary shadow-[0_8px_24px_rgba(63,112,77,0.12)] transition-colors hover:bg-[#f5efe8]"
                     aria-label={t.hero.selectApartment}
                   >
-                    <Search className="h-6 w-6" strokeWidth={2.2} />
+                    <Search className="h-5 w-5" strokeWidth={2.2} />
                   </button>
                 </div>
               </div>
