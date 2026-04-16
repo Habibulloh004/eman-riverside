@@ -35,7 +35,7 @@ export default function PageHero({ title, subtitle, image }: PageHeroProps) {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 lg:px-8 relative z-10 h-full flex items-center">
+      <div className="container relative z-10 mx-auto flex h-full items-center px-4 lg:px-8">
         <div>
           {subtitle && (
             <div className="flex items-center gap-3 mb-2">

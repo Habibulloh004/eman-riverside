@@ -300,6 +300,7 @@ export const uzCyrl = {
     paymentPlans: "Тўлов Режалари",
     faq: "FAQ",
     projectsTab: "Лойиҳалар",
+    bannersTab: "Баннерлар",
     // Language switcher
     russian: "Русский",
     uzbek: "Ўзбек",
@@ -326,6 +327,21 @@ export const uzCyrl = {
     brochureNone: "Файл танланмаган",
     brochureClear: "Ўчириш",
     brochureHint: "PDF/DOCX/XLSX/PPTX ва бошқа ҳужжатларни юклаб, кейин «Сақлаш» тугмасини босинг. Хедердаги тугма фақат файл сақланган бўлса фаол бўлади.",
+    // Hero banners
+    addBanner: "Баннер қўшиш",
+    noBanners: "Баннерлар қўшилмаган",
+    addFirstBanner: "Биринчи баннерни қўшинг",
+    bannerImage: "Расм",
+    bannerUpload: "Баннер юклаш",
+    bannerUploading: "Баннер юкланмоқда...",
+    bannerTitleRu: "Сарлавҳа (RU)",
+    bannerTitleUz: "Сарлавҳа (UZ)",
+    bannerSubtitleRu: "Ости сарлавҳа (RU)",
+    bannerSubtitleUz: "Ости сарлавҳа (UZ)",
+    bannerAdded: "Баннер қўшилди",
+    bannerRemoved: "Баннер ўчирилди",
+    bannersSaved: "Баннерлар сақланди",
+    bannerHint: "Бу баннерлар бош саҳифанинг биринчи қисмида слайдер бўлиб кўринади. Қидирув блоги слайдлар устидан доимий қолади.",
     // Social
     socialHint: "Ижтимоий тармоқ ҳаволаларини киритинг. Бўш майдонлар сайтда кўрсатилмайди.",
     // Payment plans

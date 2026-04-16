@@ -11,6 +11,34 @@ import { useEstates } from "@/hooks/useEstates";
 
 let hasAnimatedHeroInRuntime = false;
 
+function resolveHeroImageUrl(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("blob:") ||
+    trimmed.startsWith("data:")
+  ) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("/api/proxy/")) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("/uploads/")) {
+    return `/api/proxy${trimmed}`;
+  }
+
+  if (trimmed.startsWith("//")) {
+    return `https:${trimmed}`;
+  }
+
+  return trimmed;
+}
+
 export default function Hero() {
   const { t, language } = useLanguage();
   const { settings } = useSiteSettings();
@@ -20,6 +48,7 @@ export default function Hero() {
   const [selectedBuilding, setSelectedBuilding] = useState("");
   const [selectedFloor, setSelectedFloor] = useState("");
   const [selectedApartment, setSelectedApartment] = useState("");
+  const [activeBannerIndex, setActiveBannerIndex] = useState(0);
 
   const buildingOptions = useMemo(() => {
     const unique = Array.from(
@@ -88,6 +117,27 @@ export default function Hero() {
       ),
     },
   ].filter(Boolean) as { name: string; href: string; icon: React.ReactNode }[];
+
+  const bannerItems = useMemo(() => {
+    const fromSettings = settings.content.hero_banners
+      .map((item) => ({
+        image: resolveHeroImageUrl(item.image || ""),
+        title: language === "ru" ? item.title_ru : item.title_uz,
+        subtitle: language === "ru" ? item.subtitle_ru : item.subtitle_uz,
+      }))
+      .filter((item) => item.image || item.title || item.subtitle);
+
+    if (fromSettings.length > 0) return fromSettings;
+
+    return [
+      {
+        image: "/images/hero.webp",
+        title: t.hero.comingSoon,
+        subtitle: t.hero.subtitle,
+      },
+    ];
+  }, [settings.content.hero_banners, language, t.hero.comingSoon, t.hero.subtitle]);
+  const currentBannerIndex = activeBannerIndex % Math.max(1, bannerItems.length);
 
   const handleSearch = () => {
     if (selectedApartment) {
@@ -187,6 +237,18 @@ export default function Hero() {
     return () => ctx.revert();
   }, []);
 
+  useEffect(() => {
+    if (bannerItems.length <= 1) return;
+
+    const interval = window.setInterval(() => {
+      setActiveBannerIndex((prev) => (prev + 1) % bannerItems.length);
+    }, 5500);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [bannerItems.length]);
+
   return (
     <section
       id="hero"
@@ -228,42 +290,73 @@ export default function Hero() {
             data-hero-card
             className="relative overflow-hidden rounded-[30px] border border-white/70 bg-white/18 shadow-[0_24px_80px_rgba(63,112,77,0.12)] backdrop-blur-[2px] lg:h-[min(720px,calc(100svh-128px))]"
           >
+            <div className="absolute right-4 top-4 z-30 rounded-full bg-black/15 px-3 py-2 backdrop-blur-sm">
+              <div className="flex items-center gap-2">
+                {bannerItems.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setActiveBannerIndex(index)}
+                    className={`h-1.5 rounded-full transition-all ${
+                      index === currentBannerIndex ? "w-8 bg-white" : "w-3 bg-white/60 hover:bg-white/80"
+                    }`}
+                    aria-label={`Slide ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+
             <div className="grid lg:h-full lg:grid-cols-[0.46fr_0.54fr]">
               <div className="relative flex min-h-[320px] flex-col justify-between overflow-hidden bg-primary px-7 py-8 text-white sm:px-9 sm:py-10 lg:h-full lg:min-h-0 lg:px-12 lg:py-12 lg:pb-24">
                 <div className="absolute inset-y-0 left-0 w-full bg-[linear-gradient(135deg,rgba(255,255,255,0.08),transparent_40%)]" />
-                <div className="absolute left-5 top-6 text-[100px] font-semibold leading-none text-white/8 sm:text-[132px] lg:left-7 lg:top-7 lg:text-[180px]">
-                  EM
-                </div>
 
                 <div className="relative z-10 max-w-[360px] pt-8 lg:pt-16">
-                  <h1
-                    data-hero-text
-                    className="font-sans text-[clamp(3rem,6.5vw,5.25rem)] font-light leading-[0.95] tracking-[-0.04em] whitespace-pre-line"
-                  >
-                    {t.hero.comingSoon}
-                  </h1>
-                  <p
-                    data-hero-text
-                    className="mt-6 max-w-[260px] text-lg leading-[1.2] text-white/88 sm:text-xl"
-                  >
-                    {t.hero.subtitle}
-                  </p>
+                  {bannerItems.map((banner, index) => (
+                    <div
+                      key={`${banner.title}-${index}`}
+                      className={`absolute inset-0 transition-opacity duration-700 ${
+                        index === currentBannerIndex ? "opacity-100" : "opacity-0"
+                      }`}
+                    >
+                      <h1
+                        data-hero-text
+                        className="font-sans text-[clamp(3rem,6.5vw,5.25rem)] font-light leading-[0.95] tracking-[-0.04em] whitespace-pre-line"
+                      >
+                        {banner.title}
+                      </h1>
+                      <p
+                        data-hero-text
+                        className="mt-6 max-w-[260px] text-lg leading-[1.2] text-white/88 sm:text-xl"
+                      >
+                        {banner.subtitle}
+                      </p>
+                    </div>
+                  ))}
+                  <div className="opacity-0 pointer-events-none select-none">
+                    <h1 className="font-sans text-[clamp(3rem,6.5vw,5.25rem)] font-light leading-[0.95] tracking-[-0.04em] whitespace-pre-line">
+                      {bannerItems[currentBannerIndex]?.title}
+                    </h1>
+                    <p className="mt-6 max-w-[260px] text-lg leading-[1.2] text-white/88 sm:text-xl">
+                      {bannerItems[currentBannerIndex]?.subtitle}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="pointer-events-none relative z-10 mt-10 hidden lg:block">
-                  <div className="h-px w-14 bg-white/30" />
-                </div>
               </div>
 
               <div className="relative min-h-[280px] lg:h-full lg:min-h-0">
-                <Image
-                  src="/images/hero.webp"
-                  alt="EMAN RIVERSIDE"
-                  fill
-                  className="object-cover"
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 54vw"
-                />
+                {bannerItems.map((banner, index) => (
+                  <Image
+                    key={`${banner.image}-${index}`}
+                    src={banner.image || "/images/hero.webp"}
+                    alt="EMAN RIVERSIDE"
+                    fill
+                    className={`object-cover transition-opacity duration-700 ${
+                      index === currentBannerIndex ? "opacity-100" : "opacity-0"
+                    }`}
+                    priority={index === 0}
+                    sizes="(max-width: 1024px) 100vw, 54vw"
+                  />
+                ))}
                 <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(63,112,77,0.14),rgba(255,255,255,0)_25%,rgba(255,244,232,0.1)_100%)]" />
               </div>
             </div>

@@ -302,6 +302,7 @@ export const ru: AdminTranslations = {
     paymentPlans: "Планы оплаты",
     faq: "FAQ",
     projectsTab: "Проекты",
+    bannersTab: "Баннеры",
     // Language switcher
     russian: "Русский",
     uzbek: "Ўзбек",
@@ -328,6 +329,21 @@ export const ru: AdminTranslations = {
     brochureNone: "Файл не выбран",
     brochureClear: "Удалить",
     brochureHint: "Загрузите PDF/DOCX/XLSX/PPTX и другие документы, затем нажмите «Сохранить». Кнопка в шапке станет активной только если файл сохранен.",
+    // Hero banners
+    addBanner: "Добавить баннер",
+    noBanners: "Баннеры не добавлены",
+    addFirstBanner: "Добавьте первый баннер",
+    bannerImage: "Изображение",
+    bannerUpload: "Загрузить баннер",
+    bannerUploading: "Загрузка баннера...",
+    bannerTitleRu: "Заголовок (RU)",
+    bannerTitleUz: "Заголовок (UZ)",
+    bannerSubtitleRu: "Подзаголовок (RU)",
+    bannerSubtitleUz: "Подзаголовок (UZ)",
+    bannerAdded: "Баннер добавлен",
+    bannerRemoved: "Баннер удалён",
+    bannersSaved: "Баннеры сохранены",
+    bannerHint: "Эти баннеры показываются в первом экране как слайдер. Блок поиска остается фиксированным поверх слайдов.",
     // Social
     socialHint: "Введите ссылки на социальные сети. Пустые поля не будут отображаться на сайте.",
     // Payment plans

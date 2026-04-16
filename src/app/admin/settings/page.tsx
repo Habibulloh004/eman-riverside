@@ -29,6 +29,7 @@ import {
   Music,
   FileText,
   Upload,
+  Image as ImageIcon,
 } from "lucide-react";
 import { useAdminLanguage } from "@/contexts/AdminLanguageContext";
 import RichTextEditor from "@/components/ui/rich-text-editor";
@@ -63,6 +64,14 @@ interface ProjectItem {
   features?: string[];
 }
 
+interface HeroBannerItem {
+  image: string;
+  title_ru: string;
+  title_uz: string;
+  subtitle_ru: string;
+  subtitle_uz: string;
+}
+
 function extractFileNameFromUrl(url: string): string {
   const trimmed = url.trim();
   if (!trimmed) return "";
@@ -83,7 +92,8 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingMusic, setIsUploadingMusic] = useState(false);
   const [isUploadingBrochure, setIsUploadingBrochure] = useState(false);
-  const [activeTab, setActiveTab] = useState<"contact" | "social" | "pricing" | "faq" | "projects">("contact");
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [activeTab, setActiveTab] = useState<"contact" | "social" | "pricing" | "faq" | "projects" | "banners">("contact");
   const [activeLang, setActiveLang] = useState<"ru" | "uz">("ru");
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const { t } = useAdminLanguage();
@@ -118,6 +128,7 @@ export default function SettingsPage() {
 
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [projectsUz, setProjectsUz] = useState<ProjectItem[]>([]);
+  const [heroBanners, setHeroBanners] = useState<HeroBannerItem[]>([]);
 
   const loadSettings = useCallback(async () => {
     try {
@@ -179,6 +190,38 @@ export default function SettingsPage() {
         const projUz = getValue("projects_uz");
         setProjectsUz(projUz ? JSON.parse(projUz) : []);
       } catch { setProjectsUz([]); }
+
+      try {
+        const heroTitle = getValue("hero_title");
+        const heroSubtitleRu = getValue("hero_subtitle");
+        const heroSubtitleUz = getValue("hero_subtitle_uz");
+        const rawBanners = getValue("hero_banners");
+        const parsedBanners = rawBanners ? JSON.parse(rawBanners) : [];
+
+        if (Array.isArray(parsedBanners) && parsedBanners.length > 0) {
+          setHeroBanners(
+            parsedBanners.map((item) => ({
+              image: String(item?.image || ""),
+              title_ru: String(item?.title_ru || ""),
+              title_uz: String(item?.title_uz || ""),
+              subtitle_ru: String(item?.subtitle_ru || ""),
+              subtitle_uz: String(item?.subtitle_uz || ""),
+            }))
+          );
+        } else {
+          setHeroBanners([
+            {
+              image: "/images/hero.webp",
+              title_ru: heroTitle || "Tez Kunda\nСкоро",
+              title_uz: heroTitle || "Tez Kunda",
+              subtitle_ru: heroSubtitleRu || "",
+              subtitle_uz: heroSubtitleUz || "",
+            },
+          ]);
+        }
+      } catch {
+        setHeroBanners([]);
+      }
 
     } catch (err) {
       console.error("Failed to load settings:", err);
@@ -261,6 +304,27 @@ export default function SettingsPage() {
     }
   };
 
+  const handleBannerUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingBanner(true);
+    try {
+      const result = await apiClient.upload("/api/admin/upload", file);
+      setHeroBanners((prev) =>
+        prev.map((banner, currentIndex) =>
+          currentIndex === index ? { ...banner, image: result.url } : banner
+        )
+      );
+    } catch (err) {
+      console.error("Failed to upload banner:", err);
+      showNotification("error", t.settings.saveError);
+    } finally {
+      setIsUploadingBanner(false);
+      e.target.value = "";
+    }
+  };
+
   const handleSaveSocial = async () => {
     try {
       setIsSaving(true);
@@ -280,6 +344,40 @@ export default function SettingsPage() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const saveHeroBanners = async (
+    nextBanners: HeroBannerItem[],
+    successMessage: string = t.settings.bannersSaved
+  ) => {
+    try {
+      setIsSaving(true);
+      const cleaned = nextBanners.filter(
+        (item) =>
+          item.image.trim() !== "" ||
+          item.title_ru.trim() !== "" ||
+          item.title_uz.trim() !== "" ||
+          item.subtitle_ru.trim() !== "" ||
+          item.subtitle_uz.trim() !== ""
+      );
+
+      const updates = [
+        { key: "hero_banners", value: JSON.stringify(cleaned) },
+      ];
+
+      await settingsApi.bulkUpdate(updates);
+      setHeroBanners(cleaned);
+      showNotification("success", successMessage);
+    } catch (err) {
+      console.error("Failed to save:", err);
+      showNotification("error", t.settings.saveError);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveBanners = async () => {
+    await saveHeroBanners(heroBanners);
   };
 
   const savePaymentPlans = async (
@@ -483,6 +581,28 @@ export default function SettingsPage() {
     }
   };
 
+  const addBanner = () => {
+    setHeroBanners((prev) => [
+      ...prev,
+      { image: "", title_ru: "", title_uz: "", subtitle_ru: "", subtitle_uz: "" },
+    ]);
+    showNotification("success", t.settings.bannerAdded);
+  };
+
+  const updateBanner = (index: number, field: keyof HeroBannerItem, value: string) => {
+    setHeroBanners((prev) =>
+      prev.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, [field]: value } : item
+      )
+    );
+  };
+
+  const removeBanner = (index: number) => {
+    const next = heroBanners.filter((_, itemIndex) => itemIndex !== index);
+    setHeroBanners(next);
+    void saveHeroBanners(next, t.settings.bannerRemoved);
+  };
+
   const currentPlans = activeLang === "ru" ? paymentPlans : paymentPlansUz;
   const currentFaq = activeLang === "ru" ? faqItems : faqItemsUz;
   const currentProjects = activeLang === "ru" ? projects : projectsUz;
@@ -574,6 +694,17 @@ export default function SettingsPage() {
           >
             <Layers className="w-4 h-4" />
             {t.settings.projectsTab}
+          </button>
+          <button
+            onClick={() => setActiveTab("banners")}
+            className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
+              activeTab === "banners"
+                ? "text-green-600 border-b-2 border-green-600 bg-green-50/50"
+                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            <ImageIcon className="w-4 h-4" />
+            {t.settings.bannersTab}
           </button>
         </div>
 
@@ -1251,6 +1382,143 @@ export default function SettingsPage() {
               <div className="mt-8 pt-6 border-t border-gray-100">
                 <button
                   onClick={handleSaveProjects}
+                  disabled={isSaving}
+                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
+                >
+                  {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                  {t.settings.save}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ==================== BANNERS TAB ==================== */}
+          {activeTab === "banners" && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <p className="text-sm text-gray-500">
+                  {t.settings.bannerHint}
+                </p>
+                <button
+                  onClick={addBanner}
+                  className="flex items-center gap-2 px-4 py-2 text-green-600 border border-green-200 rounded-lg hover:bg-green-50 transition-colors text-sm font-medium"
+                >
+                  <Plus className="w-4 h-4" />
+                  {t.settings.addBanner}
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {heroBanners.length === 0 ? (
+                  <div className="text-center py-12 bg-gray-50 rounded-xl">
+                    <ImageIcon className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                    <p className="text-gray-500">{t.settings.noBanners}</p>
+                    <button
+                      onClick={addBanner}
+                      className="mt-3 text-green-600 text-sm font-medium hover:underline"
+                    >
+                      {t.settings.addFirstBanner}
+                    </button>
+                  </div>
+                ) : (
+                  heroBanners.map((banner, index) => (
+                    <div key={index} className="border border-gray-200 rounded-xl p-5 bg-gray-50">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="font-medium text-gray-900">#{index + 1}</div>
+                        <button
+                          onClick={() => removeBanner(index)}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-xs font-medium text-gray-500 mb-1 block">
+                            {t.settings.bannerImage}
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="text"
+                              value={banner.image}
+                              onChange={(e) => updateBanner(index, "image", e.target.value)}
+                              placeholder="/images/hero.webp"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                            />
+                            <label className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer text-sm font-medium text-gray-700 whitespace-nowrap">
+                              {isUploadingBanner ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Upload className="w-4 h-4" />
+                              )}
+                              {isUploadingBanner ? t.settings.bannerUploading : t.settings.bannerUpload}
+                              <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                                onChange={(e) => handleBannerUpload(index, e)}
+                                disabled={isUploadingBanner}
+                                className="hidden"
+                              />
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                          <div>
+                            <label className="text-xs font-medium text-gray-500 mb-1 block">
+                              {t.settings.bannerTitleRu}
+                            </label>
+                            <textarea
+                              value={banner.title_ru}
+                              onChange={(e) => updateBanner(index, "title_ru", e.target.value)}
+                              rows={3}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-500 mb-1 block">
+                              {t.settings.bannerTitleUz}
+                            </label>
+                            <textarea
+                              value={banner.title_uz}
+                              onChange={(e) => updateBanner(index, "title_uz", e.target.value)}
+                              rows={3}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-500 mb-1 block">
+                              {t.settings.bannerSubtitleRu}
+                            </label>
+                            <textarea
+                              value={banner.subtitle_ru}
+                              onChange={(e) => updateBanner(index, "subtitle_ru", e.target.value)}
+                              rows={2}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-500 mb-1 block">
+                              {t.settings.bannerSubtitleUz}
+                            </label>
+                            <textarea
+                              value={banner.subtitle_uz}
+                              onChange={(e) => updateBanner(index, "subtitle_uz", e.target.value)}
+                              rows={2}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-gray-100">
+                <button
+                  onClick={handleSaveBanners}
                   disabled={isSaving}
                   className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
                 >

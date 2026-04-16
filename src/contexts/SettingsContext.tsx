@@ -1,7 +1,16 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
-import { settingsApi, SettingsResponse, PaymentPlan, FAQItem, ProjectItem, GalleryItem, parseSettingValue } from "@/lib/api/settings";
+import {
+  settingsApi,
+  SettingsResponse,
+  PaymentPlan,
+  FAQItem,
+  ProjectItem,
+  GalleryItem,
+  HeroBannerItem,
+  parseSettingValue,
+} from "@/lib/api/settings";
 
 interface ContactSettings {
   phone: string;
@@ -25,6 +34,7 @@ interface ContentSettings {
   hero_title: string;
   hero_subtitle: string;
   hero_subtitle_uz: string;
+  hero_banners: HeroBannerItem[];
   map_embed_url: string;
   map_coordinates: string;
   background_music_url: string;
@@ -75,6 +85,7 @@ const defaultSettings: SiteSettings = {
     hero_title: "EMAN RIVERSIDE",
     hero_subtitle: "Жилой комплекс нового уровня",
     hero_subtitle_uz: "Yangi darajadagi turar-joy majmuasi",
+    hero_banners: [],
     map_embed_url: "",
     map_coordinates: "41.3111,69.2401",
     background_music_url: "",
@@ -168,6 +179,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           hero_title: getValue(data, "content", "hero_title", defaultSettings.content.hero_title),
           hero_subtitle: getValue(data, "content", "hero_subtitle", defaultSettings.content.hero_subtitle),
           hero_subtitle_uz: getValue(data, "content", "hero_subtitle_uz", defaultSettings.content.hero_subtitle_uz),
+          hero_banners: getJSONValue<HeroBannerItem[]>(data, "content", "hero_banners", []),
           map_embed_url: getValue(data, "content", "map_embed_url", defaultSettings.content.map_embed_url),
           map_coordinates: getValue(data, "content", "map_coordinates", defaultSettings.content.map_coordinates),
           background_music_url: getValue(

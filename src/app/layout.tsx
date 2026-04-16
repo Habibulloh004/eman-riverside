@@ -151,8 +151,8 @@ export default function RootLayout({
             <LanguageProvider>
               <BackgroundMusicPlayer />
               <ScrollToTop />
-              <PageEnterAnimations />
               {children}
+              <PageEnterAnimations />
               <Toaster
                 position="top-center"
                 toastOptions={{

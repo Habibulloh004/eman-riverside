@@ -5,11 +5,32 @@ export const runtime = "nodejs";
 // Allow large file uploads (200MB to match backend limit)
 export const maxDuration = 60;
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090";
+const PRIMARY_API_URL =
+  process.env.BACKEND_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:8090";
+
+function normalizeBaseUrl(url: string): string {
+  return url.replace(/\/+$/, "");
+}
+
+function buildCandidateApiUrls(): string[] {
+  const defaults = [
+    "http://127.0.0.1:9191",
+    "http://localhost:9191",
+    "http://127.0.0.1:8080",
+    "http://localhost:8080",
+    "http://127.0.0.1:8090",
+    "http://localhost:8090",
+  ];
+
+  const all = [PRIMARY_API_URL, ...defaults].map(normalizeBaseUrl);
+  return Array.from(new Set(all));
+}
 
 async function proxy(request: NextRequest, pathSegments: string[]) {
   const path = pathSegments.join("/");
-  const targetUrl = `${API_URL}/${path}${request.nextUrl.search}`;
+  const apiBaseCandidates = buildCandidateApiUrls();
 
   const headers = new Headers();
   const contentType = request.headers.get("content-type");
@@ -30,25 +51,34 @@ async function proxy(request: NextRequest, pathSegments: string[]) {
       ? undefined
       : await request.arrayBuffer();
 
-  try {
-    const response = await fetch(targetUrl, {
-      method,
-      headers,
-      body: body ? new Uint8Array(body) : undefined,
-    });
+  let lastError: unknown;
 
-    const responseHeaders = new Headers(response.headers);
-    return new Response(response.body, {
-      status: response.status,
-      headers: responseHeaders,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Proxy error";
-    return new Response(JSON.stringify({ message }), {
-      status: 502,
-      headers: { "Content-Type": "application/json" },
-    });
+  for (const base of apiBaseCandidates) {
+    const targetUrl = `${base}/${path}${request.nextUrl.search}`;
+
+    try {
+      const response = await fetch(targetUrl, {
+        method,
+        headers,
+        body: body ? new Uint8Array(body) : undefined,
+      });
+
+      const responseHeaders = new Headers(response.headers);
+      return new Response(response.body, {
+        status: response.status,
+        headers: responseHeaders,
+      });
+    } catch (error) {
+      lastError = error;
+      // Try next candidate on network-level failures.
+    }
   }
+
+  const message = lastError instanceof Error ? lastError.message : "Proxy error";
+  return new Response(JSON.stringify({ message }), {
+    status: 502,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 export async function GET(

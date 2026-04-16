@@ -57,6 +57,14 @@ export interface GalleryItem {
   description: string;
 }
 
+export interface HeroBannerItem {
+  image: string;
+  title_ru: string;
+  title_uz: string;
+  subtitle_ru: string;
+  subtitle_uz: string;
+}
+
 // Grouped settings response from public API
 export type SettingsResponse = Record<string, SiteSetting[]>;
 

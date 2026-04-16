@@ -20,24 +20,62 @@ import {
   ChevronRight,
   ChevronDown,
   SlidersHorizontal,
-  X,
 } from "lucide-react";
 import { useEstates } from "@/hooks/useEstates";
 import { Estate } from "@/lib/api/estates";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 // Filter options
-const floorOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
-const roomOptions = [1, 2, 3, 4, 5];
 const areaOptions = [
   { label: "< 50", min: 0, max: 50 },
   { label: "50-80", min: 50, max: 80 },
   { label: "80-100", min: 80, max: 100 },
   { label: "> 100", min: 100, max: 999 },
 ];
-const typeOptions = ["Все", "Эконом", "Стандарт"];
 
 const ITEMS_PER_PAGE = 10;
+const DEFAULT_PRICE_MAX = 500_000_000;
+const DEFAULT_AREA_MAX = 400;
+
+function interleaveByRoomCount(apartments: Estate[]): Estate[] {
+  if (apartments.length <= 1) return apartments;
+
+  const buckets = new Map<number, Estate[]>();
+  for (const apartment of apartments) {
+    const room = Number(apartment.estate_rooms);
+    if (!Number.isFinite(room) || room <= 0) continue;
+    if (!buckets.has(room)) buckets.set(room, []);
+    buckets.get(room)!.push(apartment);
+  }
+
+  const roomKeys = Array.from(buckets.keys()).sort((a, b) => a - b);
+  if (roomKeys.length <= 1) return apartments;
+
+  // Alternate low/high room groups to avoid long single-room blocks (e.g. 1,3,2,...).
+  const cycle: number[] = [];
+  let left = 0;
+  let right = roomKeys.length - 1;
+  while (left <= right) {
+    cycle.push(roomKeys[left]);
+    if (left !== right) cycle.push(roomKeys[right]);
+    left += 1;
+    right -= 1;
+  }
+
+  const result: Estate[] = [];
+  let hasRemaining = true;
+  while (hasRemaining) {
+    hasRemaining = false;
+    for (const room of cycle) {
+      const bucket = buckets.get(room);
+      if (!bucket || bucket.length === 0) continue;
+      result.push(bucket.shift()!);
+      hasRemaining = true;
+    }
+  }
+
+  return result.length > 0 ? result : apartments;
+}
 
 function FilterDropdown({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
   const [open, setOpen] = useState(false);
@@ -88,7 +126,71 @@ function CatalogContent() {
   const desktopFilterRef = useRef<HTMLDivElement | null>(null);
 
   // React Query - get all data once with caching
-  const { data: allApartments = [], isLoading } = useEstates({ type: "living" });
+  const { data: allApartments = [], isLoading } = useEstates({ type: "living", limit: 5000 });
+
+  // Use only valid apartments for deriving filter values and rendering list.
+  const validApartments = useMemo(
+    () =>
+      allApartments.filter((a) => {
+        const floor = Number(a.estate_floor);
+        const area = Number(a.estate_area);
+        const rooms = Number(a.estate_rooms);
+        const price = Number(a.estate_price);
+        return (
+          Number.isFinite(floor) &&
+          floor > 0 &&
+          Number.isFinite(area) &&
+          area >= 35 &&
+          Number.isFinite(rooms) &&
+          rooms > 0 &&
+          Number.isFinite(price) &&
+          price > 0
+        );
+      }),
+    [allApartments]
+  );
+
+  const floorOptions = useMemo(() => {
+    const uniqueFloors = Array.from(
+      new Set(
+        validApartments
+          .map((a) => Number(a.estate_floor))
+          .filter((floor) => Number.isFinite(floor) && floor > 0)
+      )
+    ).sort((a, b) => a - b);
+    return uniqueFloors;
+  }, [validApartments]);
+
+  const roomOptions = useMemo(() => {
+    const uniqueRooms = Array.from(
+      new Set(
+        validApartments
+          .map((a) => Number(a.estate_rooms))
+          .filter((rooms) => Number.isFinite(rooms) && rooms > 0)
+      )
+    ).sort((a, b) => a - b);
+    return uniqueRooms;
+  }, [validApartments]);
+
+  const maxPrice = useMemo(() => {
+    const prices = validApartments
+      .map((a) => Number(a.estate_price) || 0)
+      .filter((price) => price > 0);
+
+    if (prices.length === 0) return DEFAULT_PRICE_MAX;
+    const rawMax = Math.max(...prices);
+    const step = rawMax >= 1_000_000_000 ? 25_000_000 : 10_000_000;
+    return Math.ceil(rawMax / step) * step;
+  }, [validApartments]);
+
+  const maxArea = useMemo(() => {
+    const areas = validApartments
+      .map((a) => Number(a.estate_area) || 0)
+      .filter((area) => area > 0);
+
+    if (areas.length === 0) return DEFAULT_AREA_MAX;
+    return Math.ceil(Math.max(...areas) / 10) * 10;
+  }, [validApartments]);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -116,20 +218,32 @@ function CatalogContent() {
     initialRooms ? [parseInt(initialRooms)] : []
   );
   const [selectedAreas, setSelectedAreas] = useState<string[]>(getInitialArea);
-  const [selectedType, setSelectedType] = useState("Все");
-  const [selectedFinishing, setSelectedFinishing] = useState("Все");
 
   // Range sliders
-  const [priceRange, setPriceRange] = useState([0, 500_000_000]);
-  const [areaRange, setAreaRange] = useState([0, 400]);
+  const [priceRange, setPriceRange] = useState([0, DEFAULT_PRICE_MAX]);
+  const [areaRange, setAreaRange] = useState([0, DEFAULT_AREA_MAX]);
+  const [priceManuallyChanged, setPriceManuallyChanged] = useState(false);
+  const [areaManuallyChanged, setAreaManuallyChanged] = useState(false);
+
+  const effectivePriceRange = useMemo<[number, number]>(() => {
+    if (!priceManuallyChanged) return [0, maxPrice];
+    const min = Math.max(0, Math.min(priceRange[0], maxPrice));
+    const max = Math.max(min, Math.min(priceRange[1], maxPrice));
+    return [min, max];
+  }, [priceManuallyChanged, priceRange, maxPrice]);
+
+  const effectiveAreaRange = useMemo<[number, number]>(() => {
+    if (!areaManuallyChanged) return [0, maxArea];
+    const min = Math.max(0, Math.min(areaRange[0], maxArea));
+    const max = Math.max(min, Math.min(areaRange[1], maxArea));
+    return [min, max];
+  }, [areaManuallyChanged, areaRange, maxArea]);
 
   // Memoized filtered apartments (frontend filtering)
   const filteredApartments = useMemo(() => {
-    if (allApartments.length === 0) return [];
+    if (validApartments.length === 0) return [];
 
-    let filtered = [...allApartments].filter(
-      a => a.estate_floor > 0 && a.estate_area >= 35
-    );
+    let filtered = [...validApartments];
 
     // Room filter
     if (selectedRooms.length > 0) {
@@ -167,29 +281,31 @@ function CatalogContent() {
     }
 
     // Price filter
-    if (priceRange[0] > 0) {
-      filtered = filtered.filter(a => (a.estate_price || 0) >= priceRange[0]);
+    if (effectivePriceRange[0] > 0) {
+      filtered = filtered.filter(a => (a.estate_price || 0) >= effectivePriceRange[0]);
     }
-    if (priceRange[1] < 500_000_000) {
-      filtered = filtered.filter(a => (a.estate_price || 0) <= priceRange[1]);
+    if (effectivePriceRange[1] < maxPrice) {
+      filtered = filtered.filter(a => (a.estate_price || 0) <= effectivePriceRange[1]);
     }
 
     // Area range filter
-    if (areaRange[0] > 0 || areaRange[1] < 400) {
-      filtered = filtered.filter(a => a.estate_area >= areaRange[0] && a.estate_area <= areaRange[1]);
+    if (effectiveAreaRange[0] > 0 || effectiveAreaRange[1] < maxArea) {
+      filtered = filtered.filter(
+        a => a.estate_area >= effectiveAreaRange[0] && a.estate_area <= effectiveAreaRange[1]
+      );
     }
 
-    return filtered;
-  }, [allApartments, selectedRooms, selectedAreas, selectedFloors, priceRange, areaRange, initialBuilding, initialApartment]);
+    return interleaveByRoomCount(filtered);
+  }, [validApartments, selectedRooms, selectedAreas, selectedFloors, effectivePriceRange, effectiveAreaRange, maxPrice, maxArea, initialBuilding, initialApartment]);
 
   const resetFilters = () => {
     setSelectedFloors([]);
     setSelectedRooms([]);
     setSelectedAreas([]);
-    setSelectedType("Все");
-    setSelectedFinishing("Все");
-    setPriceRange([0, 500_000_000]);
-    setAreaRange([0, 400]);
+    setPriceManuallyChanged(false);
+    setAreaManuallyChanged(false);
+    setPriceRange([0, maxPrice]);
+    setAreaRange([0, maxArea]);
     setCurrentPage(1);
   };
 
@@ -222,8 +338,6 @@ function CatalogContent() {
     }
     return pages;
   };
-
-  const hasActiveFilters = selectedFloors.length > 0 || selectedRooms.length > 0 || selectedAreas.length > 0 || selectedType !== "Все" || selectedFinishing !== "Все" || priceRange[0] > 0 || priceRange[1] < 500_000_000 || areaRange[0] > 0 || areaRange[1] < 400;
 
   const toggleFilter = <T,>(value: T, selected: T[], setSelected: React.Dispatch<React.SetStateAction<T[]>>) => {
     if (selected.includes(value)) {
@@ -306,15 +420,20 @@ function CatalogContent() {
     };
   }, []);
 
-  const finishingOptions = [
-    { label: language === "uz" ? "Hammasi" : "Все", value: "Все" },
-    { label: language === "uz" ? "Pardozli" : "С отделкой", value: "С отделкой" },
-    { label: language === "uz" ? "Pardozsiz" : "Без отделки", value: "Без отделки" },
-  ];
-
   const filterBar = (
-    <div data-no-page-text-anim="true" data-no-page-ui-anim="true" ref={desktopFilterRef} className="space-y-4">
-      {/* Row 1: Floor, Rooms, Price range, Area */}
+    <div data-no-page-text-anim="true" data-no-page-ui-anim="true" ref={desktopFilterRef}>
+      {isLoading && allApartments.length === 0 ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="h-10 rounded-full bg-gray-200 animate-pulse w-[130px]" />
+          <div className="h-10 rounded-full bg-gray-200 animate-pulse w-[180px]" />
+          <div className="h-14 rounded-2xl bg-gray-200 animate-pulse w-full sm:w-auto sm:flex-1 lg:max-w-[380px]" />
+          <div className="h-14 rounded-2xl bg-gray-200 animate-pulse w-[calc(50%-6px)] sm:w-[180px]" />
+          <div className="ml-auto flex items-center gap-2">
+            <div className="h-10 rounded-full bg-gray-200 animate-pulse w-[180px]" />
+            <div className="h-10 rounded-full bg-gray-200 animate-pulse w-[180px]" />
+          </div>
+        </div>
+      ) : (
       <div className="flex flex-wrap items-center gap-3">
         <FilterDropdown
           label={`${t.catalog.floorFilter}${selectedFloors.length > 0 ? `  ${selectedFloors.join(", ")}` : ""}`}
@@ -347,15 +466,15 @@ function CatalogContent() {
         {/* Price range slider */}
         <div className="rounded-2xl bg-white shadow-sm border border-gray-100 px-4 py-2 w-full sm:w-auto sm:flex-1 lg:max-w-[380px]">
           <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
-            <span>{t.catalog.from} {priceRange[0].toLocaleString()} {language === "uz" ? "so'm" : "сум"}</span>
-            <span>{t.catalog.priceTo} {priceRange[1].toLocaleString()} {language === "uz" ? "so'm" : "сум"}</span>
+            <span>{t.catalog.from} {effectivePriceRange[0].toLocaleString()} {language === "uz" ? "so'm" : "сум"}</span>
+            <span>{t.catalog.priceTo} {effectivePriceRange[1].toLocaleString()} {language === "uz" ? "so'm" : "сум"}</span>
           </div>
           <Slider
             min={0}
-            max={500_000_000}
-            step={5_000_000}
-            value={priceRange}
-            onValueChange={(val) => { setPriceRange(val); setCurrentPage(1); }}
+            max={maxPrice}
+            step={maxPrice <= 200_000_000 ? 1_000_000 : maxPrice <= 700_000_000 ? 5_000_000 : 10_000_000}
+            value={effectivePriceRange}
+            onValueChange={(val) => { setPriceRange(val); setPriceManuallyChanged(true); setCurrentPage(1); }}
           />
         </div>
 
@@ -363,85 +482,16 @@ function CatalogContent() {
         <div className="rounded-2xl bg-white shadow-sm border border-gray-100 px-4 py-2 w-[calc(50%-6px)] sm:w-auto sm:min-w-[180px]">
           <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
             <span>{t.catalog.areaFilter}</span>
-            <span>{areaRange[1]}{t.catalog.sqm}</span>
+            <span>{effectiveAreaRange[1]}{t.catalog.sqm}</span>
           </div>
           <Slider
             min={0}
-            max={400}
+            max={maxArea}
             step={5}
-            value={areaRange}
-            onValueChange={(val) => { setAreaRange(val); setCurrentPage(1); }}
+            value={effectiveAreaRange}
+            onValueChange={(val) => { setAreaRange(val); setAreaManuallyChanged(true); setCurrentPage(1); }}
           />
         </div>
-      </div>
-
-      {/* Row 2: Type + Finishing + actions */}
-      <div className="flex flex-wrap items-center gap-3">
-        {/* Type dropdown + pills */}
-        <FilterDropdown
-          label={t.catalog.typeFilter}
-          className="w-auto min-w-[140px]"
-        >
-          <div className="space-y-1">
-            {typeOptions.map((type) => (
-              <button
-                key={type}
-                onClick={() => { setSelectedType(type); setCurrentPage(1); }}
-                className={`block w-full text-left px-3 py-1.5 rounded text-xs transition-colors ${selectedType === type ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:bg-gray-50"}`}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-        </FilterDropdown>
-
-        {typeOptions.filter(t => t !== "Все").map((type) => (
-          <button
-            key={type}
-            onClick={() => { setSelectedType(selectedType === type ? "Все" : type); setCurrentPage(1); }}
-            className={`rounded-full px-4 py-2 text-xs font-medium border transition-colors ${
-              selectedType === type
-                ? "bg-primary text-white border-primary"
-                : "bg-white text-gray-500 border-gray-100 shadow-sm hover:border-gray-200"
-            }`}
-          >
-            {type}
-          </button>
-        ))}
-
-        <div className="w-px h-6 bg-gray-200 hidden sm:block" />
-
-        {/* Finishing dropdown + pills */}
-        <FilterDropdown
-          label={language === "uz" ? "Pardoz" : "Отделка"}
-          className="w-auto min-w-[130px]"
-        >
-          <div className="space-y-1">
-            {finishingOptions.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => { setSelectedFinishing(opt.value); setCurrentPage(1); }}
-                className={`block w-full text-left px-3 py-1.5 rounded text-xs transition-colors ${selectedFinishing === opt.value ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:bg-gray-50"}`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </FilterDropdown>
-
-        {finishingOptions.filter(o => o.value !== "Все").map((opt) => (
-          <button
-            key={opt.value}
-            onClick={() => { setSelectedFinishing(selectedFinishing === opt.value ? "Все" : opt.value); setCurrentPage(1); }}
-            className={`rounded-full px-4 py-2 text-xs font-medium border transition-colors ${
-              selectedFinishing === opt.value
-                ? "bg-primary text-white border-primary"
-                : "bg-white text-gray-500 border-gray-100 shadow-sm hover:border-gray-200"
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
 
         {/* Actions */}
         <div className="ml-auto flex items-center gap-2">
@@ -459,6 +509,7 @@ function CatalogContent() {
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 

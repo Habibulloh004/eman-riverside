@@ -22,9 +22,9 @@ export default function AboutPage() {
       <SideNav />
       <main>
         <AboutProjectHero />
-
+        
         {/* About sections with background */}
-        <div className="relative">
+        <div className="relative pt-5">
           {/* Background Images */}
           <div className="absolute inset-0 z-0 overflow-hidden">
             <div className="absolute left-0 top-0 w-1/3 h-full">

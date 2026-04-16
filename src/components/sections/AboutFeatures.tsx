@@ -176,7 +176,7 @@ export default function AboutFeatures() {
 
   if (isLoading) {
     return (
-      <div className="bg-[#F9EFE7] pb-24">
+      <div className="py-5">
         <div className="container mx-auto space-y-4 px-4 lg:px-8">
           <FeatureSkeleton />
           <FeatureSkeleton />
@@ -190,7 +190,7 @@ export default function AboutFeatures() {
   }
 
   return (
-    <section className="bg-[#F9EFE7] pb-16 lg:pb-20">
+    <section className="py-5 lg:pb-20">
       <div className="container mx-auto space-y-3 px-4 lg:space-y-4 lg:px-8">
         {projects.slice(0, 3).map((project, index) => (
           <FeatureItem

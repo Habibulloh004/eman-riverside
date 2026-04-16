@@ -164,8 +164,8 @@ export default function Header() {
           : "bg-transparent"
       }`}
     >
-      <div className="container mx-auto px-4 lg:px-8">
-        <div ref={desktopHeaderRef} className="flex items-center justify-between h-20">
+      <div className="container mx-auto max-w-[1360px] px-4 lg:px-6 xl:px-8">
+        <div ref={desktopHeaderRef} className="flex items-center justify-between h-[72px] lg:h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center shrink-0" data-anim-header-logo>
             <Image
@@ -179,7 +179,7 @@ export default function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-4 xl:gap-5 2xl:gap-8 min-w-0">
+          <nav className="hidden lg:flex items-center gap-3 xl:gap-4 2xl:gap-6 min-w-0">
             {headerNavLinks.map((link) => (
               <Link
                 key={link.href}
@@ -201,7 +201,7 @@ export default function Header() {
           </nav>
 
           {/* CTA Buttons */}
-          <div className="hidden lg:flex items-center gap-2 2xl:gap-3 shrink-0">
+          <div className="hidden lg:flex items-center gap-2 shrink-0">
             <div data-anim-header-seq>
               <Button
                 className="rounded-full px-6 2xl:px-8 whitespace-nowrap border-primary text-primary hover:bg-primary hover:text-white"

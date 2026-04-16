@@ -9,12 +9,13 @@ const MAX_MEDIA_TARGETS_PER_SECTION = 18;
 const MAX_UI_TARGETS_PER_SECTION = 12;
 const animatedSectionRuntimeKeys = new Set<string>();
 const animatedRuntimeTargets = new WeakSet<HTMLElement>();
+const wavePreparedElements = new WeakSet<HTMLElement>();
 
 function createWaveTargets(element: HTMLElement): HTMLElement[] | null {
   if (element.dataset.noWaveText === "true") return null;
   if (element.childElementCount > 0) return null;
 
-  if (element.dataset.wavePrepared === "1") {
+  if (wavePreparedElements.has(element)) {
     return Array.from(
       element.querySelectorAll<HTMLElement>(':scope > span[data-wave-word="1"]')
     ).filter((word) => !animatedRuntimeTargets.has(word));
@@ -35,8 +36,7 @@ function createWaveTargets(element: HTMLElement): HTMLElement[] | null {
   const words = text.split(/\s+/);
   if (words.length < 2 || words.length > 14) return null;
 
-  element.dataset.wavePrepared = "1";
-  element.setAttribute("aria-label", text);
+  wavePreparedElements.add(element);
   element.textContent = "";
 
   const waveWords: HTMLElement[] = [];
@@ -173,6 +173,7 @@ export default function PageEnterAnimations() {
     const timelines: gsap.core.Timeline[] = [];
     const observedSections = new WeakSet<HTMLElement>();
     const preparedSectionTargets = new WeakMap<HTMLElement, SectionTargets>();
+    const sectionIndexMap = new WeakMap<HTMLElement, number>();
     const getSectionRuntimeKey = (section: HTMLElement, index: number) =>
       `${pathname}::${section.id || section.dataset.animKey || `idx-${index}`}`;
 
@@ -417,9 +418,8 @@ export default function PageEnterAnimations() {
           if (!entry.isIntersecting) return;
 
           const section = entry.target as HTMLElement;
-          const sectionIndexAttr = section.dataset.pageAnimIndex;
-          const sectionIndex = sectionIndexAttr ? Number(sectionIndexAttr) : -1;
-          animateSection(section, Number.isNaN(sectionIndex) ? -1 : sectionIndex);
+          const sectionIndex = sectionIndexMap.get(section) ?? -1;
+          animateSection(section, sectionIndex);
         });
       },
       {
@@ -431,7 +431,7 @@ export default function PageEnterAnimations() {
     const observeSections = () => {
       const sections = getEligibleSections();
       sections.forEach((section, index) => {
-        section.dataset.pageAnimIndex = String(index);
+        sectionIndexMap.set(section, index);
         const runtimeKey = getSectionRuntimeKey(section, index);
         if (animatedSectionRuntimeKeys.has(runtimeKey)) return;
 

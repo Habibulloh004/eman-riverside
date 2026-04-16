@@ -32,6 +32,29 @@ const HEARTBEAT_INTERVAL = 30000;
 const INITIAL_RECONNECT_DELAY = 1000;
 const MAX_RECONNECT_DELAY = 30000;
 
+function buildWebSocketUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_WS_URL?.trim();
+  if (explicit) return explicit;
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (apiUrl) {
+    try {
+      const parsed = new URL(apiUrl);
+      const wsProtocol = parsed.protocol === "https:" ? "wss:" : "ws:";
+      return `${wsProtocol}//${parsed.host}/ws`;
+    } catch {
+      // Ignore invalid NEXT_PUBLIC_API_URL and fallback below.
+    }
+  }
+
+  if (typeof window !== "undefined") {
+    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    return `${wsProtocol}//${window.location.host}/ws`;
+  }
+
+  return "ws://localhost:9191/ws";
+}
+
 export function WebSocketProvider({ children }: { children: ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
   const [newSubmissionsCount, setNewSubmissionsCount] = useState(0);
@@ -102,7 +125,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8080/ws";
+    const wsUrl = buildWebSocketUrl();
 
     const startHeartbeat = (ws: WebSocket) => {
       // Clear existing heartbeat
@@ -199,8 +222,12 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           );
         };
 
-        ws.onerror = (error) => {
-          console.error("WebSocket error:", error);
+        ws.onerror = () => {
+          // Browsers expose minimal details for WS error events; keep log useful/noisy-safe.
+          console.warn("WebSocket error event (details hidden by browser)", {
+            url: wsUrl,
+            readyState: ws.readyState,
+          });
         };
       } catch (error) {
         console.error("WebSocket connection error:", error);
