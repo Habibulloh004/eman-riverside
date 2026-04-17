@@ -8,7 +8,22 @@ import { galleryApi, GalleryItem } from "@/lib/api/gallery";
 import { HeroVideoDialog } from "@/components/ui/hero-video-dialog";
 import { sanitizeRichTextHtml } from "@/lib/rich-text";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090";
+function resolveMediaUrl(url?: string): string {
+  if (!url) return "/images/hero/1.png";
+  if (url.startsWith("/uploads/")) return `/api/proxy${url}`;
+  if (url.startsWith("uploads/")) return `/api/proxy/${url}`;
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    try {
+      const parsed = new URL(url);
+      if (parsed.pathname.startsWith("/uploads/")) {
+        return `/api/proxy${parsed.pathname}${parsed.search}`;
+      }
+    } catch {
+      // Keep original URL on parse failure.
+    }
+  }
+  return url;
+}
 
 // Default gallery items if API returns empty
 const defaultGalleryItems = {
@@ -83,13 +98,13 @@ export default function GalleryPage() {
         if (imageData.items && imageData.items.length > 0) {
           const items = imageData.items.map((item: GalleryItem) => ({
             id: item.id,
-            image: item.url.startsWith("http") ? item.url : `${API_URL}${item.url}`,
+            image: resolveMediaUrl(item.url),
             title: language === "uz" ? (item.title_uz || item.title) : item.title,
             description: sanitizeRichTextHtml(
               language === "uz" ? (item.description_uz || item.description) : item.description
             ),
             redirect_url: item.redirect_url,
-            category: item.category || "construction",
+            category: item.category || "gallery",
             home_section: language === "uz" ? (item.home_section_uz || item.home_section) : item.home_section,
             home_desc: language === "uz" ? (item.home_desc_uz || item.home_desc) : item.home_desc,
           }));
@@ -109,8 +124,8 @@ export default function GalleryPage() {
         const videoData = await galleryApi.listPublic({ type: "video" });
         if (videoData.items && videoData.items.length > 0) {
           const videos = videoData.items.map((video: GalleryItem) => ({
-            url: video.url.startsWith("http") ? video.url : `${API_URL}${video.url}`,
-            thumbnail: video.thumbnail ? (video.thumbnail.startsWith("http") ? video.thumbnail : `${API_URL}${video.thumbnail}`) : "",
+            url: resolveMediaUrl(video.url),
+            thumbnail: video.thumbnail ? resolveMediaUrl(video.thumbnail) : "",
             title: language === "uz" ? (video.title_uz || video.title) : video.title,
             redirect_url: video.redirect_url,
           }));
@@ -179,7 +194,7 @@ export default function GalleryPage() {
     if (!raw) return "";
     if (["interior", "interier", "интерьер"].includes(raw)) return "interior";
     if (["exterior", "extreir", "экстерьер"].includes(raw)) return "exterior";
-    if (["construction", "стройка", "қурилиш", "курилиш жараёни"].includes(raw)) return "construction";
+    if (["gallery", "construction", "infrastructure", "стройка", "қурилиш", "курилиш жараёни", "инфраструктура"].includes(raw)) return "gallery";
     return raw;
   };
 
@@ -197,7 +212,7 @@ export default function GalleryPage() {
     () =>
       galleryItems.filter((item) => {
         const cat = normalizeCategory(item.category);
-        return cat === "construction" || cat === "infrastructure";
+        return cat === "gallery";
       }),
     [galleryItems]
   );

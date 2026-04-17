@@ -121,6 +121,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  async rewrites() {
+    return [
+      {
+        source: "/uploads/:path*",
+        destination: "/api/proxy/uploads/:path*",
+      },
+    ];
+  },
 };
 
 const pwaConfig = withPWA({

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -126,22 +126,62 @@ export default function Gallery() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
 
-  const images = (data?.items || []).map((item) => ({
-    url: item.url.startsWith("http") ? item.url : `${API_URL}${item.url}`,
-    title: language === "uz" ? (item.title_uz || item.title) : item.title,
-    redirectUrl: item.redirect_url || null,
-  }));
+  const galleryData = useMemo(() => {
+    const sourceItems = (data?.items || [])
+      .filter((item) => {
+        const cat = (item.category || "").toLowerCase();
+        return cat !== "interior" && cat !== "exterior";
+      })
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
-  const getImageUrl = (index: number) => images[index]?.url || DEFAULT_IMAGE;
-  const getImageTitle = (index: number) => images[index]?.title || t.gallerySection.title;
-  const getRedirectUrl = (index: number) => images[index]?.redirectUrl || null;
+    const filledSlots = Array.from({ length: 9 }, () => null as typeof sourceItems[number] | null);
+
+    sourceItems.forEach((item) => {
+      const preferredSlot = Math.min(
+        Math.max(item.sort_order ?? 0, 0),
+        filledSlots.length - 1
+      );
+
+      let targetSlot = preferredSlot;
+      while (targetSlot < filledSlots.length && filledSlots[targetSlot] !== null) {
+        targetSlot += 1;
+      }
+
+      if (targetSlot >= filledSlots.length) {
+        targetSlot = filledSlots.findIndex((slot) => slot === null);
+      }
+
+      if (targetSlot >= 0) {
+        filledSlots[targetSlot] = item;
+      }
+    });
+
+    const actualItems = filledSlots.filter((item): item is typeof sourceItems[number] => item !== null);
+    const actualIndexById = new Map(actualItems.map((item, index) => [item.id, index]));
+
+    return {
+      lightboxItems: actualItems.map((item) => ({
+        url: item.url.startsWith("http") ? item.url : `${API_URL}${item.url}`,
+        title: language === "uz" ? (item.title_uz || item.title) : item.title,
+      })),
+      slots: filledSlots.map((item) => ({
+        url: item ? (item.url.startsWith("http") ? item.url : `${API_URL}${item.url}`) : DEFAULT_IMAGE,
+        title: item ? (language === "uz" ? (item.title_uz || item.title) : item.title) : t.gallerySection.title,
+        redirectUrl: item?.redirect_url || null,
+        lightboxIndex: item ? actualIndexById.get(item.id) ?? null : null,
+      })),
+    };
+  }, [data?.items, language, t.gallerySection.title]);
 
   const handleTileClick = (index: number) => {
-    const redirectUrl = getRedirectUrl(index);
+    const tile = galleryData.slots[index];
+    if (!tile || tile.lightboxIndex === null) return;
+
+    const redirectUrl = tile.redirectUrl;
     if (redirectUrl) {
       window.open(redirectUrl, "_blank", "noopener,noreferrer");
     } else {
-      setLightboxIndex(index);
+      setLightboxIndex(tile.lightboxIndex);
     }
   };
 
@@ -178,7 +218,7 @@ export default function Gallery() {
       }
     });
     return () => observer.disconnect();
-  }, [images.length, isLoading]);
+  }, [galleryData.slots.length, isLoading]);
 
   if (isLoading) {
     return (
@@ -246,8 +286,8 @@ export default function Gallery() {
               onClick={() => handleTileClick(i)}
             >
               <Image
-                src={getImageUrl(i)}
-                alt={getImageTitle(i)}
+                src={galleryData.slots[i]?.url || DEFAULT_IMAGE}
+                alt={galleryData.slots[i]?.title || t.gallerySection.title}
                 fill
                 className="object-cover"
                 data-no-hover-scale="true"
@@ -260,9 +300,9 @@ export default function Gallery() {
 
       {/* Lightbox */}
       <AnimatePresence>
-        {lightboxIndex !== null && images.length > 0 && (
+        {lightboxIndex !== null && galleryData.lightboxItems.length > 0 && (
           <Lightbox
-            images={images}
+            images={galleryData.lightboxItems}
             currentIndex={lightboxIndex}
             onClose={() => setLightboxIndex(null)}
             onNavigate={setLightboxIndex}

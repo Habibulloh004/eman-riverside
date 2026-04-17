@@ -59,12 +59,17 @@ class ApiClient {
       requestHeaders['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(`${getBaseUrl()}${endpoint}`, {
-      method,
-      headers: requestHeaders,
-      body: body ? JSON.stringify(body) : undefined,
-      credentials: 'include',
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${getBaseUrl()}${endpoint}`, {
+        method,
+        headers: requestHeaders,
+        body: body ? JSON.stringify(body) : undefined,
+        credentials: 'include',
+      });
+    } catch {
+      throw new Error('Network request failed');
+    }
 
     // Auto-refresh on 401 and retry once
     if (response.status === 401 && !endpoint.includes('/auth/')) {
@@ -94,7 +99,9 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Request failed' }));
-      throw new Error(error.message || 'Request failed');
+      const message =
+        error.message === 'fetch failed' ? 'Backend service unavailable' : error.message || 'Request failed';
+      throw new Error(message);
     }
 
     return response.json();

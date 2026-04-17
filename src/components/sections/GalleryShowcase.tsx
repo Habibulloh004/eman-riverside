@@ -42,9 +42,35 @@ const fallbackCopy = {
 } as const;
 
 function resolveImage(url: string) {
-  if (!url) return "/images/hero/1.png";
-  if (url.startsWith("/")) return url;
-  return url.startsWith("http") ? url : `${API_URL}${url}`;
+  const trimmed = (url || "").trim();
+  if (!trimmed) return "/images/hero/1.png";
+
+  if (trimmed.startsWith("/api/proxy/")) return trimmed;
+  if (trimmed.startsWith("/uploads/")) return `/api/proxy${trimmed}`;
+  if (trimmed.startsWith("uploads/")) return `/api/proxy/${trimmed}`;
+
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    try {
+      const parsed = new URL(trimmed);
+      if (parsed.pathname.startsWith("/uploads/")) {
+        return `/api/proxy${parsed.pathname}${parsed.search}`;
+      }
+    } catch {
+      // Keep original URL on parse failure.
+    }
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("/")) return trimmed;
+  return `${API_URL}${trimmed}`;
+}
+
+function normalizeCategory(value?: string) {
+  const raw = (value || "").trim().toLowerCase();
+  if (!raw) return "";
+  if (["interior", "interier", "интерьер"].includes(raw)) return "interior";
+  if (["exterior", "extreir", "экстерьер"].includes(raw)) return "exterior";
+  return raw;
 }
 
 const curatedImages = [
@@ -67,44 +93,73 @@ export default function GalleryShowcase() {
     const copy = fallbackCopy[locale];
     const items = data?.items || [];
 
-    const projectItems = items
-      .filter((item) => {
-        const url = item.url || "";
-        return (
-          url.includes("/uploads/") ||
-          url.includes("eman") ||
-          item.category === "interior" ||
-          item.category === "exterior" ||
-          item.category === "construction"
-        );
-      })
-      .slice(0, 8)
-      .map((item) => ({
-        id: String(item.id),
-        url: resolveImage(item.url),
-        title: (locale === "uz" ? item.title_uz : item.title) || "",
-      }));
+    const toShowcaseItem = (item: typeof items[number]) => ({
+      id: String(item.id),
+      url: resolveImage(item.url),
+      title: (locale === "uz" ? item.title_uz : item.title) || "",
+    });
 
-    const fallbackProjectItems = curatedImages.map((url, index) => ({
-      id: `curated-${index}`,
+    const fallbackInterior = curatedImages.slice(0, 4).map((url, index) => ({
+      id: `curated-int-${index}`,
       url,
       title: "",
     }));
 
-    const source = projectItems.length >= 8 ? projectItems : fallbackProjectItems;
+    const fallbackExterior = curatedImages.slice(4, 8).map((url, index) => ({
+      id: `curated-ext-${index}`,
+      url,
+      title: "",
+    }));
+
+    const buildShowcaseItems = (
+      sourceItems: typeof items,
+      fallbackItems: typeof fallbackInterior
+    ) => {
+      const filledSlots = Array.from({ length: fallbackItems.length }, () => null as typeof sourceItems[number] | null);
+
+      sourceItems
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+        .forEach((item) => {
+          const preferredSlot = Math.min(
+            Math.max(item.sort_order ?? 0, 0),
+            filledSlots.length - 1
+          );
+
+          let targetSlot = preferredSlot;
+          while (targetSlot < filledSlots.length && filledSlots[targetSlot] !== null) {
+            targetSlot += 1;
+          }
+
+          if (targetSlot >= filledSlots.length) {
+            targetSlot = filledSlots.findIndex((slot) => slot === null);
+          }
+
+          if (targetSlot >= 0) {
+            filledSlots[targetSlot] = item;
+          }
+        });
+
+      return filledSlots.map((item, index) => item ? toShowcaseItem(item) : fallbackItems[index]);
+    };
 
     return [
       {
         key: "interior",
         title: copy.interior.title,
         description: copy.interior.description,
-        items: source.slice(0, 4),
+        items: buildShowcaseItems(
+          items.filter((item) => normalizeCategory(item.category) === "interior"),
+          fallbackInterior
+        ),
       },
       {
         key: "exterior",
         title: copy.exterior.title,
         description: copy.exterior.description,
-        items: source.slice(4, 8),
+        items: buildShowcaseItems(
+          items.filter((item) => normalizeCategory(item.category) === "exterior"),
+          fallbackExterior
+        ),
       },
     ];
   }, [data?.items, language]);

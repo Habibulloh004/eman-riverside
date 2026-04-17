@@ -5,6 +5,9 @@ export const runtime = "nodejs";
 // Allow large file uploads (200MB to match backend limit)
 export const maxDuration = 60;
 
+// Increase body size limit for file uploads (default is ~4MB)
+export const fetchCache = "default-no-store";
+
 const PRIMARY_API_URL =
   process.env.BACKEND_API_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
@@ -31,6 +34,9 @@ function buildCandidateApiUrls(): string[] {
 async function proxy(request: NextRequest, pathSegments: string[]) {
   const path = pathSegments.join("/");
   const apiBaseCandidates = buildCandidateApiUrls();
+  const shouldForwardCookies =
+    path === "api/auth/refresh" ||
+    path === "api/auth/logout";
 
   const headers = new Headers();
   const contentType = request.headers.get("content-type");
@@ -41,7 +47,7 @@ async function proxy(request: NextRequest, pathSegments: string[]) {
 
   if (contentType) headers.set("content-type", contentType);
   if (authorization) headers.set("authorization", authorization);
-  if (cookie) headers.set("cookie", cookie);
+  if (shouldForwardCookies && cookie) headers.set("cookie", cookie);
   if (xFilename) headers.set("x-filename", xFilename);
   if (accept) headers.set("accept", accept);
 
@@ -52,6 +58,8 @@ async function proxy(request: NextRequest, pathSegments: string[]) {
       : await request.arrayBuffer();
 
   let lastError: unknown;
+  const isUploadGetRequest =
+    method === "GET" && (path.startsWith("uploads/") || path.includes("/uploads/"));
 
   for (const base of apiBaseCandidates) {
     const targetUrl = `${base}/${path}${request.nextUrl.search}`;
@@ -62,6 +70,16 @@ async function proxy(request: NextRequest, pathSegments: string[]) {
         headers,
         body: body ? new Uint8Array(body) : undefined,
       });
+
+      // For uploaded media, try other candidates when current base doesn't have the file.
+      if (
+        isUploadGetRequest &&
+        !response.ok &&
+        (response.status === 404 || response.status >= 500)
+      ) {
+        lastError = new Error(`Upload fetch failed from ${base} with ${response.status}`);
+        continue;
+      }
 
       const responseHeaders = new Headers(response.headers);
       return new Response(response.body, {

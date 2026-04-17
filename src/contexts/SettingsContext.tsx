@@ -204,7 +204,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
       setSettings(parsed);
     } catch (err) {
-      console.error("Failed to load settings:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.warn("Settings API unavailable, using default settings:", err);
+      }
       setError("Failed to load settings");
       // Use defaults on error
       setSettings(defaultSettings);
