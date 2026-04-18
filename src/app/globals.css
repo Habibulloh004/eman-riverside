@@ -159,6 +159,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
   }
 
   /* Serif font for headings */
@@ -198,13 +199,13 @@
   }
 
   .gallery-motion-from-right {
-    --gallery-move-x: 26px;
-    --gallery-move-y: 0px;
+    --gallery-move-x: 0px;
+    --gallery-move-y: 20px;
   }
-  
+
   .gallery-motion-from-left {
-    --gallery-move-x: -26px;
-    --gallery-move-y: 0px;
+    --gallery-move-x: 0px;
+    --gallery-move-y: 20px;
   }
 
   .gallery-motion-from-bottom {
@@ -214,60 +215,60 @@
 
   .hero-enter-right {
     opacity: 0;
-    transform: translateX(38px);
+    transform: translateY(22px);
     transition: transform 760ms cubic-bezier(0.22, 1, 0.36, 1), opacity 560ms ease;
   }
 
   .gallery-reveal-visible.hero-enter-right {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0);
   }
 
   .interior-enter-left-top {
     opacity: 0;
-    transform: translate(-34px, -28px);
+    transform: translateY(-20px);
     transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1), opacity 520ms ease;
   }
 
   .interior-enter-right-top {
     opacity: 0;
-    transform: translate(34px, -28px);
+    transform: translateY(-20px);
     transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1), opacity 520ms ease;
   }
 
   .gallery-reveal-visible.interior-enter-left-top,
   .gallery-reveal-visible.interior-enter-right-top {
     opacity: 1;
-    transform: translate(0, 0);
+    transform: translateY(0);
   }
 
   .gallery-enter-from-left-bottom {
     opacity: 0;
-    transform: translate(-28px, 26px);
+    transform: translateY(26px);
     transition: transform 740ms cubic-bezier(0.22, 1, 0.36, 1), opacity 540ms ease;
   }
 
   .gallery-enter-from-right-bottom {
     opacity: 0;
-    transform: translate(28px, 26px);
+    transform: translateY(26px);
     transition: transform 740ms cubic-bezier(0.22, 1, 0.36, 1), opacity 540ms ease;
   }
 
   .gallery-reveal-visible.gallery-enter-from-left-bottom,
   .gallery-reveal-visible.gallery-enter-from-right-bottom {
     opacity: 1;
-    transform: translate(0, 0);
+    transform: translateY(0);
   }
 
   .exterior-enter-left-bottom {
     opacity: 0;
-    translate: -32px 30px;
+    translate: 0 28px;
     transition: translate 760ms cubic-bezier(0.22, 1, 0.36, 1), opacity 560ms ease;
   }
 
   .exterior-enter-right-bottom {
     opacity: 0;
-    translate: 32px 30px;
+    translate: 0 28px;
     transition: translate 760ms cubic-bezier(0.22, 1, 0.36, 1), opacity 560ms ease;
   }
 
