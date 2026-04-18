@@ -7,6 +7,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { galleryApi, GalleryItem } from "@/lib/api/gallery";
 import { HeroVideoDialog } from "@/components/ui/hero-video-dialog";
 import { sanitizeRichTextHtml } from "@/lib/rich-text";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 function resolveMediaUrl(url?: string): string {
   if (!url) return "/images/hero/1.png";
@@ -149,41 +153,113 @@ export default function GalleryPage() {
     loadGallery();
   }, [language]);
 
+  // Gallery page ScrollTrigger animations
   useEffect(() => {
     const root = mainRef.current;
     if (!root) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const targets = Array.from(
-      root.querySelectorAll<HTMLElement>(".gallery-reveal:not(.gallery-reveal-visible)")
+    const triggers: ScrollTrigger[] = [];
+
+    // --- Hero: immediate cinematic entrance (already in viewport on load) ---
+    const heroSection = root.querySelector<HTMLElement>("[data-gallery-hero]");
+    if (heroSection) {
+      const heroText = heroSection.querySelector<HTMLElement>("[data-gallery-hero-text]");
+      const heroImage = heroSection.querySelector<HTMLElement>("[data-gallery-hero-image]");
+      const heroLogo = heroSection.querySelector<HTMLElement>("[data-gallery-hero-logo]");
+
+      gsap.set([heroText, heroImage, heroLogo].filter(Boolean), { clearProps: "all" });
+
+      if (heroText) gsap.set(heroText, { autoAlpha: 0, y: 30 });
+      if (heroImage) gsap.set(heroImage, { clipPath: "inset(0 100% 0 0)" });
+      if (heroLogo) gsap.set(heroLogo, { autoAlpha: 0, scale: 0.9 });
+
+      // Play immediately — hero is visible on load, no scroll needed
+      const heroTl = gsap.timeline({ delay: 0.25, defaults: { ease: "power3.out" } });
+      if (heroImage) heroTl.to(heroImage, { clipPath: "inset(0 0% 0 0)", duration: 0.9, ease: "power3.inOut" }, 0);
+      if (heroText) heroTl.to(heroText, { autoAlpha: 1, y: 0, duration: 0.6 }, 0.3);
+      if (heroLogo) heroTl.to(heroLogo, { autoAlpha: 1, scale: 1, duration: 0.5 }, 0.6);
+    }
+
+    // --- Standard gallery reveals via ScrollTrigger ---
+    // Must run BEFORE hscroll setup so all gallery-reveal elements get handled
+    const revealTargets = Array.from(
+      root.querySelectorAll<HTMLElement>(".gallery-reveal:not([data-gallery-hero-image]):not([data-gallery-hero-logo])")
     );
-    if (targets.length === 0) return;
 
-    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-    const isInitiallyVisible = (el: HTMLElement) => {
-      const rect = el.getBoundingClientRect();
-      return rect.top <= viewportHeight * 0.92 && rect.bottom >= 0;
-    };
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("gallery-reveal-visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.2, rootMargin: "0px 0px -8% 0px" }
-    );
-
-    targets.forEach((target) => {
-      if (isInitiallyVisible(target)) {
-        target.classList.add("gallery-reveal-visible");
-      } else {
-        observer.observe(target);
-      }
+    revealTargets.forEach((target, i) => {
+      const st = ScrollTrigger.create({
+        trigger: target,
+        start: "top 92%",
+        once: true,
+        onEnter: () => {
+          gsap.delayedCall(i * 0.06, () => {
+            target.classList.add("gallery-reveal-visible");
+          });
+        },
+      });
+      triggers.push(st);
     });
-    return () => observer.disconnect();
+
+    // --- Horizontal Scroll Gallery ---
+    const hScrollSection = root.querySelector<HTMLElement>("[data-gallery-hscroll]");
+    const hScrollStrip = root.querySelector<HTMLElement>("[data-gallery-hscroll-strip]");
+
+    let rafId: number | null = null;
+
+    if (hScrollSection && hScrollStrip) {
+      const cards = hScrollStrip.querySelectorAll<HTMLElement>("[data-gallery-hscroll-card]");
+
+      const setupHScroll = () => {
+        const stripWidth = hScrollStrip.scrollWidth;
+        const viewportWidth = hScrollSection.offsetWidth;
+        const distance = stripWidth - viewportWidth;
+
+        if (distance <= 0) return;
+
+        const hTl = gsap.to(hScrollStrip, {
+          x: -distance,
+          ease: "none",
+          scrollTrigger: {
+            trigger: hScrollSection,
+            start: "top top",
+            end: `+=${distance}`,
+            pin: true,
+            scrub: 1,
+            pinSpacing: true,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        if (hTl.scrollTrigger) triggers.push(hTl.scrollTrigger);
+
+        cards.forEach((card) => {
+          const st = ScrollTrigger.create({
+            trigger: card,
+            containerAnimation: hTl,
+            start: "left 80%",
+            end: "left 20%",
+            scrub: true,
+            animation: gsap.fromTo(
+              card,
+              { scale: 0.92, autoAlpha: 0.5 },
+              { scale: 1, autoAlpha: 1, ease: "none" }
+            ),
+          });
+          triggers.push(st);
+        });
+      };
+
+      rafId = requestAnimationFrame(() => {
+        setupHScroll();
+        ScrollTrigger.refresh();
+      });
+    }
+
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      triggers.forEach((st) => st.kill());
+    };
   }, [isLoading, galleryItems.length, videoItems.length, activeVideoIndex]);
 
   const plainText = (html?: string) =>
@@ -226,11 +302,11 @@ export default function GalleryPage() {
     <>
       <Header />
       <main ref={mainRef} className="pt-20 lg:pt-24 bg-[#F5ECE4]">
-        {/* Hero Section */}
-        <section className="relative bg-[#F5ECE4] overflow-hidden">
+        {/* Hero Section — Pinned scroll reveal */}
+        <section data-gallery-hero data-no-page-section-anim="true" className="relative bg-[#F5ECE4] overflow-hidden">
           <div className="relative h-screen max-h-[900px] max-w-[1920px] mx-auto">
             {/* Left side - Large Vertical text */}
-            <div className="absolute left-6 lg:left-18 top-[40%] -translate-y-1/2 z-10">
+            <div data-gallery-hero-text className="absolute left-6 lg:left-18 top-[40%] -translate-y-1/2 z-10">
               <span
                 className="text-[#1a1a1a] text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-medium tracking-[0.2em] whitespace-nowrap"
                 style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
@@ -240,7 +316,7 @@ export default function GalleryPage() {
             </div>
 
             {/* Logo - positioned right of vertical text, near top */}
-            <div className="absolute max-md:hidden left-24 sm:left-32 lg:left-44 top-28 lg:top-32 z-10 gallery-reveal gallery-reveal-step gallery-step-0">
+            <div data-gallery-hero-logo className="absolute max-md:hidden left-24 sm:left-32 lg:left-44 top-28 lg:top-32 z-10">
               <Image
                 src="/darklogo.png"
                 alt="EMAN RIVERSIDE"
@@ -251,7 +327,7 @@ export default function GalleryPage() {
             </div>
 
             {/* Main diagonal image - right side with diagonal left edge */}
-            <div className="absolute top-0 right-0 w-[75%] lg:w-[70%] h-full gallery-reveal gallery-reveal-step gallery-step-1 hero-enter-right">
+            <div data-gallery-hero-image className="absolute top-0 right-0 w-[75%] lg:w-[70%] h-full">
               <Image
                 src="/images/03.webp"
                 alt="EMAN RIVERSIDE Building"
@@ -359,9 +435,14 @@ export default function GalleryPage() {
           </div>
         </section>
 
-        {/* Gallery Section - Green background */}
+        {/* Gallery Section - Green background — Horizontal scroll pinned */}
         {(isLoading || mainGalleryItems.length > 0) && (
-        <section className="relative py-12 lg:py-24 bg-primary overflow-hidden">
+        <section
+          data-gallery-hscroll
+          data-no-page-section-anim="true"
+          className="relative bg-primary overflow-hidden"
+          style={{ minHeight: "100vh" }}
+        >
           {/* Background text */}
           <div className="absolute inset-0 flex items-start justify-center pt-8 pointer-events-none">
             <span className="text-[80px] lg:text-[200px] font-serif text-white/5 whitespace-nowrap">
@@ -369,74 +450,64 @@ export default function GalleryPage() {
             </span>
           </div>
 
-          <div className="container mx-auto px-4 lg:px-8 relative z-10">
+          <div className="relative z-10 flex h-screen flex-col justify-center px-4 lg:px-8">
             {/* Section title */}
-            <h2 className="text-2xl lg:text-4xl xl:text-5xl font-serif text-white text-center mb-8 lg:mb-16">
+            <h2 className="text-2xl lg:text-4xl xl:text-5xl font-serif text-white mb-8 lg:mb-12">
               {t.gallery.galleryTitle}
             </h2>
 
-            {/* Gallery carousel */}
+            {/* Horizontal scroll strip */}
             {isLoading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
               </div>
             ) : (
-              <div>
-                <div
-                  className="flex gap-4 lg:gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4 -mx-4 px-4 lg:-mx-8 lg:px-8"
-                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
-                  {mainGalleryItems.map((item, index) => {
-                    const tileClassName = "flex-shrink-0 w-[70%] sm:w-[45%] lg:w-[280px] snap-center flex flex-col";
-                    const content = (
-                      <>
-                        <div className={`relative aspect-[3/4] rounded-sm overflow-hidden mb-3 lg:mb-4 gallery-reveal gallery-reveal-step gallery-step-${index % 10}`}>
-                          <Image
-                            src={item.image}
-                            alt={item.title}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 640px) 70vw, (max-width: 1024px) 45vw, 280px"
-                          />
-                        </div>
-                        <h3 className="text-white text-sm font-medium mb-1 lg:mb-2 line-clamp-1">{item.title}</h3>
-                        <div
-                          className="text-white/60 text-xs leading-relaxed line-clamp-3 prose prose-invert prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{ __html: item.description }}
+              <div
+                data-gallery-hscroll-strip
+                className="flex gap-6 lg:gap-8 will-change-transform"
+              >
+                {mainGalleryItems.map((item) => {
+                  const cardContent = (
+                    <div data-gallery-hscroll-card className="flex-shrink-0 w-[70vw] sm:w-[45vw] lg:w-[300px] flex flex-col">
+                      <div className="relative aspect-[3/4] rounded-sm overflow-hidden mb-3 lg:mb-4">
+                        <Image
+                          src={item.image}
+                          alt={item.title}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 640px) 70vw, (max-width: 1024px) 45vw, 300px"
                         />
-                      </>
-                    );
-
-                    if (item.redirect_url) {
-                      return (
-                        <a
-                          key={item.id}
-                          href={item.redirect_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`${tileClassName} cursor-pointer hover:opacity-95 transition-opacity`}
-                        >
-                          {content}
-                        </a>
-                      );
-                    }
-
-                    return (
-                      <div
-                        key={item.id}
-                        className={tileClassName}
-                      >
-                        {content}
                       </div>
+                      <h3 className="text-white text-sm font-medium mb-1 lg:mb-2 line-clamp-1">{item.title}</h3>
+                      <div
+                        className="text-white/60 text-xs leading-relaxed line-clamp-3 prose prose-invert prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{ __html: item.description }}
+                      />
+                    </div>
+                  );
+
+                  if (item.redirect_url) {
+                    return (
+                      <a
+                        key={item.id}
+                        href={item.redirect_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="cursor-pointer hover:opacity-95 transition-opacity"
+                      >
+                        {cardContent}
+                      </a>
                     );
-                  })}
-                </div>
+                  }
+
+                  return <div key={item.id}>{cardContent}</div>;
+                })}
               </div>
             )}
 
             {/* Decorative ellipse */}
             {mainGalleryItems.length > 0 && (
-              <div className="flex justify-center mt-8 lg:mt-16">
+              <div className="flex justify-center mt-8 lg:mt-12">
                 <svg width="120" height="40" viewBox="0 0 120 40" fill="none">
                   <ellipse cx="60" cy="20" rx="58" ry="18" stroke="white" strokeWidth="1" fill="none" opacity="0.3" />
                 </svg>

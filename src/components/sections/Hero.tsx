@@ -8,6 +8,7 @@ import { gsap } from "gsap";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
 import { useEstates } from "@/hooks/useEstates";
+import { useMagneticCursor } from "@/hooks/useMagneticCursor";
 
 let hasAnimatedHeroInRuntime = false;
 
@@ -44,6 +45,8 @@ export default function Hero() {
   const { settings } = useSiteSettings();
   const router = useRouter();
   const heroRef = useRef<HTMLElement | null>(null);
+  const searchBtnRef = useRef<HTMLButtonElement | null>(null);
+  useMagneticCursor(searchBtnRef, 0.35);
   const { data: estates = [] } = useEstates({ type: "living" });
   const [selectedBuilding, setSelectedBuilding] = useState("");
   const [selectedFloor, setSelectedFloor] = useState("");
@@ -189,77 +192,99 @@ export default function Hero() {
     const root = heroRef.current;
     const social = root.querySelector<HTMLElement>("[data-hero-social]");
     const card = root.querySelector<HTMLElement>("[data-hero-card]");
+    const imagePanel = root.querySelector<HTMLElement>("[data-hero-image-panel]");
     const textTargets = Array.from(
       root.querySelectorAll<HTMLElement>("[data-hero-text]")
     ).filter((el) => el.offsetParent !== null);
     const form = root.querySelector<HTMLElement>("[data-hero-form]");
 
-    const allTargets = [social, card, ...textTargets, form].filter(
+    const allTargets = [social, card, imagePanel, ...textTargets, form].filter(
       (el): el is HTMLElement => Boolean(el)
     );
     if (allTargets.length === 0) return;
     if (hasAnimatedHeroInRuntime) {
-      gsap.set(allTargets, { clearProps: "opacity,visibility,transform" });
+      gsap.set(allTargets, { clearProps: "all" });
       return;
     }
     hasAnimatedHeroInRuntime = true;
 
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: "none" } });
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
+      // Cinematic card reveal — clip-path grows from center
+      if (card) {
+        tl.fromTo(
+          card,
+          { clipPath: "inset(6% 4% 6% 4%)", autoAlpha: 0 },
+          {
+            clipPath: "inset(0% 0% 0% 0%)",
+            autoAlpha: 1,
+            duration: 1.0,
+            ease: "power3.inOut",
+            clearProps: "clipPath",
+          }
+        );
+      }
+
+      // Image panel — subtle scale settle
+      if (imagePanel) {
+        tl.fromTo(
+          imagePanel,
+          { scale: 1.08 },
+          {
+            scale: 1,
+            duration: 1.4,
+            ease: "power2.out",
+            clearProps: "transform",
+          },
+          0 // start at same time as card
+        );
+      }
+
+      // Text elements — fade up with stagger
+      if (textTargets.length > 0) {
+        tl.fromTo(
+          textTargets,
+          { y: 14, autoAlpha: 0 },
+          {
+            y: 0,
+            autoAlpha: 1,
+            duration: 0.6,
+            stagger: 0.08,
+            clearProps: "opacity,visibility,transform",
+          },
+          0.35
+        );
+      }
+
+      // Search form — slides up
+      if (form) {
+        tl.fromTo(
+          form,
+          { y: 16, autoAlpha: 0 },
+          {
+            y: 0,
+            autoAlpha: 1,
+            duration: 0.6,
+            ease: "power2.out",
+            clearProps: "opacity,visibility,transform",
+          },
+          0.55
+        );
+      }
+
+      // Social links — fade in from left
       if (social && social.offsetParent !== null) {
         tl.fromTo(
           social,
-          { x: -18, autoAlpha: 0 },
+          { x: -12, autoAlpha: 0 },
           {
             x: 0,
             autoAlpha: 1,
             duration: 0.5,
             clearProps: "opacity,visibility,transform",
-          }
-        );
-      }
-
-      if (card) {
-        tl.fromTo(
-          card,
-          { y: 26, autoAlpha: 0 },
-          {
-            y: 0,
-            autoAlpha: 1,
-            duration: 0.82,
-            clearProps: "opacity,visibility,transform",
           },
-          social ? "-=0.08" : 0
-        );
-      }
-
-      if (textTargets.length > 0) {
-        tl.fromTo(
-          textTargets,
-          { y: 18, autoAlpha: 0 },
-          {
-            y: 0,
-            autoAlpha: 1,
-            duration: 0.58,
-            stagger: 0.085,
-            clearProps: "opacity,visibility,transform",
-          },
-          card ? "-=0.48" : 0
-        );
-      }
-
-      if (form) {
-        tl.fromTo(
-          form,
-          { y: 18, autoAlpha: 0 },
-          {
-            y: 0,
-            autoAlpha: 1,
-            duration: 0.55,
-            clearProps: "opacity,visibility,transform",
-          },
-          "-=0.22"
+          0.7
         );
       }
     }, heroRef);
@@ -373,7 +398,7 @@ export default function Hero() {
 
               </div>
 
-              <div className="relative min-h-[280px] lg:h-full lg:min-h-0">
+              <div data-hero-image-panel className="relative min-h-[280px] lg:h-full lg:min-h-0" data-speed="0.85">
                 {bannerItems.map((banner, index) => (
                   <Image
                     key={`${banner.image}-${index}`}
@@ -468,6 +493,7 @@ export default function Hero() {
                   </div>
 
                   <button
+                    ref={searchBtnRef}
                     onClick={handleSearch}
                     className="flex h-11 w-11 items-center justify-center self-center rounded-[14px] bg-white text-primary shadow-[0_8px_24px_rgba(63,112,77,0.12)] transition-colors hover:bg-[#f5efe8]"
                     aria-label={t.hero.selectApartment}

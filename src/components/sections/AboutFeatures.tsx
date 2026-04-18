@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useProjectsPublic } from "@/hooks/useProjects";
 import { FeatureSkeleton } from "@/components/ui/skeleton";
 import { Project } from "@/lib/api/projects";
 import { sanitizeRichTextHtml } from "@/lib/rich-text";
+import { useCountUp } from "@/hooks/useCountUp";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090";
 
@@ -130,9 +131,12 @@ function FeatureCopy({
   subtitle: string;
   descriptionHtml: string;
 }) {
+  const numberRef = useRef<HTMLDivElement>(null);
+  useCountUp(numberRef, number);
+
   return (
     <div className="relative flex min-h-[220px] flex-col justify-center overflow-hidden bg-primary px-5 py-5 text-white sm:px-6 sm:py-6 lg:min-h-[390px] lg:px-7 lg:py-7">
-      <div className="absolute left-4 top-3 text-[68px] font-semibold leading-none text-white/10 sm:text-[80px] lg:left-5 lg:top-4 lg:text-[92px]">
+      <div ref={numberRef} className="absolute left-4 top-3 text-[68px] font-semibold leading-none text-white/10 sm:text-[80px] lg:left-5 lg:top-4 lg:text-[92px]">
         {number}
       </div>
 
@@ -156,13 +160,14 @@ function FeatureCopy({
 
 function FeatureImage({ image, title }: { image: string; title: string }) {
   return (
-    <div className="relative min-h-[220px] lg:min-h-[390px]">
+    <div className="relative min-h-[220px] lg:min-h-[390px] overflow-hidden">
       <Image
         src={image}
         alt={title || "Feature"}
         fill
         className="object-cover"
         sizes="(max-width: 1024px) 100vw, 50vw"
+        data-speed="0.9"
       />
     </div>
   );

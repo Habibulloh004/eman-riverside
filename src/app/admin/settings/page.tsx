@@ -192,9 +192,6 @@ export default function SettingsPage() {
       } catch { setProjectsUz([]); }
 
       try {
-        const heroTitle = getValue("hero_title");
-        const heroSubtitleRu = getValue("hero_subtitle");
-        const heroSubtitleUz = getValue("hero_subtitle_uz");
         const rawBanners = getValue("hero_banners");
         const parsedBanners = rawBanners ? JSON.parse(rawBanners) : [];
 
@@ -209,15 +206,7 @@ export default function SettingsPage() {
             }))
           );
         } else {
-          setHeroBanners([
-            {
-              image: "/images/hero.webp",
-              title_ru: heroTitle || "Tez Kunda\nСкоро",
-              title_uz: heroTitle || "Tez Kunda",
-              subtitle_ru: heroSubtitleRu || "",
-              subtitle_uz: heroSubtitleUz || "",
-            },
-          ]);
+          setHeroBanners([]);
         }
       } catch {
         setHeroBanners([]);

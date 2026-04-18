@@ -369,7 +369,7 @@ function CatalogContent() {
 
     if (cards.length === 0) return;
 
-    const tl = gsap.timeline({ defaults: { ease: "none" } });
+    const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
     tl.set(titles, { autoAlpha: 0 });
 

@@ -20,7 +20,7 @@ export default function Location() {
   return (
     <section id="location" className="relative py-16 lg:py-24 bg-[#F9EFE7] overflow-hidden">
       {/* Background image with low opacity */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0" data-speed="0.85">
         <Image
           src="/images/hero/1.png"
           alt=""

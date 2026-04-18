@@ -6,6 +6,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useGalleryPublic } from "@/hooks/useGallery";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090";
 const DEFAULT_IMAGE = "/images/hero/1.png";
@@ -188,36 +192,86 @@ export default function Gallery() {
   useEffect(() => {
     const root = sectionRef.current;
     if (!root) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const targets = Array.from(root.querySelectorAll<HTMLElement>(".gallery-reveal"));
-    if (targets.length === 0) return;
+    const tiles = Array.from(root.querySelectorAll<HTMLElement>(".gallery-reveal"));
+    if (tiles.length === 0) return;
 
-    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-    const isInitiallyVisible = (el: HTMLElement) => {
-      const rect = el.getBoundingClientRect();
-      return rect.top <= viewportHeight * 0.92 && rect.bottom >= 0;
+    // Wipe direction based on tile position in grid
+    const wipeDirections: Record<string, { prop: string; origin: string }> = {
+      "tile-a": { prop: "scaleY", origin: "top center" },
+      "tile-b": { prop: "scaleX", origin: "left center" },
+      "tile-c": { prop: "scaleX", origin: "right center" },
+      "tile-d": { prop: "scaleX", origin: "left center" },
+      "tile-e": { prop: "scaleX", origin: "left center" },
+      "tile-f": { prop: "scaleY", origin: "center top" },
+      "tile-g": { prop: "scaleX", origin: "right center" },
+      "tile-h": { prop: "scaleY", origin: "center top" },
+      "tile-i": { prop: "scaleX", origin: "left center" },
     };
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("gallery-reveal-visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.2, rootMargin: "0px 0px -8% 0px" }
-    );
+    const overlays: HTMLDivElement[] = [];
+    const triggers: ScrollTrigger[] = [];
 
-    targets.forEach((target) => {
-      if (isInitiallyVisible(target)) {
-        target.classList.add("gallery-reveal-visible");
-      } else {
-        observer.observe(target);
-      }
+    tiles.forEach((tile, i) => {
+      // Find which tile class this has
+      const tileClass = Array.from(tile.classList).find((c) => c.startsWith("tile-")) || "tile-a";
+      const dir = wipeDirections[tileClass] || { prop: "scaleX", origin: "right center" };
+
+      // Create wipe overlay
+      const overlay = document.createElement("div");
+      overlay.style.cssText = `
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        background: #3F704D;
+        transform-origin: ${dir.origin};
+        pointer-events: none;
+      `;
+      tile.appendChild(overlay);
+      overlays.push(overlay);
+
+      // Hide the image initially
+      const img = tile.querySelector("img");
+      if (img) gsap.set(img, { scale: 1.15 });
+
+      const st = ScrollTrigger.create({
+        trigger: tile,
+        start: "top 88%",
+        once: true,
+        onEnter: () => {
+          const delay = i * 0.07;
+          const tl = gsap.timeline({ delay });
+
+          // Wipe overlay away
+          tl.fromTo(
+            overlay,
+            { [dir.prop]: 1 },
+            {
+              [dir.prop]: 0,
+              duration: 0.8,
+              ease: "power4.inOut",
+              onComplete: () => overlay.remove(),
+            }
+          );
+
+          // Image scale settles
+          if (img) {
+            tl.to(
+              img,
+              { scale: 1, duration: 1.2, ease: "power2.out" },
+              0.1
+            );
+          }
+        },
+      });
+      triggers.push(st);
     });
-    return () => observer.disconnect();
+
+    return () => {
+      triggers.forEach((st) => st.kill());
+      overlays.forEach((o) => { try { o.remove(); } catch { /* noop */ } });
+    };
   }, [galleryData.slots.length, isLoading]);
 
   if (isLoading) {
@@ -282,7 +336,7 @@ export default function Gallery() {
           {tileIndices.map((i) => (
             <div
               key={tileClasses[i]}
-              className={`gallery-tile gallery-reveal gallery-reveal-step gallery-step-${i % 10} ${tileClasses[i]}`}
+              className={`gallery-tile gallery-reveal ${tileClasses[i]}`}
               onClick={() => handleTileClick(i)}
             >
               <Image
@@ -291,6 +345,7 @@ export default function Gallery() {
                 fill
                 className="object-cover"
                 data-no-hover-scale="true"
+                data-no-reveal="true"
                 sizes={i === 0 ? "(max-width: 1024px) 100vw, 25vw" : "(max-width: 1024px) 50vw, 25vw"}
               />
             </div>

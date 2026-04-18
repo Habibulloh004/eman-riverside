@@ -3,113 +3,120 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SplitText } from "gsap/SplitText";
 
-const MAX_TEXT_TARGETS_PER_SECTION = 60;
-const MAX_MEDIA_TARGETS_PER_SECTION = 18;
-const MAX_UI_TARGETS_PER_SECTION = 12;
+gsap.registerPlugin(ScrollTrigger, SplitText);
+
+const MAX_TEXT_TARGETS_PER_SECTION = 40;
+const MAX_MEDIA_TARGETS_PER_SECTION = 12;
 const animatedSectionRuntimeKeys = new Set<string>();
 const animatedRuntimeTargets = new WeakSet<HTMLElement>();
-const wavePreparedElements = new WeakSet<HTMLElement>();
+const splitInstances: SplitText[] = [];
 
-function createWaveTargets(element: HTMLElement): HTMLElement[] | null {
+/* ------------------------------------------------------------------ */
+/*  Phase 2A: SplitText Line Reveals for Headings                     */
+/* ------------------------------------------------------------------ */
+
+function createLineRevealTargets(element: HTMLElement): HTMLElement[] | null {
   if (element.dataset.noWaveText === "true") return null;
   if (element.childElementCount > 0) return null;
-
-  if (wavePreparedElements.has(element)) {
-    return Array.from(
-      element.querySelectorAll<HTMLElement>(':scope > span[data-wave-word="1"]')
-    ).filter((word) => !animatedRuntimeTargets.has(word));
-  }
+  if (animatedRuntimeTargets.has(element)) return null;
 
   const text = element.textContent?.trim();
-  if (!text) return null;
+  if (!text || text.length < 2) return null;
 
   const tag = element.tagName.toLowerCase();
-  const canWave =
-    tag === "h1" ||
-    tag === "h2" ||
-    tag === "h3" ||
-    (tag === "p" && text.length <= 120) ||
-    (tag === "li" && text.length <= 90);
-  if (!canWave) return null;
+  const canSplit = tag === "h1" || tag === "h2" || tag === "h3";
+  if (!canSplit) return null;
 
-  const words = text.split(/\s+/);
-  if (words.length < 2 || words.length > 14) return null;
+  // SplitText needs the element to be visible to measure lines
+  if (element.offsetParent === null) return null;
 
-  wavePreparedElements.add(element);
-  element.textContent = "";
+  try {
+    const split = new SplitText(element, {
+      type: "lines",
+      linesClass: "split-line",
+      aria: "auto",
+    });
 
-  const waveWords: HTMLElement[] = [];
-  words.forEach((word, index) => {
-    const wordSpan = document.createElement("span");
-    wordSpan.dataset.waveWord = "1";
-    wordSpan.setAttribute("aria-hidden", "true");
-    wordSpan.style.display = "inline-block";
-    wordSpan.style.willChange = "transform, opacity";
-    wordSpan.textContent = word;
-    element.appendChild(wordSpan);
-    waveWords.push(wordSpan);
-
-    if (index < words.length - 1) {
-      element.appendChild(document.createTextNode(" "));
+    if (!split.lines || split.lines.length === 0) {
+      split.revert();
+      return null;
     }
-  });
 
-  return waveWords;
+    splitInstances.push(split);
+    animatedRuntimeTargets.add(element);
+
+    return split.lines as HTMLElement[];
+  } catch {
+    return null;
+  }
 }
 
-function collectTitleAndTextTargets(section: HTMLElement): {
-  titleTargets: HTMLElement[];
-  textTargets: HTMLElement[];
+/* ------------------------------------------------------------------ */
+/*  Target Collection                                                  */
+/* ------------------------------------------------------------------ */
+
+function collectTitleTargets(section: HTMLElement): {
+  lineTargets: HTMLElement[];
+  fallbackTitleTargets: HTMLElement[];
 } {
-  const isEligibleText = (el: HTMLElement) =>
+  const isEligible = (el: HTMLElement) =>
     el.offsetParent !== null &&
     !el.closest('[data-no-page-text-anim="true"]') &&
     !animatedRuntimeTargets.has(el);
 
-  const headingNodes = Array.from(
+  const headings = Array.from(
     section.querySelectorAll<HTMLElement>("h1, h2, h3")
-  ).filter(isEligibleText);
-  const sentenceNodes = Array.from(
-    section.querySelectorAll<HTMLElement>("p, li, [data-page-body-anim='true']")
-  ).filter(isEligibleText);
+  ).filter(isEligible);
 
-  const [titleNode, ...otherHeadingNodes] = headingNodes;
-  const titleTargets: HTMLElement[] = [];
-  const textTargets: HTMLElement[] = [];
+  const lineTargets: HTMLElement[] = [];
+  const fallbackTitleTargets: HTMLElement[] = [];
 
-  if (titleNode) {
-    const waveTargets = createWaveTargets(titleNode);
-    if (waveTargets) {
-      animatedRuntimeTargets.add(titleNode);
-      if (waveTargets.length > 0) {
-        titleTargets.push(...waveTargets);
-      }
-    } else {
-      titleTargets.push(titleNode);
+  for (const heading of headings) {
+    const lines = createLineRevealTargets(heading);
+    if (lines && lines.length > 0) {
+      lineTargets.push(...lines);
+    } else if (!animatedRuntimeTargets.has(heading)) {
+      fallbackTitleTargets.push(heading);
     }
   }
 
-  const processAsText = (node: HTMLElement) => {
-    const waveTargets = createWaveTargets(node);
-    if (waveTargets) {
-      animatedRuntimeTargets.add(node);
-      if (waveTargets.length > 0) {
-        textTargets.push(...waveTargets);
-      }
-      return;
-    }
-
-    textTargets.push(node);
-  };
-
-  otherHeadingNodes.forEach(processAsText);
-  sentenceNodes.forEach(processAsText);
-
   return {
-    titleTargets: titleTargets.slice(0, 18),
-    textTargets: textTargets.slice(0, MAX_TEXT_TARGETS_PER_SECTION),
+    lineTargets: lineTargets.slice(0, 18),
+    fallbackTitleTargets: fallbackTitleTargets.slice(0, 8),
   };
+}
+
+function collectTextTargets(section: HTMLElement): HTMLElement[] {
+  // Body text is opt-in only via data-page-body-anim="true"
+  const isEligible = (el: HTMLElement) =>
+    el.offsetParent !== null &&
+    !el.closest('[data-no-page-text-anim="true"]') &&
+    !animatedRuntimeTargets.has(el);
+
+  // Only animate p/li that are explicitly opted in, or direct children of the section
+  const explicitTargets = Array.from(
+    section.querySelectorAll<HTMLElement>("[data-page-body-anim='true']")
+  ).filter(isEligible);
+
+  // Also include p tags that are direct children of the section (not deeply nested)
+  const directParagraphs = Array.from(
+    section.querySelectorAll<HTMLElement>(":scope > p, :scope > div > p, :scope > div > div > p")
+  ).filter(isEligible);
+
+  const allTargets = [...explicitTargets];
+  const seen = new Set<HTMLElement>(allTargets);
+
+  for (const p of directParagraphs) {
+    if (!seen.has(p) && allTargets.length < MAX_TEXT_TARGETS_PER_SECTION) {
+      allTargets.push(p);
+      seen.add(p);
+    }
+  }
+
+  return allTargets.slice(0, MAX_TEXT_TARGETS_PER_SECTION);
 }
 
 function collectMediaTargets(section: HTMLElement): HTMLElement[] {
@@ -125,7 +132,6 @@ function collectMediaTargets(section: HTMLElement): HTMLElement[] {
   mediaCandidates.forEach((el) => {
     if (el.offsetParent === null) return;
     if (el.closest('[data-no-page-media-anim="true"]')) return;
-    // Gallery sections manage their own reveal timeline/classes.
     if (el.classList.contains("gallery-reveal") || el.closest(".gallery-reveal")) return;
     if (animatedRuntimeTargets.has(el)) return;
     if (seen.has(el)) return;
@@ -140,17 +146,41 @@ function collectMediaTargets(section: HTMLElement): HTMLElement[] {
   return uniqueTargets.slice(0, MAX_MEDIA_TARGETS_PER_SECTION);
 }
 
-function collectUiTargets(section: HTMLElement): HTMLElement[] {
-  return Array.from(
-    section.querySelectorAll<HTMLElement>(
-      "button, a, input, select, textarea, [role='button']"
-    )
-  )
-    .filter((el) => el.offsetParent !== null)
-    .filter((el) => !el.closest('[data-no-page-ui-anim="true"]'))
-    .filter((el) => !animatedRuntimeTargets.has(el))
-    .slice(0, MAX_UI_TARGETS_PER_SECTION);
+/* ------------------------------------------------------------------ */
+/*  Phase 3A: Image Overlay Wipe Reveal                                */
+/* ------------------------------------------------------------------ */
+
+function createImageWipeOverlay(
+  target: HTMLElement
+): HTMLElement | null {
+  // Find the closest positioned parent to place the overlay
+  const container = target.parentElement;
+  if (!container) return null;
+
+  // Ensure the container has relative positioning for overlay placement
+  const computedPos = window.getComputedStyle(container).position;
+  if (computedPos === "static") {
+    container.style.position = "relative";
+  }
+  container.style.overflow = "hidden";
+
+  const overlay = document.createElement("div");
+  overlay.className = "anim-wipe-overlay";
+  overlay.style.cssText = `
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: #3F704D;
+    transform-origin: right center;
+    pointer-events: none;
+  `;
+  container.appendChild(overlay);
+  return overlay;
 }
+
+/* ------------------------------------------------------------------ */
+/*  Main Component                                                     */
+/* ------------------------------------------------------------------ */
 
 export default function PageEnterAnimations() {
   const pathname = usePathname();
@@ -163,17 +193,18 @@ export default function PageEnterAnimations() {
     if (!main) return;
 
     type SectionTargets = {
-      titleTargets: HTMLElement[];
+      lineTargets: HTMLElement[];
+      fallbackTitleTargets: HTMLElement[];
       textTargets: HTMLElement[];
       mediaTargets: HTMLElement[];
-      uiTargets: HTMLElement[];
       hidden: boolean;
     };
 
+    const triggers: ScrollTrigger[] = [];
     const timelines: gsap.core.Timeline[] = [];
-    const observedSections = new WeakSet<HTMLElement>();
     const preparedSectionTargets = new WeakMap<HTMLElement, SectionTargets>();
     const sectionIndexMap = new WeakMap<HTMLElement, number>();
+
     const getSectionRuntimeKey = (section: HTMLElement, index: number) =>
       `${pathname}::${section.id || section.dataset.animKey || `idx-${index}`}`;
 
@@ -200,70 +231,51 @@ export default function PageEnterAnimations() {
       );
     };
 
-    const isSectionInViewNow = (section: HTMLElement) => {
-      const rect = section.getBoundingClientRect();
-      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-      const triggerLine = viewportHeight * 0.88;
-      return rect.bottom > 0 && rect.top < triggerLine;
-    };
-
-    const mergeTargets = (
-      existing: HTMLElement[],
-      incoming: HTMLElement[],
-      max: number
+    const prepareSectionTargets = (
+      section: HTMLElement,
+      hideTargets: boolean
     ) => {
-      if (incoming.length === 0 || existing.length >= max) return;
-
-      const seen = new Set(existing);
-      incoming.forEach((target) => {
-        if (seen.has(target) || existing.length >= max) return;
-        existing.push(target);
-        seen.add(target);
-      });
-    };
-
-    const prepareSectionTargets = (section: HTMLElement, hideTargets: boolean) => {
       let prepared = preparedSectionTargets.get(section);
-      if (!prepared) {
-        prepared = { titleTargets: [], textTargets: [], mediaTargets: [], uiTargets: [], hidden: false };
-        preparedSectionTargets.set(section, prepared);
-      }
+      if (prepared) return prepared;
 
-      const { titleTargets: newTitleTargets, textTargets: newTextTargets } =
-        collectTitleAndTextTargets(section);
-      const newMediaTargets = collectMediaTargets(section);
-      const newUiTargets = collectUiTargets(section);
-      const newTargets = [...newTitleTargets, ...newTextTargets, ...newMediaTargets, ...newUiTargets];
+      const { lineTargets, fallbackTitleTargets } = collectTitleTargets(section);
+      const textTargets = collectTextTargets(section);
+      const mediaTargets = collectMediaTargets(section);
 
-      if (newTargets.length > 0) {
-        newTargets.forEach((target) => {
-          animatedRuntimeTargets.add(target);
-        });
-      }
+      prepared = {
+        lineTargets,
+        fallbackTitleTargets,
+        textTargets,
+        mediaTargets,
+        hidden: false,
+      };
 
-      mergeTargets(prepared.titleTargets, newTitleTargets, 18);
-      mergeTargets(prepared.textTargets, newTextTargets, MAX_TEXT_TARGETS_PER_SECTION);
-      mergeTargets(prepared.mediaTargets, newMediaTargets, MAX_MEDIA_TARGETS_PER_SECTION);
-      mergeTargets(prepared.uiTargets, newUiTargets, MAX_UI_TARGETS_PER_SECTION);
+      const allTargets = [
+        ...lineTargets,
+        ...fallbackTitleTargets,
+        ...textTargets,
+        ...mediaTargets,
+      ];
 
-      const shouldHide = hideTargets || prepared.hidden;
-      if (shouldHide) {
-        const titleToHide = prepared.hidden ? newTitleTargets : prepared.titleTargets;
-        const textToHide = prepared.hidden ? newTextTargets : prepared.textTargets;
-        const mediaToHide = prepared.hidden ? newMediaTargets : prepared.mediaTargets;
-        const uiToHide = prepared.hidden ? newUiTargets : prepared.uiTargets;
+      allTargets.forEach((t) => animatedRuntimeTargets.add(t));
+      preparedSectionTargets.set(section, prepared);
 
-        if (titleToHide.length > 0) {
-          gsap.set(titleToHide, { y: 16, autoAlpha: 0 });
+      if (hideTargets) {
+        // Line reveal targets: subtle slide up per split line
+        if (lineTargets.length > 0) {
+          gsap.set(lineTargets, { y: 18, autoAlpha: 0 });
         }
-        if (textToHide.length > 0) {
-          gsap.set(textToHide, { y: 18, autoAlpha: 0 });
+        // Fallback headings (not split): subtle slide
+        if (fallbackTitleTargets.length > 0) {
+          gsap.set(fallbackTitleTargets, { y: 10, autoAlpha: 0 });
         }
-        if (mediaToHide.length > 0) {
-          gsap.set(mediaToHide, { autoAlpha: 0 });
+        // Body text: very subtle
+        if (textTargets.length > 0) {
+          gsap.set(textTargets, { y: 8, autoAlpha: 0 });
         }
-        if (uiToHide.length > 0) {
-          gsap.set(uiToHide, { y: 10, autoAlpha: 0 });
+        // Media: hidden (will use wipe overlay)
+        if (mediaTargets.length > 0) {
+          gsap.set(mediaTargets, { autoAlpha: 0 });
         }
 
         prepared.hidden = true;
@@ -274,194 +286,254 @@ export default function PageEnterAnimations() {
 
     const animateSection = (section: HTMLElement, sectionIndex: number) => {
       const runtimeKey = getSectionRuntimeKey(section, sectionIndex);
-      if (animatedSectionRuntimeKeys.has(runtimeKey)) {
-        observer.unobserve(section);
-        return;
-      }
-
-      // Mark immediately to avoid duplicate triggers during fast observer callbacks.
+      if (animatedSectionRuntimeKeys.has(runtimeKey)) return;
       animatedSectionRuntimeKeys.add(runtimeKey);
 
-      const preparedTargets = prepareSectionTargets(section, false);
-      const titleTargets = preparedTargets.titleTargets;
-      const textTargets = preparedTargets.textTargets;
-      const mediaTargets = preparedTargets.mediaTargets;
-      const uiTargets = preparedTargets.uiTargets;
+      const targets = prepareSectionTargets(section, false);
+      const {
+        lineTargets,
+        fallbackTitleTargets,
+        textTargets,
+        mediaTargets,
+      } = targets;
 
-      if (
-        titleTargets.length === 0 &&
-        textTargets.length === 0 &&
-        mediaTargets.length === 0 &&
-        uiTargets.length === 0
-      ) {
-        observer.unobserve(section); // animate once per page load
-        return;
-      }
+      const hasContent =
+        lineTargets.length > 0 ||
+        fallbackTitleTargets.length > 0 ||
+        textTargets.length > 0 ||
+        mediaTargets.length > 0;
 
-      const timeline = gsap.timeline({ defaults: { ease: "none" } });
+      if (!hasContent) return;
 
-      if (titleTargets.length > 0) {
-        if (preparedTargets.hidden) {
-          timeline.to(titleTargets, {
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+      // --- Headings: SplitText per-line stagger reveal ---
+      if (lineTargets.length > 0) {
+        if (targets.hidden) {
+          tl.to(lineTargets, {
             y: 0,
             autoAlpha: 1,
-            duration: 0.58,
-            stagger: 0.026,
+            duration: 0.65,
+            stagger: 0.07,
             clearProps: "opacity,visibility,transform",
           });
         } else {
-          timeline.fromTo(
-            titleTargets,
-            { y: 16, autoAlpha: 0 },
+          tl.fromTo(
+            lineTargets,
+            { y: 18, autoAlpha: 0 },
             {
               y: 0,
               autoAlpha: 1,
-              duration: 0.58,
-              stagger: 0.026,
+              duration: 0.65,
+              stagger: 0.07,
               clearProps: "opacity,visibility,transform",
             }
           );
         }
       }
 
-      const contentStart = titleTargets.length > 0 ? 0.18 : 0;
-
-      if (textTargets.length > 0) {
-        if (preparedTargets.hidden) {
-          timeline.to(textTargets, {
-            y: 0,
-            autoAlpha: 1,
-            duration: 0.62,
-            stagger: 0.028,
-            clearProps: "opacity,visibility,transform",
-          }, contentStart);
-        } else {
-          timeline.fromTo(
-            textTargets,
-            { y: 18, autoAlpha: 0 },
+      // --- Fallback headings (not split): subtle slide up ---
+      if (fallbackTitleTargets.length > 0) {
+        const pos = lineTargets.length > 0 ? "-=0.4" : 0;
+        if (targets.hidden) {
+          tl.to(
+            fallbackTitleTargets,
             {
               y: 0,
               autoAlpha: 1,
-              duration: 0.62,
-              stagger: 0.028,
+              duration: 0.6,
+              stagger: 0.04,
               clearProps: "opacity,visibility,transform",
             },
-            contentStart
-          );
-        }
-      }
-
-      if (mediaTargets.length > 0) {
-        if (preparedTargets.hidden) {
-          timeline.to(
-            mediaTargets,
-            {
-              autoAlpha: 1,
-              duration: 0.56,
-              stagger: 0.05,
-              clearProps: "opacity,visibility",
-            },
-            titleTargets.length > 0 ? 0.22 : 0.04
+            pos
           );
         } else {
-          timeline.fromTo(
-            mediaTargets,
-            { autoAlpha: 0 },
-            {
-              autoAlpha: 1,
-              duration: 0.56,
-              stagger: 0.05,
-              clearProps: "opacity,visibility",
-            },
-            titleTargets.length > 0 ? 0.22 : 0.04
-          );
-        }
-      }
-
-      if (uiTargets.length > 0) {
-        if (preparedTargets.hidden) {
-          timeline.to(
-            uiTargets,
-            {
-              y: 0,
-              autoAlpha: 1,
-              duration: 0.45,
-              stagger: 0.03,
-              clearProps: "opacity,visibility,transform",
-            },
-            titleTargets.length > 0 ? 0.26 : textTargets.length > 0 ? "-=0.3" : 0
-          );
-        } else {
-          timeline.fromTo(
-            uiTargets,
+          tl.fromTo(
+            fallbackTitleTargets,
             { y: 10, autoAlpha: 0 },
             {
               y: 0,
               autoAlpha: 1,
-              duration: 0.45,
-              stagger: 0.03,
+              duration: 0.6,
+              stagger: 0.04,
               clearProps: "opacity,visibility,transform",
             },
-            titleTargets.length > 0 ? 0.26 : textTargets.length > 0 ? "-=0.3" : 0
+            pos
           );
         }
       }
 
-      preparedTargets.hidden = false;
-      timelines.push(timeline);
-      observer.unobserve(section);
+      // --- Body text: quiet fade + minimal slide ---
+      const textStart =
+        lineTargets.length > 0 || fallbackTitleTargets.length > 0
+          ? "-=0.3"
+          : 0;
+
+      if (textTargets.length > 0) {
+        if (targets.hidden) {
+          tl.to(
+            textTargets,
+            {
+              y: 0,
+              autoAlpha: 1,
+              duration: 0.5,
+              stagger: 0.025,
+              ease: "power2.out",
+              clearProps: "opacity,visibility,transform",
+            },
+            textStart
+          );
+        } else {
+          tl.fromTo(
+            textTargets,
+            { y: 8, autoAlpha: 0 },
+            {
+              y: 0,
+              autoAlpha: 1,
+              duration: 0.5,
+              stagger: 0.025,
+              ease: "power2.out",
+              clearProps: "opacity,visibility,transform",
+            },
+            textStart
+          );
+        }
+      }
+
+      // --- Media: overlay wipe reveal ---
+      const mediaStart =
+        lineTargets.length > 0 || fallbackTitleTargets.length > 0
+          ? "-=0.25"
+          : textTargets.length > 0
+            ? "-=0.2"
+            : 0;
+
+      if (mediaTargets.length > 0) {
+        mediaTargets.forEach((target, i) => {
+          const overlay = createImageWipeOverlay(target);
+          const delay = i * 0.08;
+
+          // First make the image visible (behind the overlay)
+          gsap.set(target, { autoAlpha: 1 });
+
+          if (overlay) {
+            // Wipe the overlay away from left to right
+            tl.fromTo(
+              overlay,
+              { scaleX: 1 },
+              {
+                scaleX: 0,
+                duration: 0.8,
+                ease: "power4.inOut",
+                onComplete: () => overlay.remove(),
+              },
+              typeof mediaStart === "string"
+                ? mediaStart
+                : (mediaStart as number) + delay
+            );
+          } else {
+            // Fallback: simple fade
+            tl.to(
+              target,
+              {
+                autoAlpha: 1,
+                duration: 0.5,
+                clearProps: "opacity,visibility",
+              },
+              typeof mediaStart === "string"
+                ? mediaStart
+                : (mediaStart as number) + delay
+            );
+          }
+        });
+      }
+
+      targets.hidden = false;
+      timelines.push(tl);
     };
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
+    /* ---------------------------------------------------------------- */
+    /*  Phase 4B: Scroll-linked image scale                             */
+    /* ---------------------------------------------------------------- */
 
-          const section = entry.target as HTMLElement;
-          const sectionIndex = sectionIndexMap.get(section) ?? -1;
-          animateSection(section, sectionIndex);
+    const createScrollScale = (targets: HTMLElement[]) => {
+      targets.forEach((target) => {
+        const st = ScrollTrigger.create({
+          trigger: target,
+          start: "top bottom",
+          end: "bottom top",
+          scrub: true,
+          animation: gsap.fromTo(
+            target,
+            { scale: 1 },
+            { scale: 1.04, ease: "none" }
+          ),
         });
-      },
-      {
-        threshold: 0.18,
-        rootMargin: "0px 0px -12% 0px",
-      }
-    );
+        triggers.push(st);
+      });
+    };
 
-    const observeSections = () => {
+    /* ---------------------------------------------------------------- */
+    /*  ScrollTrigger-based section observation                         */
+    /* ---------------------------------------------------------------- */
+
+    const setupSections = () => {
       const sections = getEligibleSections();
+
       sections.forEach((section, index) => {
         sectionIndexMap.set(section, index);
         const runtimeKey = getSectionRuntimeKey(section, index);
         if (animatedSectionRuntimeKeys.has(runtimeKey)) return;
 
-        if (!observedSections.has(section)) {
-          observer.observe(section);
-          observedSections.add(section);
-        }
+        // Pre-hide targets that are below the fold
+        const rect = section.getBoundingClientRect();
+        const isBelowFold = rect.top > window.innerHeight * 0.88;
+        prepareSectionTargets(section, isBelowFold);
 
-        prepareSectionTargets(section, !isSectionInViewNow(section));
+        const st = ScrollTrigger.create({
+          trigger: section,
+          start: "top 85%",
+          once: true,
+          onEnter: () => {
+            animateSection(section, index);
 
-        // Ensure first viewport animations start immediately without requiring user input.
-        if (isSectionInViewNow(section)) {
-          animateSection(section, index);
-        }
+            // Set up scroll-linked scale on media targets after they've been revealed
+            const prepared = preparedSectionTargets.get(section);
+            if (prepared && prepared.mediaTargets.length > 0) {
+              // Slight delay to let reveal animation start
+              gsap.delayedCall(0.4, () => {
+                createScrollScale(prepared.mediaTargets);
+              });
+            }
+          },
+        });
+        triggers.push(st);
       });
     };
 
-    observeSections();
-    const rafId = window.requestAnimationFrame(observeSections);
-
-    const mutationObserver = new MutationObserver(() => {
-      observeSections();
+    // Initial setup with a frame delay to let ScrollSmoother initialize
+    const rafId = requestAnimationFrame(() => {
+      setupSections();
+      // Re-scan once more after a short delay for dynamically rendered content
+      const rafId2 = requestAnimationFrame(() => {
+        setupSections();
+        ScrollTrigger.refresh();
+      });
+      // Store for cleanup
+      (window as unknown as Record<string, number>).__pageAnimRaf2 = rafId2;
     });
-    mutationObserver.observe(main, { childList: true, subtree: true });
 
     return () => {
-      window.cancelAnimationFrame(rafId);
-      mutationObserver.disconnect();
-      observer.disconnect();
+      cancelAnimationFrame(rafId);
+      const raf2 = (window as unknown as Record<string, number>).__pageAnimRaf2;
+      if (raf2) cancelAnimationFrame(raf2);
+      triggers.forEach((st) => st.kill());
       timelines.forEach((tl) => tl.kill());
+      // Revert SplitText instances
+      splitInstances.forEach((s) => {
+        try { s.revert(); } catch { /* already reverted */ }
+      });
+      splitInstances.length = 0;
     };
   }, [pathname]);
 

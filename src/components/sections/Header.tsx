@@ -5,10 +5,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
 import { RequestModal } from "@/components/shared";
+import { useMagneticCursor } from "@/hooks/useMagneticCursor";
+
+gsap.registerPlugin(ScrollTrigger);
 
 let hasAnimatedHeaderInRuntime = false;
 
@@ -85,12 +89,46 @@ export default function Header() {
     { href: "/contacts", label: t.nav.contacts },
   ];
 
+  const headerRef = useRef<HTMLElement | null>(null);
+
+  // ScrollTrigger-based header show/hide on scroll direction
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return () => window.removeEventListener("scroll", handleScroll);
+    }
+
+    const st = ScrollTrigger.create({
+      start: "top top",
+      end: "max",
+      onUpdate: (self) => {
+        const header = headerRef.current;
+        if (!header) return;
+
+        // Only hide/show after scrolling past the hero
+        if (self.scroll() < window.innerHeight * 0.8) {
+          gsap.to(header, { y: 0, duration: 0.3, ease: "power2.out" });
+          return;
+        }
+
+        if (self.direction === 1) {
+          // Scrolling down — hide
+          gsap.to(header, { y: "-100%", duration: 0.3, ease: "power2.in" });
+        } else {
+          // Scrolling up — show
+          gsap.to(header, { y: 0, duration: 0.3, ease: "power2.out" });
+        }
+      },
+    });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      st.kill();
+    };
   }, []);
 
   useEffect(() => {
@@ -116,7 +154,7 @@ export default function Header() {
     hasAnimatedHeaderInRuntime = true;
 
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: "none" } });
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
       if (logo) {
         tl.fromTo(
@@ -152,12 +190,16 @@ export default function Header() {
     };
   }, [isSettingsLoading]);
 
+  const ctaRef = useRef<HTMLDivElement>(null);
+  useMagneticCursor(ctaRef, 0.25);
+
   const toggleLanguage = () => {
     setLanguage(language === "ru" ? "uz" : "ru");
   };
 
   return (
     <header
+      ref={headerRef}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
           ? "bg-white/95 backdrop-blur-md shadow-sm"
@@ -202,7 +244,7 @@ export default function Header() {
 
           {/* CTA Buttons */}
           <div className="hidden lg:flex items-center gap-2 shrink-0">
-            <div data-anim-header-seq>
+            <div ref={ctaRef} data-anim-header-seq>
               <Button
                 className="rounded-full px-6 2xl:px-8 whitespace-nowrap border-primary text-primary hover:bg-primary hover:text-white"
                 variant="outline"

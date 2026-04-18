@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import { siteConfig } from "@/lib/constants";
 import { PageEnterAnimations, ScrollToTop } from "@/components/shared";
+import SmoothScrollProvider from "@/components/shared/SmoothScrollProvider";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { QueryProvider } from "@/lib/query-provider";
@@ -115,7 +116,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className="scroll-smooth" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang="ru" suppressHydrationWarning>
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased`} suppressHydrationWarning>
         <Script id="google-tag-manager" strategy="beforeInteractive">
           {`
@@ -150,9 +151,11 @@ export default function RootLayout({
           <SettingsProvider>
             <LanguageProvider>
               <BackgroundMusicPlayer />
-              <ScrollToTop />
-              {children}
-              <PageEnterAnimations />
+              <SmoothScrollProvider>
+                <ScrollToTop />
+                {children}
+                <PageEnterAnimations />
+              </SmoothScrollProvider>
               <Toaster
                 position="top-center"
                 toastOptions={{

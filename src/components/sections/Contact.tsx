@@ -125,7 +125,7 @@ export default function Contact() {
           duration: 0.42,
           stagger: 0.12,
           clearProps: "opacity,visibility,transform",
-          ease: "none",
+          ease: "power3.out",
           onComplete: () => {
             items.forEach((item) => {
               pendingRowsRef.current.delete(item);
