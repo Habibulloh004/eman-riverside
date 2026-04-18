@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Globe, X } from "lucide-react";
 import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
@@ -162,7 +162,7 @@ const DynamicYandexMap = dynamic(() => Promise.resolve(YandexMapInner), {
   ),
 });
 
-export default function YandexMap({
+function YandexMap({
   className,
   grayscale = true,
   coordinates,
@@ -259,3 +259,5 @@ export default function YandexMap({
     </>
   );
 }
+
+export default memo(YandexMap);
