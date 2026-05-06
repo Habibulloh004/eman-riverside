@@ -445,7 +445,7 @@ export default function ApartmentDetailPage() {
                       src={img.url}
                       alt={`Инфраструктура ${idx + 1}`}
                       fill
-                      className="object-cover"
+                      className="object-contain object-center"
                       sizes="100vw"
                     />
                   </div>

@@ -12,10 +12,11 @@ import { useSiteSettings } from "@/contexts/SettingsContext";
 import { submissionsApi } from "@/lib/api/submissions";
 import { toast } from "sonner";
 import { gsap } from "gsap";
+import { sanitizeRichTextHtml } from "@/lib/rich-text";
 
 export default function ContactsPage() {
   const { t, language } = useLanguage();
-  const { settings } = useSiteSettings();
+  const { settings, isLoading } = useSiteSettings();
   const contactDetailsRef = useRef<HTMLDivElement | null>(null);
   const locationItemsRef = useRef<HTMLUListElement | null>(null);
   const animatedRowsRef = useRef(new WeakSet<HTMLElement>());
@@ -24,6 +25,9 @@ export default function ContactsPage() {
   // Dynamic contact info from settings
   const address = language === "uz" ? settings.contact.address_uz : settings.contact.address;
   const workingHours = language === "uz" ? settings.contact.working_hours_uz : settings.contact.working_hours;
+  const aboutTitle = language === "uz" ? settings.content.about_us_title_uz : settings.content.about_us_title;
+  const aboutContentRaw = language === "uz" ? settings.content.about_us_content_uz : settings.content.about_us_content;
+  const aboutContent = sanitizeRichTextHtml(aboutContentRaw);
   const phoneHref = `tel:${settings.contact.phone.replace(/\s/g, "")}`;
   const whatsappHref = `https://wa.me/${settings.social.whatsapp.replace(/\D/g, "")}`;
 
@@ -247,6 +251,26 @@ export default function ContactsPage() {
           subtitle={t.contacts.heroSubtitle}
           image="/images/hero/1.png"
         />
+
+        {!isLoading && (aboutTitle || aboutContent) && (
+          <section className="py-12 lg:py-16 bg-[#F5ECE4] border-b border-black/5">
+            <div className="container mx-auto px-4 lg:px-8">
+              <div className="max-w-4xl">
+                {aboutTitle && (
+                  <h2 className="text-2xl lg:text-4xl font-serif text-[#1A1A1A] mb-5">
+                    {aboutTitle}
+                  </h2>
+                )}
+                {aboutContent && (
+                  <div
+                    className="prose prose-sm lg:prose-base max-w-none prose-p:leading-7 prose-p:mb-4 prose-strong:text-[#1A1A1A]"
+                    dangerouslySetInnerHTML={{ __html: aboutContent }}
+                  />
+                )}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Наши контакты Section */}
         <section className="py-12 lg:py-16 bg-[#F5ECE4]">

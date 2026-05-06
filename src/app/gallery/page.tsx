@@ -318,7 +318,7 @@ export default function GalleryPage() {
             {/* Logo - positioned right of vertical text, near top */}
             <div data-gallery-hero-logo className="absolute max-md:hidden left-24 sm:left-32 lg:left-44 top-28 lg:top-32 z-10">
               <Image
-                src="/darklogo.png"
+                src="/logo horizontal green 1.svg"
                 alt="EMAN RIVERSIDE"
                 width={120}
                 height={60}

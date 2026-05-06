@@ -339,6 +339,8 @@ export const ru: AdminTranslations = {
     brochureNone: "Файл не выбран",
     brochureClear: "Удалить",
     brochureHint: "Загрузите PDF/DOCX/XLSX/PPTX и другие документы, затем нажмите «Сохранить». Кнопка в шапке станет активной только если файл сохранен.",
+    aboutUsTitleLabel: "Заголовок О нас",
+    aboutUsContentLabel: "Текст О нас (rich text)",
     // Hero banners
     addBanner: "Добавить баннер",
     noBanners: "Баннеры не добавлены",

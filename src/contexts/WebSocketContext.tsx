@@ -190,7 +190,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
               if (typeof Notification !== "undefined" && Notification.permission === "granted") {
                 new Notification("Yangi zayavka!", {
                   body: `${payload.name} - ${payload.phone}`,
-                  icon: "/logo.svg",
+                  icon: "/logo horizontal green 1.svg",
                   tag: `submission-${payload.id}`, // Prevent duplicate notifications
                 });
               }

@@ -298,7 +298,7 @@ export default function PaymentPage() {
               {/* Logo */}
               <div>
                 <Image
-                  src="/logo.svg"
+                  src="/logo horizontal green 1.svg"
                   alt="EMAN RIVERSIDE"
                   width={100}
                   height={50}

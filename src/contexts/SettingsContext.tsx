@@ -34,6 +34,10 @@ interface ContentSettings {
   hero_title: string;
   hero_subtitle: string;
   hero_subtitle_uz: string;
+  about_us_title: string;
+  about_us_title_uz: string;
+  about_us_content: string;
+  about_us_content_uz: string;
   hero_banners: HeroBannerItem[];
   map_embed_url: string;
   map_coordinates: string;
@@ -85,6 +89,10 @@ const defaultSettings: SiteSettings = {
     hero_title: "EMAN RIVERSIDE",
     hero_subtitle: "Жилой комплекс нового уровня",
     hero_subtitle_uz: "Yangi darajadagi turar-joy majmuasi",
+    about_us_title: "",
+    about_us_title_uz: "",
+    about_us_content: "",
+    about_us_content_uz: "",
     hero_banners: [],
     map_embed_url: "",
     map_coordinates: "41.3111,69.2401",
@@ -179,6 +187,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           hero_title: getValue(data, "content", "hero_title", defaultSettings.content.hero_title),
           hero_subtitle: getValue(data, "content", "hero_subtitle", defaultSettings.content.hero_subtitle),
           hero_subtitle_uz: getValue(data, "content", "hero_subtitle_uz", defaultSettings.content.hero_subtitle_uz),
+          about_us_title: getValue(data, "content", "about_us_title", defaultSettings.content.about_us_title),
+          about_us_title_uz: getValue(data, "content", "about_us_title_uz", defaultSettings.content.about_us_title_uz),
+          about_us_content: getValue(data, "content", "about_us_content", defaultSettings.content.about_us_content),
+          about_us_content_uz: getValue(
+            data,
+            "content",
+            "about_us_content_uz",
+            defaultSettings.content.about_us_content_uz
+          ),
           hero_banners: getJSONValue<HeroBannerItem[]>(data, "content", "hero_banners", []),
           map_embed_url: getValue(data, "content", "map_embed_url", defaultSettings.content.map_embed_url),
           map_coordinates: getValue(data, "content", "map_coordinates", defaultSettings.content.map_coordinates),

@@ -88,7 +88,7 @@ export default function Footer() {
             {/* Logo */}
             <Link href="/" className="inline-block mb-4">
               <Image
-                src="/logo.svg"
+                src="/logo horizontal green 1.svg"
                 alt="EMAN RIVERSIDE"
                 width={100}
                 height={32}

@@ -337,6 +337,8 @@ export const uzCyrl = {
     brochureNone: "Файл танланмаган",
     brochureClear: "Ўчириш",
     brochureHint: "PDF/DOCX/XLSX/PPTX ва бошқа ҳужжатларни юклаб, кейин «Сақлаш» тугмасини босинг. Хедердаги тугма фақат файл сақланган бўлса фаол бўлади.",
+    aboutUsTitleLabel: "Биз ҳақимизда сарлавҳа",
+    aboutUsContentLabel: "Биз ҳақимизда матн (rich text)",
     // Hero banners
     addBanner: "Баннер қўшиш",
     noBanners: "Баннерлар қўшилмаган",

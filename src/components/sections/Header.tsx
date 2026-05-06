@@ -5,14 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
 import { RequestModal } from "@/components/shared";
 import { useMagneticCursor } from "@/hooks/useMagneticCursor";
-
-gsap.registerPlugin(ScrollTrigger);
 
 let hasAnimatedHeaderInRuntime = false;
 
@@ -91,44 +88,15 @@ export default function Header() {
 
   const headerRef = useRef<HTMLElement | null>(null);
 
-  // ScrollTrigger-based header show/hide on scroll direction
+  // Keep header style in sync with scroll position
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
 
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return () => window.removeEventListener("scroll", handleScroll);
-    }
-
-    const st = ScrollTrigger.create({
-      start: "top top",
-      end: "max",
-      onUpdate: (self) => {
-        const header = headerRef.current;
-        if (!header) return;
-
-        // Only hide/show after scrolling past the hero
-        if (self.scroll() < window.innerHeight * 0.8) {
-          gsap.to(header, { y: 0, duration: 0.3, ease: "power2.out" });
-          return;
-        }
-
-        if (self.direction === 1) {
-          // Scrolling down — hide
-          gsap.to(header, { y: "-100%", duration: 0.3, ease: "power2.in" });
-        } else {
-          // Scrolling up — show
-          gsap.to(header, { y: 0, duration: 0.3, ease: "power2.out" });
-        }
-      },
-    });
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      st.kill();
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
@@ -211,7 +179,7 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center shrink-0" data-anim-header-logo>
             <Image
-              src="/logo.svg"
+              src="/logo horizontal green 1.svg"
               alt="EMAN RIVERSIDE"
               width={140}
               height={40}
