@@ -9,6 +9,7 @@ import {
   ProjectItem,
   GalleryItem,
   HeroBannerItem,
+  AboutCertificateItem,
   parseSettingValue,
 } from "@/lib/api/settings";
 
@@ -38,6 +39,8 @@ interface ContentSettings {
   about_us_title_uz: string;
   about_us_content: string;
   about_us_content_uz: string;
+  about_us_right_image: string;
+  about_us_certificates: AboutCertificateItem[];
   hero_banners: HeroBannerItem[];
   map_embed_url: string;
   map_coordinates: string;
@@ -93,6 +96,8 @@ const defaultSettings: SiteSettings = {
     about_us_title_uz: "",
     about_us_content: "",
     about_us_content_uz: "",
+    about_us_right_image: "",
+    about_us_certificates: [],
     hero_banners: [],
     map_embed_url: "",
     map_coordinates: "41.3111,69.2401",
@@ -195,6 +200,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             "content",
             "about_us_content_uz",
             defaultSettings.content.about_us_content_uz
+          ),
+          about_us_right_image: getValue(
+            data,
+            "content",
+            "about_us_right_image",
+            defaultSettings.content.about_us_right_image
+          ),
+          about_us_certificates: getJSONValue<AboutCertificateItem[]>(
+            data,
+            "content",
+            "about_us_certificates",
+            []
           ),
           hero_banners: getJSONValue<HeroBannerItem[]>(data, "content", "hero_banners", []),
           map_embed_url: getValue(data, "content", "map_embed_url", defaultSettings.content.map_embed_url),

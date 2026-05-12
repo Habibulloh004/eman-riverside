@@ -65,6 +65,14 @@ export interface HeroBannerItem {
   subtitle_uz: string;
 }
 
+export interface AboutCertificateItem {
+  image: string;
+  title_ru: string;
+  title_uz: string;
+  description_ru: string;
+  description_uz: string;
+}
+
 // Grouped settings response from public API
 export type SettingsResponse = Record<string, SiteSetting[]>;
 

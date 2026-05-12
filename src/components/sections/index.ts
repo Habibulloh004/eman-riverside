@@ -6,6 +6,8 @@ export { default as AboutFeature01 } from "./AboutFeature01";
 export { default as AboutFeature02 } from "./AboutFeature02";
 export { default as AboutFeature03 } from "./AboutFeature03";
 export { default as AboutFeatures } from "./AboutFeatures";
+export { default as AboutCompanySection } from "./AboutCompanySection";
+export { default as AboutUsHero } from "./AboutUsHero";
 export { default as Location } from "./Location";
 export { default as Gallery } from "./Gallery";
 export { default as GalleryShowcase } from "./GalleryShowcase";

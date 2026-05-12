@@ -210,6 +210,11 @@ export const ru = {
     description: "Современный жилой комплекс с продуманной инфраструктурой и уникальным расположением.",
   },
 
+  aboutUsPage: {
+    heroTitle: "О нас",
+    heroSubtitle: "О КОМПАНИИ EMAN RIVERSIDE",
+  },
+
   // Catalog Page
   catalog: {
     heroTitle: "Каталог квартир",

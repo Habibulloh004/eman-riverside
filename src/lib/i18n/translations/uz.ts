@@ -212,6 +212,11 @@ export const uz: Translations = {
     description: "O'ylangan infratuzilma va noyob joylashuvga ega zamonaviy turar-joy majmuasi.",
   },
 
+  aboutUsPage: {
+    heroTitle: "Biz haqimizda",
+    heroSubtitle: "EMAN RIVERSIDE KOMPANIYASI HAQIDA",
+  },
+
   // Catalog Page
   catalog: {
     heroTitle: "Kvartiralar katalogi",

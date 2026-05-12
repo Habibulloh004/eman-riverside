@@ -73,7 +73,7 @@ export default function Footer() {
   ].filter(Boolean) as { name: string; href: string; icon: React.ReactNode }[];
 
   const footerLinks = [
-    { href: "/projects", label: t.nav.about },
+    { href: "/about-us", label: t.nav.about },
     { href: "/catalog", label: t.nav.catalog },
     { href: "/gallery", label: t.nav.gallery },
     { href: "/contacts", label: t.nav.contacts },

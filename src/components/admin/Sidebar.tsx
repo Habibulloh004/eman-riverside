@@ -69,6 +69,15 @@ export default function Sidebar() {
       ),
     },
     {
+      name: t.sidebar.aboutUs,
+      href: "/admin/about-us",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
+        </svg>
+      ),
+    },
+    {
       name: t.sidebar.security,
       href: "/admin/security",
       icon: (

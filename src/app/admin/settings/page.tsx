@@ -106,10 +106,6 @@ export default function SettingsPage() {
     address_uz: "",
     working_hours: "",
     working_hours_uz: "",
-    about_us_title: "",
-    about_us_title_uz: "",
-    about_us_content: "",
-    about_us_content_uz: "",
     background_music_url: "",
     brochure_file_url: "",
     brochure_file_name: "",
@@ -150,10 +146,6 @@ export default function SettingsPage() {
         address_uz: getValue("address_uz"),
         working_hours: getValue("working_hours"),
         working_hours_uz: getValue("working_hours_uz"),
-        about_us_title: getValue("about_us_title"),
-        about_us_title_uz: getValue("about_us_title_uz"),
-        about_us_content: getValue("about_us_content"),
-        about_us_content_uz: getValue("about_us_content_uz"),
         background_music_url: getValue("background_music_url"),
         brochure_file_url: brochureFileUrl,
         brochure_file_name: brochureFileName,
@@ -265,10 +257,6 @@ export default function SettingsPage() {
         { key: "address_uz", value: contactForm.address_uz },
         { key: "working_hours", value: contactForm.working_hours },
         { key: "working_hours_uz", value: contactForm.working_hours_uz },
-        { key: "about_us_title", value: contactForm.about_us_title },
-        { key: "about_us_title_uz", value: contactForm.about_us_title_uz },
-        { key: "about_us_content", value: contactForm.about_us_content },
-        { key: "about_us_content_uz", value: contactForm.about_us_content_uz },
         { key: "background_music_url", value: contactForm.background_music_url },
         { key: "brochure_file_url", value: contactForm.brochure_file_url },
         { key: "brochure_file_name", value: contactForm.brochure_file_name },
@@ -325,6 +313,7 @@ export default function SettingsPage() {
       e.target.value = "";
     }
   };
+
 
   const handleSaveSocial = async () => {
     try {
@@ -796,38 +785,6 @@ export default function SettingsPage() {
                     })}
                     placeholder={activeLang === "ru" ? "Пн-Пт: 9:00 - 18:00" : "Du-Ju: 9:00 - 18:00"}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                    <FileText className="w-4 h-4 text-gray-400" />
-                    {t.settings.aboutUsTitleLabel} {activeLang === "ru" ? t.settings.addressLangRu : t.settings.addressLangUz}
-                  </label>
-                  <input
-                    type="text"
-                    value={activeLang === "ru" ? contactForm.about_us_title : contactForm.about_us_title_uz}
-                    onChange={(e) => setContactForm({
-                      ...contactForm,
-                      [activeLang === "ru" ? "about_us_title" : "about_us_title_uz"]: e.target.value
-                    })}
-                    placeholder={activeLang === "ru" ? "О проекте EMAN Riverside" : "EMAN Riverside loyihasi haqida"}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                    <FileText className="w-4 h-4 text-gray-400" />
-                    {t.settings.aboutUsContentLabel} {activeLang === "ru" ? t.settings.addressLangRu : t.settings.addressLangUz}
-                  </label>
-                  <RichTextEditor
-                    value={activeLang === "ru" ? contactForm.about_us_content : contactForm.about_us_content_uz}
-                    onChange={(value) => setContactForm({
-                      ...contactForm,
-                      [activeLang === "ru" ? "about_us_content" : "about_us_content_uz"]: value
-                    })}
-                    placeholder={activeLang === "ru" ? "Введите текст о проекте..." : "Loyiha haqida matn kiriting..."}
                   />
                 </div>
 
