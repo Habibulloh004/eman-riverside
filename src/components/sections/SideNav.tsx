@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useProjectsPublic } from "@/hooks/useProjects";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const DEFAULT_PROJECT_COUNT = 3;
 
 export default function SideNav() {
+  const { language } = useLanguage();
   const { data, isLoading } = useProjectsPublic();
   const [activeSection, setActiveSection] = useState("feature-01");
   const [isVisible, setIsVisible] = useState(true);
@@ -68,6 +70,9 @@ export default function SideNav() {
     return null;
   }
 
+  const startLabel =
+    language === "uz" ? "Boshlash" : language === "ru" ? "Старт" : "Start";
+
   return (
     <nav
       className={`fixed right-2 lg:right-4 top-1/2 -translate-y-1/2 z-50 hidden lg:flex items-end gap-2 transition-all duration-500 ${
@@ -76,7 +81,7 @@ export default function SideNav() {
     >
       {/* Labels column */}
       <div className="flex flex-col items-end gap-4">
-        <span className="text-xs font-semibold text-primary">Старт</span>
+        <span className="text-xs font-semibold text-primary">{startLabel}</span>
         {sideNavItems.map((item) => (
           <button
             key={item.id}

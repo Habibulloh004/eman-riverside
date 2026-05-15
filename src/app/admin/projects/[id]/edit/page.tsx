@@ -16,15 +16,18 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [langTab, setLangTab] = useState<"ru" | "uz">("ru");
+  const [langTab, setLangTab] = useState<"ru" | "uz" | "en">("ru");
 
   const [formData, setFormData] = useState<CreateProjectRequest>({
     type_ru: "",
     type_uz: "",
+    type_en: "",
     area_ru: "",
     area_uz: "",
+    area_en: "",
     description_ru: "",
     description_uz: "",
+    description_en: "",
     image: "",
     sort_order: 0,
     is_published: true,
@@ -36,16 +39,19 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
       setFormData({
         type_ru: project.type_ru,
         type_uz: project.type_uz,
+        type_en: project.type_en,
         area_ru: project.area_ru,
         area_uz: project.area_uz,
+        area_en: project.area_en,
         description_ru: project.description_ru,
         description_uz: project.description_uz,
+        description_en: project.description_en,
         image: project.image,
         sort_order: project.sort_order,
         is_published: project.is_published,
       });
     } catch {
-      alert("Failed to load project");
+      alert(t.projects.loadError);
       router.push("/admin/projects");
     } finally {
       setIsLoading(false);
@@ -62,7 +68,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
       const result = await projectsApi.upload(file);
       setFormData({ ...formData, image: result.url });
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Upload failed");
+      alert(error instanceof Error ? error.message : t.settings.saveError);
     } finally {
       setIsUploading(false);
     }
@@ -72,17 +78,20 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
     e.preventDefault();
     if (!formData.type_ru.trim()) { alert(t.projects.typeRuRequired); return; }
     if (!formData.type_uz.trim()) { alert(t.projects.typeUzRequired); return; }
+    if (!formData.type_en.trim()) { alert(t.projects.typeEnRequired); return; }
     if (!formData.area_ru.trim()) { alert(t.projects.areaRuRequired); return; }
     if (!formData.area_uz.trim()) { alert(t.projects.areaUzRequired); return; }
+    if (!formData.area_en.trim()) { alert(t.projects.areaEnRequired); return; }
     if (!formData.description_ru.trim()) { alert(t.projects.descRuRequired); return; }
     if (!formData.description_uz.trim()) { alert(t.projects.descUzRequired); return; }
+    if (!formData.description_en.trim()) { alert(t.projects.descEnRequired); return; }
 
     setIsSaving(true);
     try {
       await projectsApi.update(Number(id), formData);
       router.push("/admin/projects");
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to save");
+      alert(error instanceof Error ? error.message : t.settings.saveError);
     } finally {
       setIsSaving(false);
     }
@@ -158,6 +167,9 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
             <button type="button" onClick={() => setLangTab("uz")}
               className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${langTab === "uz" ? "bg-white text-green-600 border-b-2 border-green-600 -mb-px" : "text-gray-500 hover:text-gray-700"}`}
             >{t.settings.uzbek}</button>
+            <button type="button" onClick={() => setLangTab("en")}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${langTab === "en" ? "bg-white text-green-600 border-b-2 border-green-600 -mb-px" : "text-gray-500 hover:text-gray-700"}`}
+            >EN</button>
           </div>
 
           <div className="p-5 space-y-4">
@@ -178,7 +190,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
                   <RichTextEditor value={formData.description_ru} onChange={(value) => setFormData({ ...formData, description_ru: value })} />
                 </div>
               </>
-            ) : (
+            ) : langTab === "uz" ? (
               <>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t.projects.roomTypeUz}</label>
@@ -193,6 +205,23 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t.projects.descriptionUz}</label>
                   <RichTextEditor value={formData.description_uz} onChange={(value) => setFormData({ ...formData, description_uz: value })} />
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.projects.roomTypeEn}</label>
+                  <input type="text" value={formData.type_en} onChange={(e) => setFormData({ ...formData, type_en: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.projects.areaEn}</label>
+                  <input type="text" value={formData.area_en} onChange={(e) => setFormData({ ...formData, area_en: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.projects.descriptionEn}</label>
+                  <RichTextEditor value={formData.description_en} onChange={(value) => setFormData({ ...formData, description_en: value })} />
                 </div>
               </>
             )}

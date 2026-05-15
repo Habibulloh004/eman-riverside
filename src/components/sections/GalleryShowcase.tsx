@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { pickLocalizedString } from "@/lib/i18n/localized";
 import { useGalleryPublic } from "@/hooks/useGallery";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090";
@@ -37,6 +38,18 @@ const fallbackCopy = {
       title: "Eksteryer",
       description:
         "Majmuaning arxitekturasi, kechki ko'rinishlar va obodonlashtirilgan jamoat hududlari yagona kompozitsiyaga birlashadi. Fasadlar, hovli va yoritish bir tizim kabi ishlaydi.",
+    },
+  },
+  en: {
+    interior: {
+      title: "Interior",
+      description:
+        "Bright spaces, thoughtful layouts, and soft natural tones create a calm and comfortable atmosphere. Each space is designed so everyday life feels lighter and more serene.",
+    },
+    exterior: {
+      title: "Exterior",
+      description:
+        "The architecture of the complex, evening views, and landscaped public spaces come together as one composition. Facades, courtyards, and lighting work as a single visual system.",
     },
   },
 } as const;
@@ -89,14 +102,18 @@ export default function GalleryShowcase() {
   const { data } = useGalleryPublic({ type: "image" });
 
   const blocks = useMemo<ShowcaseBlock[]>(() => {
-    const locale = language === "uz" ? "uz" : "ru";
+    const locale = language === "uz" ? "uz" : language === "ru" ? "ru" : "en";
     const copy = fallbackCopy[locale];
     const items = data?.items || [];
 
     const toShowcaseItem = (item: typeof items[number]) => ({
       id: String(item.id),
       url: resolveImage(item.url),
-      title: (locale === "uz" ? item.title_uz : item.title) || "",
+      title: pickLocalizedString(language, {
+        ru: item.title,
+        uz: item.title_uz,
+        en: item.title_en,
+      }),
     });
 
     const fallbackInterior = curatedImages.slice(0, 4).map((url, index) => ({

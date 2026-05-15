@@ -5,6 +5,7 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { pickLocalizedString } from "@/lib/i18n/localized";
 import { useGalleryPublic } from "@/hooks/useGallery";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -166,11 +167,21 @@ export default function Gallery() {
     return {
       lightboxItems: actualItems.map((item) => ({
         url: item.url.startsWith("http") ? item.url : `${API_URL}${item.url}`,
-        title: language === "uz" ? (item.title_uz || item.title) : item.title,
+        title: pickLocalizedString(language, {
+          ru: item.title,
+          uz: item.title_uz,
+          en: item.title_en,
+        }),
       })),
       slots: filledSlots.map((item) => ({
         url: item ? (item.url.startsWith("http") ? item.url : `${API_URL}${item.url}`) : DEFAULT_IMAGE,
-        title: item ? (language === "uz" ? (item.title_uz || item.title) : item.title) : t.gallerySection.title,
+        title: item
+          ? pickLocalizedString(language, {
+              ru: item.title,
+              uz: item.title_uz,
+              en: item.title_en,
+            })
+          : t.gallerySection.title,
         redirectUrl: item?.redirect_url || null,
         lightboxIndex: item ? actualIndexById.get(item.id) ?? null : null,
       })),

@@ -21,20 +21,22 @@ export default function Error({
             500
           </span>
           <h1 className="text-2xl lg:text-4xl font-serif text-primary -mt-6 mb-3">
-            {language === "uz" ? "Xatolik yuz berdi" : "Произошла ошибка"}
+            {language === "uz" ? "Xatolik yuz berdi" : language === "ru" ? "Произошла ошибка" : "Something went wrong"}
           </h1>
           <p className="text-sm text-muted-foreground mb-8 max-w-md mx-auto">
             {language === "uz"
               ? "Kutilmagan xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring"
-              : "Произошла непредвиденная ошибка. Пожалуйста, попробуйте ещё раз"}
+              : language === "ru"
+                ? "Произошла непредвиденная ошибка. Пожалуйста, попробуйте снова."
+                : "An unexpected error occurred. Please try again."}
           </p>
           <div className="flex items-center justify-center gap-3">
             <Button onClick={reset}>
-              {language === "uz" ? "Qaytadan urinish" : "Попробовать снова"}
+              {language === "uz" ? "Qaytadan urinish" : language === "ru" ? "Повторить" : "Try again"}
             </Button>
             <Button variant="outline" asChild>
               <a href="/">
-                {language === "uz" ? "Bosh sahifa" : "На главную"}
+                {language === "uz" ? "Bosh sahifa" : language === "ru" ? "Главная" : "Home"}
               </a>
             </Button>
           </div>

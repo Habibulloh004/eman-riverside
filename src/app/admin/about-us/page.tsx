@@ -22,8 +22,10 @@ interface AboutCertificateItem {
   image: string;
   title_ru: string;
   title_uz: string;
+  title_en: string;
   description_ru: string;
   description_uz: string;
+  description_en: string;
 }
 
 export default function AboutUsAdminPage() {
@@ -32,14 +34,16 @@ export default function AboutUsAdminPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isUploadingCertImage, setIsUploadingCertImage] = useState(false);
-  const [activeLang, setActiveLang] = useState<"ru" | "uz">("ru");
+  const [activeLang, setActiveLang] = useState<"ru" | "uz" | "en">("ru");
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const [form, setForm] = useState({
     about_us_title: "",
     about_us_title_uz: "",
+    about_us_title_en: "",
     about_us_content: "",
     about_us_content_uz: "",
+    about_us_content_en: "",
     about_us_right_image: "",
   });
   const [certificates, setCertificates] = useState<AboutCertificateItem[]>([]);
@@ -58,8 +62,10 @@ export default function AboutUsAdminPage() {
       setForm({
         about_us_title: getValue("about_us_title"),
         about_us_title_uz: getValue("about_us_title_uz"),
+        about_us_title_en: getValue("about_us_title_en"),
         about_us_content: getValue("about_us_content"),
         about_us_content_uz: getValue("about_us_content_uz"),
+        about_us_content_en: getValue("about_us_content_en"),
         about_us_right_image: getValue("about_us_right_image"),
       });
 
@@ -72,8 +78,10 @@ export default function AboutUsAdminPage() {
               image: String(item?.image || ""),
               title_ru: String(item?.title_ru || ""),
               title_uz: String(item?.title_uz || ""),
+              title_en: String(item?.title_en || ""),
               description_ru: String(item?.description_ru || ""),
               description_uz: String(item?.description_uz || ""),
+              description_en: String(item?.description_en || ""),
             }))
           );
         } else {
@@ -102,14 +110,18 @@ export default function AboutUsAdminPage() {
           item.image.trim() ||
           item.title_ru.trim() ||
           item.title_uz.trim() ||
+          item.title_en.trim() ||
           item.description_ru.trim() ||
-          item.description_uz.trim()
+          item.description_uz.trim() ||
+          item.description_en.trim()
       );
       await settingsApi.bulkUpdate([
         { key: "about_us_title", value: form.about_us_title },
         { key: "about_us_title_uz", value: form.about_us_title_uz },
+        { key: "about_us_title_en", value: form.about_us_title_en },
         { key: "about_us_content", value: form.about_us_content },
         { key: "about_us_content_uz", value: form.about_us_content_uz },
+        { key: "about_us_content_en", value: form.about_us_content_en },
         { key: "about_us_right_image", value: form.about_us_right_image },
         { key: "about_us_certificates", value: JSON.stringify(cleaned) },
       ]);
@@ -143,7 +155,7 @@ export default function AboutUsAdminPage() {
   const addCertificate = () => {
     setCertificates((prev) => [
       ...prev,
-      { image: "", title_ru: "", title_uz: "", description_ru: "", description_uz: "" },
+      { image: "", title_ru: "", title_uz: "", title_en: "", description_ru: "", description_uz: "", description_en: "" },
     ]);
   };
 
@@ -219,6 +231,15 @@ export default function AboutUsAdminPage() {
             <Globe className="h-4 w-4" />
             {t.settings.uzbek}
           </button>
+          <button
+            onClick={() => setActiveLang("en")}
+            className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+              activeLang === "en" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+            }`}
+          >
+            <Globe className="h-4 w-4" />
+            EN
+          </button>
         </div>
 
         <div className="space-y-5">
@@ -229,11 +250,21 @@ export default function AboutUsAdminPage() {
             </label>
             <input
               type="text"
-              value={activeLang === "ru" ? form.about_us_title : form.about_us_title_uz}
+              value={
+                activeLang === "ru"
+                  ? form.about_us_title
+                  : activeLang === "uz"
+                    ? form.about_us_title_uz
+                    : form.about_us_title_en
+              }
               onChange={(e) =>
                 setForm((prev) => ({
                   ...prev,
-                  [activeLang === "ru" ? "about_us_title" : "about_us_title_uz"]: e.target.value,
+                  [activeLang === "ru"
+                    ? "about_us_title"
+                    : activeLang === "uz"
+                      ? "about_us_title_uz"
+                      : "about_us_title_en"]: e.target.value,
                 }))
               }
               className="w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-green-500"
@@ -246,11 +277,21 @@ export default function AboutUsAdminPage() {
               {t.settings.aboutUsContentLabel}
             </label>
             <RichTextEditor
-              value={activeLang === "ru" ? form.about_us_content : form.about_us_content_uz}
+              value={
+                activeLang === "ru"
+                  ? form.about_us_content
+                  : activeLang === "uz"
+                    ? form.about_us_content_uz
+                    : form.about_us_content_en
+              }
               onChange={(value) =>
                 setForm((prev) => ({
                   ...prev,
-                  [activeLang === "ru" ? "about_us_content" : "about_us_content_uz"]: value,
+                  [activeLang === "ru"
+                    ? "about_us_content"
+                    : activeLang === "uz"
+                      ? "about_us_content_uz"
+                      : "about_us_content_en"]: value,
                 }))
               }
             />
@@ -326,6 +367,13 @@ export default function AboutUsAdminPage() {
                       placeholder={t.settings.aboutUsCertificatesTitleUz}
                       className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
                     />
+                    <input
+                      type="text"
+                      value={item.title_en}
+                      onChange={(e) => updateCertificate(index, "title_en", e.target.value)}
+                      placeholder={t.settings.aboutUsCertificatesTitleEn}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm md:col-span-2"
+                    />
                     <textarea
                       value={item.description_ru}
                       onChange={(e) => updateCertificate(index, "description_ru", e.target.value)}
@@ -339,6 +387,13 @@ export default function AboutUsAdminPage() {
                       placeholder={t.settings.aboutUsCertificatesDescriptionUz}
                       rows={2}
                       className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                    />
+                    <textarea
+                      value={item.description_en}
+                      onChange={(e) => updateCertificate(index, "description_en", e.target.value)}
+                      placeholder={t.settings.aboutUsCertificatesDescriptionEn}
+                      rows={2}
+                      className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm md:col-span-2"
                     />
                   </div>
                 </div>
@@ -361,4 +416,3 @@ export default function AboutUsAdminPage() {
     </div>
   );
 }
-

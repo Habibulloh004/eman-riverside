@@ -6,6 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useProjectsPublic } from "@/hooks/useProjects";
 import { FeatureSkeleton } from "@/components/ui/skeleton";
 import { Project } from "@/lib/api/projects";
+import { ClientLanguage } from "@/lib/i18n/localized";
 import { sanitizeRichTextHtml } from "@/lib/rich-text";
 import { useCountUp } from "@/hooks/useCountUp";
 
@@ -14,7 +15,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090";
 interface FeatureItemProps {
   project: Project;
   index: number;
-  language: string;
+  language: ClientLanguage;
 }
 
 const fallbackContent = {
@@ -58,19 +59,47 @@ const fallbackContent = {
         "<p>Eman Riverside kvartiralari oilaviy yashash ssenariysi uchun loyihalangan: ko'proq yorug'lik, havo va foydali maydon.</p><ul><li>3 metr shift balandligi</li><li>Panoramali derazalar</li><li>Qulay rejalashtirish</li><li>Keng oshxona-mehmonxona</li><li>White box tayyorgarligi</li></ul>",
     },
   ],
+  en: [
+    {
+      title: "Architecture and",
+      subtitle: "materials",
+      description:
+        "<h3>Facades</h3><ul><li>Decorative paint finish</li><li>Milled metal</li><li>Natural shades</li><li>Contemporary forms</li></ul><h3>Common areas</h3><ul><li>Porcelain stoneware</li><li>Travertine</li><li>Durable materials</li></ul>",
+    },
+    {
+      title: "Courtyard",
+      subtitle: "space",
+      description:
+        "<h3>Landscaping</h3><p>The territory is filled with trees, lawns, and plants, creating a fresh and private atmosphere.</p><h3>Comfort</h3><p>Safe routes, lounge areas, and thoughtful lighting come together in one family courtyard.</p><h3>Activity</h3><p>Children's and sports areas are placed nearby without conflicting with quiet zones.</p>",
+    },
+    {
+      title: "Your",
+      subtitle: "apartment",
+      description:
+        "<p>Eman Riverside apartments are designed around family living scenarios: more light, more air, and more usable space.</p><ul><li>3-meter ceilings</li><li>Panoramic windows</li><li>Functional layouts</li><li>Spacious kitchen-living rooms</li><li>White box preparation</li></ul>",
+    },
+  ],
 } as const;
 
 function FeatureItem({ project, index, language }: FeatureItemProps) {
   const number = String(index + 1).padStart(2, "0");
   const isTextFirst = index % 2 === 0;
-  const fallback = fallbackContent[language === "uz" ? "uz" : "ru"][
+  const fallback = fallbackContent[language === "uz" ? "uz" : language === "en" ? "en" : "ru"][
     index % fallbackContent.ru.length
   ];
 
-  const title = (language === "uz" ? project.type_uz : project.type_ru)?.trim();
-  const subtitle = (language === "uz" ? project.area_uz : project.area_ru)?.trim();
+  const title = (
+    language === "uz" ? project.type_uz : language === "en" ? project.type_en : project.type_ru
+  )?.trim();
+  const subtitle = (
+    language === "uz" ? project.area_uz : language === "en" ? project.area_en : project.area_ru
+  )?.trim();
   const rawDescription =
-    language === "uz" ? project.description_uz : project.description_ru;
+    language === "uz"
+      ? project.description_uz
+      : language === "en"
+        ? project.description_en
+        : project.description_ru;
   const resolvedDescription =
     rawDescription && rawDescription.replace(/<[^>]+>/g, "").trim().length > 24
       ? rawDescription

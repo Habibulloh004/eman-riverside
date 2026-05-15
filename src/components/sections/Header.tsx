@@ -66,7 +66,9 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
   const moreCloseTimerRef = useRef<number | null>(null);
+  const languageCloseTimerRef = useRef<number | null>(null);
   const desktopHeaderRef = useRef<HTMLDivElement | null>(null);
   const { language, setLanguage, t } = useLanguage();
   const { settings, isLoading: isSettingsLoading } = useSiteSettings();
@@ -85,12 +87,28 @@ export default function Header() {
     { href: "/catalog", label: t.nav.catalog },
     { href: "/gallery", label: t.nav.gallery },
   ];
-  const moreLabel = language === "ru" ? "ЕЩЕ" : "YANA";
+  const moreLabel =
+    language === "uz" ? "YANA" : language === "ru" ? "ЕЩЁ" : "MORE";
   const moreLinks = [
     { href: "/contacts", label: t.nav.contacts },
-    { href: "/about-us", label: language === "ru" ? "О НАС" : "BIZ HAQIMIZDA" },
+    {
+      href: "/about-us",
+      label:
+        language === "uz"
+          ? "BIZ HAQIMIZDA"
+          : language === "ru"
+            ? "О НАС"
+            : "ABOUT US",
+    },
   ];
   const mobileNavLinks = [...headerNavLinks, ...moreLinks];
+  const languageOptions = [
+    { value: "ru" as const, label: "RUS" },
+    { value: "uz" as const, label: "UZB" },
+    { value: "en" as const, label: "ENG" },
+  ];
+  const currentLanguageLabel =
+    languageOptions.find((option) => option.value === language)?.label || "UZB";
 
   const headerRef = useRef<HTMLElement | null>(null);
 
@@ -109,6 +127,24 @@ export default function Header() {
     moreCloseTimerRef.current = window.setTimeout(() => {
       setIsMoreOpen(false);
       moreCloseTimerRef.current = null;
+    }, 160);
+  };
+
+  const openLanguageMenu = () => {
+    if (languageCloseTimerRef.current) {
+      window.clearTimeout(languageCloseTimerRef.current);
+      languageCloseTimerRef.current = null;
+    }
+    setIsLanguageOpen(true);
+  };
+
+  const closeLanguageMenuWithDelay = () => {
+    if (languageCloseTimerRef.current) {
+      window.clearTimeout(languageCloseTimerRef.current);
+    }
+    languageCloseTimerRef.current = window.setTimeout(() => {
+      setIsLanguageOpen(false);
+      languageCloseTimerRef.current = null;
     }, 160);
   };
 
@@ -187,6 +223,9 @@ export default function Header() {
       if (moreCloseTimerRef.current) {
         window.clearTimeout(moreCloseTimerRef.current);
       }
+      if (languageCloseTimerRef.current) {
+        window.clearTimeout(languageCloseTimerRef.current);
+      }
     };
   }, []);
 
@@ -205,10 +244,6 @@ export default function Header() {
       document.body.style.touchAction = "";
     };
   }, [isOpen]);
-
-  const toggleLanguage = () => {
-    setLanguage(language === "ru" ? "uz" : "ru");
-  };
 
   return (
     <header
@@ -293,13 +328,57 @@ export default function Header() {
               </div>
             </div>
             {/* Language Switcher */}
-            <button
-              onClick={toggleLanguage}
-              data-anim-header-seq
-              className="text-xs xl:text-sm font-semibold tracking-[0.12em] text-foreground/80 hover:text-primary transition-colors whitespace-nowrap"
+            <div
+              className="relative after:absolute after:left-0 after:top-full after:h-2 after:w-full after:content-['']"
+              onMouseEnter={openLanguageMenu}
+              onMouseLeave={closeLanguageMenuWithDelay}
             >
-              {language === "ru" ? "РУС" : "UZB"}/{language === "ru" ? "УЗБ" : "RUS"}
-            </button>
+              <button
+                data-anim-header-seq
+                onClick={() => setIsLanguageOpen((prev) => !prev)}
+                className="inline-flex items-center gap-1.5 text-xs xl:text-sm font-semibold tracking-[0.12em] text-foreground/80 hover:text-primary transition-colors whitespace-nowrap"
+              >
+                <span>{currentLanguageLabel}</span>
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform duration-200 ${isLanguageOpen ? "rotate-180" : "rotate-0"}`}
+                />
+              </button>
+              <div
+                onMouseEnter={openLanguageMenu}
+                onMouseLeave={closeLanguageMenuWithDelay}
+                className={`absolute left-1/2 top-full -translate-x-1/2 w-[180px] rounded-2xl border border-white/65 bg-gradient-to-b from-white/95 via-white/90 to-[#f4f5f8]/80 shadow-[0_16px_40px_rgba(23,54,41,0.16)] backdrop-blur-xl transition-all duration-200 ${
+                  isLanguageOpen
+                    ? "pointer-events-auto opacity-100 translate-y-0"
+                    : "pointer-events-none opacity-0 translate-y-1"
+                }`}
+              >
+                <div className="px-2.5 py-2.5">
+                  {languageOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setLanguage(option.value);
+                        setIsLanguageOpen(false);
+                      }}
+                      className={`flex w-full items-center justify-between rounded-xl px-4 py-3 leading-none transition-colors ${
+                        language === option.value
+                          ? "bg-white/80 text-primary"
+                          : "text-foreground/85 hover:bg-white/80 hover:text-primary"
+                      }`}
+                    >
+                      <span className="text-[13px] font-medium tracking-[0.18em] uppercase">{option.label}</span>
+                      {language === option.value ? (
+                        <span
+                          className="h-2.5 w-2.5 rounded-full bg-primary"
+                          aria-label="Selected language"
+                        />
+                      ) : null}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </nav>
 
           {/* CTA Buttons */}
@@ -369,15 +448,29 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
-            <button
-              onClick={toggleLanguage}
-              className={`px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-lg transition-all duration-300 text-left ${
+            <div
+              className={`rounded-xl border border-[#E8E2D8] bg-[#FBF8F3] p-1 transition-all duration-300 ${
                 isOpen ? "translate-x-0 opacity-100" : "-translate-x-4 opacity-0"
               }`}
               style={{ transitionDelay: isOpen ? `${mobileNavLinks.length * 50}ms` : "0ms" }}
             >
-              {language === "ru" ? "РУС" : "UZB"}/{language === "ru" ? "УЗБ" : "RUS"}
-            </button>
+              {languageOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setLanguage(option.value)}
+                  className={`flex w-full items-center justify-between rounded-lg px-4 py-3 text-left text-sm font-medium transition-colors ${
+                    language === option.value
+                      ? "bg-white text-primary shadow-sm"
+                      : "text-foreground hover:bg-white/70"
+                  }`}
+                >
+                  <span>{option.label}</span>
+                  {language === option.value ? (
+                    <span className="h-2.5 w-2.5 rounded-full bg-primary" aria-label="Selected language" />
+                  ) : null}
+                </button>
+              ))}
+            </div>
             <div
               className={`mt-4 px-4 pb-3 flex flex-col gap-2 transition-all duration-300 ${
                 isOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"

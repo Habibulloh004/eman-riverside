@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
 import { Header, Footer } from "@/components/sections";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { pickLocalizedString } from "@/lib/i18n/localized";
 import { galleryApi, GalleryItem } from "@/lib/api/gallery";
 import { HeroVideoDialog } from "@/components/ui/hero-video-dialog";
 import { sanitizeRichTextHtml } from "@/lib/rich-text";
@@ -44,6 +45,13 @@ const defaultGalleryItems = {
     { image: "/images/hero/1.png", title: "Hudud", description: "Dam olish zonalari bilan obodonlashtirilgan hudud" },
     { image: "/images/hero/1.png", title: "Bolalar maydoni", description: "Bolalar uchun xavfsiz o'yin zonasi" },
     { image: "/images/hero/1.png", title: "Avtoturargoh", description: "Videokuzatuvli yer osti avtoturargoh" },
+  ],
+  en: [
+    { image: "/images/hero/1.png", title: "Building facade", description: "A contemporary facade design using premium materials" },
+    { image: "/images/hero/1.png", title: "Entrance lobby", description: "A spacious lobby with designer finishes" },
+    { image: "/images/hero/1.png", title: "Territory", description: "Landscaped grounds with recreation areas" },
+    { image: "/images/hero/1.png", title: "Playground", description: "A safe play area for children" },
+    { image: "/images/hero/1.png", title: "Parking", description: "Underground parking with video surveillance" },
   ],
 };
 
@@ -103,18 +111,40 @@ export default function GalleryPage() {
           const items = imageData.items.map((item: GalleryItem) => ({
             id: item.id,
             image: resolveMediaUrl(item.url),
-            title: language === "uz" ? (item.title_uz || item.title) : item.title,
+            title: pickLocalizedString(language, {
+              ru: item.title,
+              uz: item.title_uz,
+              en: item.title_en,
+            }),
             description: sanitizeRichTextHtml(
-              language === "uz" ? (item.description_uz || item.description) : item.description
+              pickLocalizedString(language, {
+                ru: item.description,
+                uz: item.description_uz,
+                en: item.description_en,
+              })
             ),
             redirect_url: item.redirect_url,
             category: item.category || "gallery",
-            home_section: language === "uz" ? (item.home_section_uz || item.home_section) : item.home_section,
-            home_desc: language === "uz" ? (item.home_desc_uz || item.home_desc) : item.home_desc,
+            home_section: pickLocalizedString(language, {
+              ru: item.home_section,
+              uz: item.home_section_uz,
+              en: item.home_section_en,
+            }),
+            home_desc: pickLocalizedString(language, {
+              ru: item.home_desc,
+              uz: item.home_desc_uz,
+              en: item.home_desc_en,
+            }),
           }));
           setGalleryItems(items);
         } else {
-          const defaults = (language === "uz" ? defaultGalleryItems.uz : defaultGalleryItems.ru).map((item) => ({
+          const defaults = (
+            language === "uz"
+              ? defaultGalleryItems.uz
+              : language === "ru"
+                ? defaultGalleryItems.ru
+                : defaultGalleryItems.en
+          ).map((item) => ({
             id: `${item.title}-${item.image}`,
             ...item,
             category: "construction",
@@ -130,14 +160,24 @@ export default function GalleryPage() {
           const videos = videoData.items.map((video: GalleryItem) => ({
             url: resolveMediaUrl(video.url),
             thumbnail: video.thumbnail ? resolveMediaUrl(video.thumbnail) : "",
-            title: language === "uz" ? (video.title_uz || video.title) : video.title,
+            title: pickLocalizedString(language, {
+              ru: video.title,
+              uz: video.title_uz,
+              en: video.title_en,
+            }),
             redirect_url: video.redirect_url,
           }));
           setVideoItems(videos);
         }
       } catch (error) {
         console.error("Failed to load gallery:", error);
-        const defaults = (language === "uz" ? defaultGalleryItems.uz : defaultGalleryItems.ru).map((item) => ({
+        const defaults = (
+          language === "uz"
+            ? defaultGalleryItems.uz
+            : language === "ru"
+              ? defaultGalleryItems.ru
+              : defaultGalleryItems.en
+        ).map((item) => ({
           id: `${item.title}-${item.image}`,
           ...item,
           category: "construction",

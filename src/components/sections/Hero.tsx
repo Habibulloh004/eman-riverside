@@ -9,6 +9,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
 import { useEstates } from "@/hooks/useEstates";
 import { useMagneticCursor } from "@/hooks/useMagneticCursor";
+import { pickLocalizedString } from "@/lib/i18n/localized";
 
 let hasAnimatedHeroInRuntime = false;
 
@@ -73,7 +74,11 @@ export default function Hero() {
         houseTitle ||
         houseHuman ||
         parentAddressShort ||
-        (language === "ru" ? `Дом ${parentId}` : `${parentId}-uy`);
+        (language === "uz"
+          ? `${parentId}-uy`
+          : language === "ru"
+            ? `Дом ${parentId}`
+            : `Building ${parentId}`);
 
       byParent.set(parentId, label);
     }
@@ -110,7 +115,11 @@ export default function Hero() {
 
     return filteredByFloor.slice(0, 10).map((estate) => {
       const fallback =
-        language === "ru" ? `Квартира ${estate.id}` : `Kvartira ${estate.id}`;
+        language === "uz"
+          ? `Kvartira ${estate.id}`
+          : language === "ru"
+            ? `Квартира ${estate.id}`
+            : `Apartment ${estate.id}`;
       const fullTitle = estate.title?.trim() || fallback;
       const rooms = Number(estate.estate_rooms);
       const area = Number(estate.estate_area);
@@ -118,9 +127,11 @@ export default function Hero() {
 
       const shortTitle =
         Number.isFinite(rooms) && Number.isFinite(area) && Number.isFinite(floor)
-          ? language === "ru"
-            ? `${rooms}к • ${area} м² • ${floor} эт`
-            : `${rooms}x • ${area} m² • ${floor}-qavat`
+          ? language === "uz"
+            ? `${rooms}x • ${area} m² • ${floor}-qavat`
+            : language === "ru"
+              ? `${rooms}к • ${area} m² • этаж ${floor}`
+              : `${rooms}r • ${area} m² • floor ${floor}`
           : fullTitle;
 
       return {
@@ -155,8 +166,16 @@ export default function Hero() {
     const fromSettings = settings.content.hero_banners
       .map((item) => ({
         image: resolveHeroImageUrl(item.image || ""),
-        title: language === "ru" ? item.title_ru : item.title_uz,
-        subtitle: language === "ru" ? item.subtitle_ru : item.subtitle_uz,
+        title: pickLocalizedString(language, {
+          ru: item.title_ru,
+          uz: item.title_uz,
+          en: item.title_en,
+        }),
+        subtitle: pickLocalizedString(language, {
+          ru: item.subtitle_ru,
+          uz: item.subtitle_uz,
+          en: item.subtitle_en,
+        }),
       }))
       .filter((item) => item.image || item.title || item.subtitle);
 
@@ -440,7 +459,13 @@ export default function Hero() {
                       }}
                       className="w-full appearance-none bg-transparent text-sm text-primary/58 focus:outline-none"
                     >
-                      <option value="">{language === "ru" ? "Выбрать дом" : "Uyni tanlash"}</option>
+                      <option value="">
+                        {language === "uz"
+                          ? "Uyni tanlash"
+                          : language === "ru"
+                            ? "Выбрать дом"
+                            : "Select building"}
+                      </option>
                       {buildingOptions.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
@@ -463,7 +488,13 @@ export default function Hero() {
                       }}
                       className="w-full appearance-none bg-transparent text-sm text-primary/58 focus:outline-none"
                     >
-                      <option value="">{language === "ru" ? "Выбрать этаж" : "Qavatni tanlash"}</option>
+                      <option value="">
+                        {language === "uz"
+                          ? "Qavatni tanlash"
+                          : language === "ru"
+                            ? "Выбрать этаж"
+                            : "Select floor"}
+                      </option>
                       {floorOptions.map((floor) => (
                         <option key={floor} value={floor}>
                           {floor}
@@ -483,7 +514,13 @@ export default function Hero() {
                       onChange={(e) => setSelectedApartment(e.target.value)}
                       className="w-full appearance-none bg-transparent text-sm text-primary/58 focus:outline-none"
                     >
-                      <option value="">{language === "ru" ? "Выбрать квартиру" : "Kvartirani tanlash"}</option>
+                      <option value="">
+                        {language === "uz"
+                          ? "Kvartirani tanlash"
+                          : language === "ru"
+                            ? "Выбрать квартиру"
+                            : "Select apartment"}
+                      </option>
                       {apartmentOptions.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}

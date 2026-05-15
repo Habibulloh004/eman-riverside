@@ -602,13 +602,15 @@ export default function GalleryPage() {
 
   const [activeTab, setActiveTab] = useState<"image" | "video">("image");
   const [filterCategory, setFilterCategory] = useState("");
-  const [modalLangTab, setModalLangTab] = useState<"ru" | "uz">("ru");
+  const [modalLangTab, setModalLangTab] = useState<"ru" | "uz" | "en">("ru");
 
   const [formData, setFormData] = useState<CreateGalleryRequest>({
     title: "",
     title_uz: "",
+    title_en: "",
     description: "",
     description_uz: "",
+    description_en: "",
     type: "image",
     url: "",
     redirect_url: "",
@@ -616,8 +618,10 @@ export default function GalleryPage() {
     category: "gallery",
     home_section: "",
     home_section_uz: "",
+    home_section_en: "",
     home_desc: "",
     home_desc_uz: "",
+    home_desc_en: "",
     home_order: 0,
     sort_order: 0,
     is_published: true,
@@ -695,7 +699,7 @@ export default function GalleryPage() {
       const result = await galleryApi.upload(file);
       setFormData((prev) => ({ ...prev, url: result.url }));
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Upload failed");
+      alert(error instanceof Error ? error.message : t.settings.saveError);
     } finally {
       setIsUploading(false);
     }
@@ -709,7 +713,7 @@ export default function GalleryPage() {
       const result = await galleryApi.upload(file);
       setFormData((prev) => ({ ...prev, thumbnail: result.url }));
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Upload failed");
+      alert(error instanceof Error ? error.message : t.settings.saveError);
     } finally {
       setIsUploading(false);
     }
@@ -719,8 +723,10 @@ export default function GalleryPage() {
     e.preventDefault();
     if (!formData.title.trim()) { alert(t.gallery.titleRuRequired); return; }
     if (!formData.title_uz.trim()) { alert(t.gallery.titleUzRequired); return; }
+    if (!formData.title_en.trim()) { alert(t.gallery.titleEnRequired); return; }
     if (!formData.description.trim()) { alert(t.gallery.descRuRequired); return; }
     if (!formData.description_uz.trim()) { alert(t.gallery.descUzRequired); return; }
+    if (!formData.description_en.trim()) { alert(t.gallery.descEnRequired); return; }
     if (!formData.url) { alert(t.gallery.fileRequired); return; }
     if (!isVideoUrlValid()) { alert(t.gallery.videoUrlInvalid); return; }
 
@@ -750,7 +756,7 @@ export default function GalleryPage() {
       resetForm();
       await loadItems();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to save");
+      alert(error instanceof Error ? error.message : t.settings.saveError);
     } finally {
       setIsSaving(false);
     }
@@ -761,8 +767,10 @@ export default function GalleryPage() {
     setFormData({
       title: item.title,
       title_uz: item.title_uz,
+      title_en: item.title_en,
       description: item.description,
       description_uz: item.description_uz,
+      description_en: item.description_en,
       type: item.type,
       url: item.url,
       redirect_url: item.redirect_url || "",
@@ -770,8 +778,10 @@ export default function GalleryPage() {
       category: item.category,
       home_section: item.home_section || "",
       home_section_uz: item.home_section_uz || "",
+      home_section_en: item.home_section_en || "",
       home_desc: item.home_desc || "",
       home_desc_uz: item.home_desc_uz || "",
+      home_desc_en: item.home_desc_en || "",
       home_order: item.home_order || 0,
       sort_order: item.sort_order,
       is_published: item.is_published,
@@ -785,7 +795,7 @@ export default function GalleryPage() {
       await galleryApi.delete(id);
       loadItems();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to delete");
+      alert(error instanceof Error ? error.message : t.settings.saveError);
     }
   };
 
@@ -793,8 +803,10 @@ export default function GalleryPage() {
     setFormData({
       title: "",
       title_uz: "",
+      title_en: "",
       description: "",
       description_uz: "",
+      description_en: "",
       type: activeTab,
       url: "",
       redirect_url: "",
@@ -802,8 +814,10 @@ export default function GalleryPage() {
       category: filterCategory || "gallery",
       home_section: "",
       home_section_uz: "",
+      home_section_en: "",
       home_desc: "",
       home_desc_uz: "",
+      home_desc_en: "",
       home_order: 0,
       sort_order: 0,
       is_published: true,
@@ -1002,7 +1016,7 @@ export default function GalleryPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          <p className="text-gray-400 text-sm mt-2">Video</p>
+                          <p className="text-gray-400 text-sm mt-2">{t.gallery.video}</p>
                         </div>
                       )}
                     </div>
@@ -1214,6 +1228,17 @@ export default function GalleryPage() {
                   >
                     {t.settings.uzbek}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setModalLangTab("en")}
+                    className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+                      modalLangTab === "en"
+                        ? "bg-white text-green-600 border-b-2 border-green-600 -mb-px"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    EN
+                  </button>
                 </div>
                 <div className="p-4 space-y-4">
                   {modalLangTab === "ru" ? (
@@ -1260,7 +1285,7 @@ export default function GalleryPage() {
                         </>
                       )}
                     </>
-                  ) : (
+                  ) : modalLangTab === "uz" ? (
                     <>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">{t.gallery.titleUz}</label>
@@ -1299,6 +1324,50 @@ export default function GalleryPage() {
                               onChange={(e) => setFormData((prev) => ({ ...prev, home_desc_uz: e.target.value }))}
                               className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent min-h-24"
                               placeholder={t.gallery.homeDescPlaceholder}
+                            />
+                          </div>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t.gallery.titleEn}</label>
+                        <input
+                          type="text"
+                          value={formData.title_en}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, title_en: e.target.value }))}
+                          className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          placeholder={t.gallery.titlePlaceholderEn}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t.gallery.descriptionEn}</label>
+                        <RichTextEditor
+                          value={formData.description_en}
+                          onChange={(value) => setFormData((prev) => ({ ...prev, description_en: value }))}
+                          placeholder={t.gallery.descriptionPlaceholderEn}
+                        />
+                      </div>
+                      {formData.type === "image" && (
+                        <>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">{t.gallery.homeSectionEn}</label>
+                            <input
+                              type="text"
+                              value={formData.home_section_en}
+                              onChange={(e) => setFormData((prev) => ({ ...prev, home_section_en: e.target.value }))}
+                              className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                              placeholder={t.gallery.homeSectionPlaceholderEn}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">{t.gallery.homeDescEn}</label>
+                            <textarea
+                              value={formData.home_desc_en}
+                              onChange={(e) => setFormData((prev) => ({ ...prev, home_desc_en: e.target.value }))}
+                              className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent min-h-24"
+                              placeholder={t.gallery.homeDescPlaceholderEn}
                             />
                           </div>
                         </>

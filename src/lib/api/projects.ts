@@ -4,10 +4,13 @@ export interface Project {
   id: number;
   type_ru: string;
   type_uz: string;
+  type_en: string;
   area_ru: string;
   area_uz: string;
+  area_en: string;
   description_ru: string;
   description_uz: string;
+  description_en: string;
   image: string;
   sort_order: number;
   is_published: boolean;
@@ -23,10 +26,13 @@ interface ProjectListResponse {
 export interface CreateProjectRequest {
   type_ru: string;
   type_uz: string;
+  type_en: string;
   area_ru: string;
   area_uz: string;
+  area_en: string;
   description_ru: string;
   description_uz: string;
+  description_en: string;
   image: string;
   sort_order: number;
   is_published: boolean;

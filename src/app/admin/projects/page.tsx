@@ -35,7 +35,7 @@ export default function ProjectsPage() {
       await projectsApi.delete(id);
       loadItems();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to delete");
+      alert(error instanceof Error ? error.message : t.settings.saveError);
     }
   };
 

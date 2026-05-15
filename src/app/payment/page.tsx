@@ -7,26 +7,11 @@ import { Header, Footer } from "@/components/sections";
 import { PageHero } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import PhoneNumberInput from "@/components/ui/phone-input";
 import { Check, Plus, Minus, MapPin, Phone, Mail } from "lucide-react";
-
-// Purchase steps
-const purchaseSteps = [
-  {
-    number: 1,
-    title: "Выберите Планировку",
-    description: "Ознакомьтесь с доступными планировками на сайте или посетите наш офис продаж.",
-  },
-  {
-    number: 2,
-    title: "Заключите Договор",
-    description: "Подпишите договор бронирования и внесите первоначальный взнос.",
-  },
-  {
-    number: 3,
-    title: "Получите ключи",
-    description: "После завершения строительства получите ключи от вашей новой квартиры.",
-  },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useSiteSettings } from "@/contexts/SettingsContext";
+import { pickLocalizedString } from "@/lib/i18n/localized";
 
 // Payment conditions - Наличные
 const cashFeatures = [
@@ -49,36 +34,187 @@ const installmentFeatures = [
   "Lorem ipsum dolor sit amet",
 ];
 
-// FAQ items
-const faqItems = [
-  { question: "Вопрос 1", answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." },
-  { question: "Вопрос 2", answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
-  { question: "Вопрос 3", answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
-  { question: "Вопрос 4", answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
-  { question: "Вопрос 5", answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
-  { question: "Вопрос 6", answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
-];
-
-// Footer links
-const footerLinks = {
-  about: [
-    { label: "О Комплексе", href: "/projects" },
-    { label: "Локация", href: "/location" },
-    { label: "Галерея", href: "/#gallery" },
-  ],
-  buyers: [
-    { label: "Каталог", href: "/catalog" },
-    { label: "Условия покупки", href: "/payment" },
-    { label: "Ход строительства", href: "/construction" },
-  ],
-};
+function getPaymentCopy(language: "ru" | "uz" | "en") {
+  return language === "uz"
+    ? {
+        successAlert: "Rahmat! Tez orada siz bilan bog'lanamiz.",
+        heroTitle: "Xarid sxemasi",
+        heroSubtitle: "EMAN RIVERSIDE XONADONINI XARID QILISH BOSQICHLARI",
+        purchaseSteps: [
+          {
+            number: 1,
+            title: "Rejani tanlang",
+            description: "Saytdagi mavjud rejalashtirish variantlarini ko'ring yoki savdo ofisimizga tashrif buyuring.",
+          },
+          {
+            number: 2,
+            title: "Shartnoma tuzing",
+            description: "Bron qilish shartnomasini imzolang va boshlang'ich to'lovni amalga oshiring.",
+          },
+          {
+            number: 3,
+            title: "Kalitlarni oling",
+            description: "Qurilish yakunlangach yangi xonadoningiz kalitlarini qabul qilib oling.",
+          },
+        ],
+        conditionsTitle: "Shartlar:",
+        cashTitle: "Naqd to'lov",
+        installmentTitle: "Bo'lib to'lash",
+        details: "Batafsil",
+        perSquareMeter: "= kv.m",
+        installmentPlaceholder: "Bo'lib to'lash muddati",
+        installmentOptions: ["12 oy", "24 oy", "36 oy"],
+        faqItems: Array.from({ length: 6 }, (_, index) => ({
+          question: `Savol ${index + 1}`,
+          answer: "Bu bo'lim uchun savol-javoblar keyinroq to'ldiriladi.",
+        })),
+        contactLead: "BARCHA SAVOLLAR BO'YICHA BATAFSIL MA'LUMOT OLISH UCHUN SO'ROV QOLDIRING. SAVDO BO'LIMIMIZ MENEJERI SIZ BILAN BOG'LANADI.",
+        mapAlt: "Xarita",
+        formTitle: "ORZUINGIZDAGI XONADONNI TOPING",
+        formDescription: "Formani to'ldiring va menejerimiz siz bilan bog'lanadi",
+        namePlaceholder: "Ismingiz",
+        phonePlaceholder: "Telefon raqami",
+        submit: "YUBORISH",
+        aboutHeading: "Loyiha haqida",
+        buyersHeading: "Xaridorlar uchun",
+        footerLinks: {
+          about: [
+            { label: "Loyiha haqida", href: "/projects" },
+            { label: "Galereya", href: "/#gallery" },
+          ],
+          buyers: [
+            { label: "Katalog", href: "/catalog" },
+            { label: "Xarid shartlari", href: "/payment" },
+          ],
+        },
+      }
+    : language === "ru"
+      ? {
+          successAlert: "Спасибо! Мы свяжемся с вами в ближайшее время.",
+          heroTitle: "Схема покупки",
+          heroSubtitle: "ЭТАПЫ ПОКУПКИ КВАРТИРЫ EMAN RIVERSIDE",
+          purchaseSteps: [
+            {
+              number: 1,
+              title: "Выберите планировку",
+              description: "Ознакомьтесь с доступными планировками на сайте или посетите наш офис продаж.",
+            },
+            {
+              number: 2,
+              title: "Заключите договор",
+              description: "Подпишите договор бронирования и внесите первоначальный взнос.",
+            },
+            {
+              number: 3,
+              title: "Получите ключи",
+              description: "После завершения строительства получите ключи от вашей новой квартиры.",
+            },
+          ],
+          conditionsTitle: "Условия:",
+          cashTitle: "Наличные",
+          installmentTitle: "Рассрочка",
+          details: "Подробнее",
+          perSquareMeter: "= м.кв.",
+          installmentPlaceholder: "Срок рассрочки",
+          installmentOptions: ["12 месяцев", "24 месяца", "36 месяцев"],
+          faqItems: Array.from({ length: 6 }, (_, index) => ({
+            question: `Вопрос ${index + 1}`,
+            answer: "Этот раздел FAQ будет заполнен позже.",
+          })),
+          contactLead: "ОСТАВЬТЕ ЗАЯВКУ, ЧТОБЫ ПОЛУЧИТЬ ПОДРОБНУЮ ИНФОРМАЦИЮ ПО ВСЕМ ВОПРОСАМ. МЕНЕДЖЕР НАШЕГО ОТДЕЛА ПРОДАЖ СВЯЖЕТСЯ С ВАМИ.",
+          mapAlt: "Карта",
+          formTitle: "НАЙДИТЕ КВАРТИРУ МЕЧТЫ",
+          formDescription: "Заполните форму, и наш менеджер свяжется с вами",
+          namePlaceholder: "Ваше имя",
+          phonePlaceholder: "Номер телефона",
+          submit: "ОТПРАВИТЬ",
+          aboutHeading: "О проекте",
+          buyersHeading: "Покупателям",
+          footerLinks: {
+            about: [
+              { label: "О проекте", href: "/projects" },
+              { label: "Галерея", href: "/#gallery" },
+            ],
+            buyers: [
+              { label: "Каталог", href: "/catalog" },
+              { label: "Условия покупки", href: "/payment" },
+            ],
+          },
+        }
+      : {
+        successAlert: "Thank you! We will contact you shortly.",
+        heroTitle: "Purchase plan",
+        heroSubtitle: "EMAN RIVERSIDE APARTMENT PURCHASE STAGES",
+        purchaseSteps: [
+          {
+            number: 1,
+            title: "Choose a layout",
+            description: "Review the available layouts on the website or visit our sales office.",
+          },
+          {
+            number: 2,
+            title: "Sign the agreement",
+            description: "Sign the reservation agreement and make the initial payment.",
+          },
+          {
+            number: 3,
+            title: "Receive the keys",
+            description: "After construction is complete, receive the keys to your new apartment.",
+          },
+        ],
+        conditionsTitle: "Conditions:",
+        cashTitle: "Cash payment",
+        installmentTitle: "Installment plan",
+        details: "Details",
+        perSquareMeter: "= sq.m",
+        installmentPlaceholder: "Installment term",
+        installmentOptions: ["12 months", "24 months", "36 months"],
+        faqItems: Array.from({ length: 6 }, (_, index) => ({
+          question: `Question ${index + 1}`,
+          answer: "This FAQ content will be filled in later.",
+        })),
+        contactLead: "LEAVE A REQUEST TO RECEIVE DETAILED INFORMATION ON ALL QUESTIONS. A MEMBER OF OUR SALES TEAM WILL CONTACT YOU.",
+        mapAlt: "Map",
+        formTitle: "FIND YOUR DREAM APARTMENT",
+        formDescription: "Fill out the form and our manager will contact you",
+        namePlaceholder: "Your name",
+        phonePlaceholder: "Phone number",
+        submit: "SEND",
+        aboutHeading: "About the project",
+        buyersHeading: "For buyers",
+        footerLinks: {
+          about: [
+            { label: "About the project", href: "/projects" },
+            { label: "Gallery", href: "/#gallery" },
+          ],
+          buyers: [
+            { label: "Catalog", href: "/catalog" },
+            { label: "Purchase conditions", href: "/payment" },
+          ],
+        },
+      };
+}
 
 export default function PaymentPage() {
+  const { language } = useLanguage();
+  const { settings } = useSiteSettings();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
   });
+  const copy = getPaymentCopy(language);
+  const address = settings
+    ? pickLocalizedString(language, {
+        ru: settings.contact.address,
+        uz: settings.contact.address_uz,
+        en: settings.contact.address_en,
+      })
+    : language === "uz"
+      ? "Toshkent shahri"
+      : language === "ru"
+        ? "Город Ташкент"
+        : "Tashkent city";
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -86,7 +222,7 @@ export default function PaymentPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Спасибо! Мы свяжемся с вами в ближайшее время.");
+    alert(copy.successAlert);
     setFormData({ name: "", phone: "" });
   };
 
@@ -95,8 +231,8 @@ export default function PaymentPage() {
       <Header />
       <main>
         <PageHero
-          title="Схема покупки"
-          subtitle="ЭТАПЫ ПОКУПКИ КВАРТИРЫ ОТ ЗАСТРОЙЩИКА"
+          title={copy.heroTitle}
+          subtitle={copy.heroSubtitle}
           image="/images/hero/1.png"
         />
 
@@ -104,7 +240,7 @@ export default function PaymentPage() {
         <section className="py-10 lg:py-14">
           <div className="container mx-auto px-4 lg:px-8">
             <div className="grid md:grid-cols-3 gap-6 lg:gap-10 max-w-4xl mx-auto">
-              {purchaseSteps.map((step) => (
+              {copy.purchaseSteps.map((step) => (
                 <div key={step.number} className="text-center">
                   <div className="w-14 h-14 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
                     <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
@@ -122,20 +258,20 @@ export default function PaymentPage() {
         {/* Conditions Section */}
         <section className="py-10 lg:py-14 bg-beige">
           <div className="container mx-auto px-4 lg:px-8">
-            <h2 className="text-2xl font-serif text-center mb-8">Условия:</h2>
+            <h2 className="text-2xl font-serif text-center mb-8">{copy.conditionsTitle}</h2>
 
             <div className="grid md:grid-cols-2 gap-5 max-w-4xl mx-auto">
               {/* Наличные Card */}
               <div className="bg-primary text-white rounded-xl p-5 lg:p-6">
-                <h3 className="text-base font-semibold mb-1">Наличные</h3>
+                <h3 className="text-base font-semibold mb-1">{copy.cashTitle}</h3>
                 <p className="text-xs text-white/60 mb-4">
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor
                 </p>
                 <div className="text-2xl lg:text-3xl font-bold mb-4">
-                  1 млн сум <span className="text-sm font-normal text-white/60">= м.кв.</span>
+                  1 mln so'm <span className="text-sm font-normal text-white/60">{copy.perSquareMeter}</span>
                 </div>
                 <Button variant="secondary" size="sm" className="w-full bg-white text-primary hover:bg-white/90 mb-5 h-9">
-                  Подробнее
+                  {copy.details}
                 </Button>
                 <ul className="space-y-2">
                   {cashFeatures.map((feature, idx) => (
@@ -151,19 +287,19 @@ export default function PaymentPage() {
 
               {/* Рассрочка Card */}
               <div className="bg-white rounded-xl p-5 lg:p-6 border border-gray-200">
-                <h3 className="text-base font-semibold mb-1">Рассрочка</h3>
+                <h3 className="text-base font-semibold mb-1">{copy.installmentTitle}</h3>
                 <p className="text-xs text-muted-foreground mb-4">
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor
                 </p>
                 <div className="text-2xl lg:text-3xl font-bold text-primary mb-4">
-                  2 млн сум <span className="text-sm font-normal text-muted-foreground">= м.кв.</span>
+                  2 mln so'm <span className="text-sm font-normal text-muted-foreground">{copy.perSquareMeter}</span>
                 </div>
                 <div className="mb-5">
                   <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs bg-gray-50">
-                    <option>Место загрузки рассрочка</option>
-                    <option>12 месяцев</option>
-                    <option>24 месяца</option>
-                    <option>36 месяцев</option>
+                    <option>{copy.installmentPlaceholder}</option>
+                    {copy.installmentOptions.map((option) => (
+                      <option key={option}>{option}</option>
+                    ))}
                   </select>
                 </div>
                 <ul className="space-y-2">
@@ -187,7 +323,7 @@ export default function PaymentPage() {
             <h2 className="text-2xl font-serif text-center mb-8">FAQ</h2>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-4xl mx-auto">
-              {faqItems.map((item, idx) => (
+              {copy.faqItems.map((item, idx) => (
                 <div
                   key={idx}
                   className="border border-gray-200 rounded-lg overflow-hidden bg-white"
@@ -221,22 +357,21 @@ export default function PaymentPage() {
               {/* Left - Contact Info & Map */}
               <div>
                 <p className="text-xs text-muted-foreground mb-4 uppercase tracking-wide">
-                  ЗАПИШИТЕ ЗВОНОК ЧТОБЫ УЗНАТЬ ПОДРОБНУЮ ИНФОРМАЦИЮ ПО ВСЕМ ВОПРОСАМ.
-                  МЕНЕДЖЕР НАШЕГО ОТДЕЛА ПРОДАЖ СВЯЖЕТСЯ С ВАМИ.
+                  {copy.contactLead}
                 </p>
 
                 <div className="space-y-2 mb-5">
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-primary" />
-                    <span className="text-sm">Город Ташкент Мирзо Улугбек район</span>
+                    <span className="text-sm">{address}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-primary" />
-                    <span className="text-sm">+998 90 070 09 98</span>
+                    <span className="text-sm">{settings?.contact.phone || "+998 90 070 09 98"}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-primary" />
-                    <span className="text-sm">info@emanriverside.uz</span>
+                    <span className="text-sm">{settings?.contact.email || "info@emanriverside.uz"}</span>
                   </div>
                 </div>
 
@@ -244,7 +379,7 @@ export default function PaymentPage() {
                 <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-200">
                   <Image
                     src="/images/hero/1.png"
-                    alt="Карта"
+                    alt={copy.mapAlt}
                     fill
                     className="object-cover"
                     sizes="(max-width: 1024px) 100vw, 50vw"
@@ -255,35 +390,34 @@ export default function PaymentPage() {
               {/* Right - Contact Form */}
               <div>
                 <h3 className="text-xl font-serif mb-1 uppercase">
-                  НАЙДИТЕ СЕБЕ КВАРТИРУ МЕЧТЫ
+                  {copy.formTitle}
                 </h3>
                 <p className="text-xs text-muted-foreground mb-5">
-                  Заполните форму и наш менеджер свяжется с вами
+                  {copy.formDescription}
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-3">
                   <Input
                     type="text"
-                    placeholder="Ваше Имя"
+                    placeholder={copy.namePlaceholder}
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                     className="bg-white border-gray-200 h-10"
                   />
-                  <Input
-                    type="tel"
-                    placeholder="Номер телефона"
+                  <PhoneNumberInput
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(value) => setFormData({ ...formData, phone: value })}
+                    placeholder={copy.phonePlaceholder}
                     required
-                    className="bg-white border-gray-200 h-10"
+                    className="bg-white border border-gray-200 rounded-md h-10 px-3"
                   />
                   <Button
                     type="submit"
                     variant="outline"
                     className="w-full border-primary text-primary hover:bg-primary hover:text-white h-10"
                   >
-                    ОТПРАВИТЬ
+                    {copy.submit}
                   </Button>
                 </form>
               </div>
@@ -322,10 +456,10 @@ export default function PaymentPage() {
               <div className="grid grid-cols-2 gap-8">
                 <div>
                   <h4 className="text-xs text-gray-400 uppercase tracking-wide mb-3">
-                    О проекте
+                    {copy.aboutHeading}
                   </h4>
                   <ul className="space-y-2">
-                    {footerLinks.about.map((link, idx) => (
+                    {copy.footerLinks.about.map((link, idx) => (
                       <li key={idx}>
                         <Link href={link.href} className="text-sm text-gray-600 hover:text-primary transition-colors">
                           {link.label}
@@ -336,10 +470,10 @@ export default function PaymentPage() {
                 </div>
                 <div>
                   <h4 className="text-xs text-gray-400 uppercase tracking-wide mb-3">
-                    Покупателям
+                    {copy.buyersHeading}
                   </h4>
                   <ul className="space-y-2">
-                    {footerLinks.buyers.map((link, idx) => (
+                    {copy.footerLinks.buyers.map((link, idx) => (
                       <li key={idx}>
                         <Link href={link.href} className="text-sm text-gray-600 hover:text-primary transition-colors">
                           {link.label}

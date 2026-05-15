@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "react-phone-number-input/style.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -387,5 +388,27 @@
 
   .bg-cream {
     background-color: var(--cream);
+  }
+}
+
+@layer components {
+  .phone-input {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .phone-input .PhoneInputCountry {
+    margin-right: 0.35rem;
+  }
+
+  .phone-input .PhoneInputCountrySelectArrow {
+    opacity: 0.65;
+  }
+
+  .phone-input .PhoneInputInput {
+    width: 100%;
+    background: transparent;
+    outline: none;
   }
 }

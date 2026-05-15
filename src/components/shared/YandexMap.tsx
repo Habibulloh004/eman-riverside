@@ -8,6 +8,7 @@ import { mapIconsApi, MapIcon } from "@/lib/api/map-icons";
 import { settingsApi } from "@/lib/api/settings";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
+import { pickLocalizedString } from "@/lib/i18n/localized";
 import {
   Dialog,
   DialogClose,
@@ -104,10 +105,11 @@ function YandexMapInner({ coordinates, zoom }: YandexMapInnerProps) {
       const icon = marker.type?.icon || "";
       const iconUrl = icon.startsWith("http") ? icon : `${API_URL}${icon}`;
       const markerName =
-        (language === "ru" ? marker.name_ru : marker.name_uz) ||
-        marker.name ||
-        marker.name_ru ||
-        marker.name_uz;
+        pickLocalizedString(language, {
+          ru: marker.name_ru || marker.name,
+          uz: marker.name_uz,
+          en: marker.name_en,
+        }) || marker.name;
       return {
         id: marker.id,
         name: markerName,

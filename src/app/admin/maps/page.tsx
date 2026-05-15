@@ -21,8 +21,8 @@ export default function AdminMapsPage() {
   const [isSavingType, setIsSavingType] = useState(false);
   const [isSavingMarker, setIsSavingMarker] = useState(false);
 
-  const [typeForm, setTypeForm] = useState({ name_ru: "", name_uz: "", icon: "" });
-  const [markerForm, setMarkerForm] = useState({ name_ru: "", name_uz: "", type_id: 0 });
+  const [typeForm, setTypeForm] = useState({ name_ru: "", name_uz: "", name_en: "", icon: "" });
+  const [markerForm, setMarkerForm] = useState({ name_ru: "", name_uz: "", name_en: "", type_id: 0 });
   const [selectedCoords, setSelectedCoords] = useState<[number, number] | null>(null);
   const [mapDefaults, setMapDefaults] = useState({ lat: "", lng: "", zoom: "" });
   const [isSavingDefaults, setIsSavingDefaults] = useState(false);
@@ -75,6 +75,7 @@ export default function AdminMapsPage() {
         id: marker.id,
         name:
           (lang === "ru" ? marker.name_ru : marker.name_uz) ||
+          marker.name_en ||
           marker.name ||
           marker.name_ru ||
           marker.name_uz,
@@ -108,7 +109,7 @@ export default function AdminMapsPage() {
       const result = await mapIconsApi.uploadTypeIcon(file);
       setTypeForm((prev) => ({ ...prev, icon: result.url }));
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Upload failed");
+      alert(error instanceof Error ? error.message : t.settings.saveError);
     } finally {
       setIsUploadingTypeIcon(false);
     }
@@ -124,6 +125,10 @@ export default function AdminMapsPage() {
       alert(t.maps.typeNameUzRequired);
       return;
     }
+    if (!typeForm.name_en.trim()) {
+      alert(t.maps.typeNameEnRequired);
+      return;
+    }
     if (!typeForm.icon) {
       alert(t.maps.iconRequired);
       return;
@@ -135,12 +140,13 @@ export default function AdminMapsPage() {
         name: typeForm.name_ru.trim(),
         name_ru: typeForm.name_ru.trim(),
         name_uz: typeForm.name_uz.trim(),
+        name_en: typeForm.name_en.trim(),
         icon: typeForm.icon,
       });
-      setTypeForm({ name_ru: "", name_uz: "", icon: "" });
+      setTypeForm({ name_ru: "", name_uz: "", name_en: "", icon: "" });
       loadTypes();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to save");
+      alert(error instanceof Error ? error.message : t.settings.saveError);
     } finally {
       setIsSavingType(false);
     }
@@ -152,7 +158,7 @@ export default function AdminMapsPage() {
       await mapIconsApi.deleteType(id);
       loadTypes();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to delete");
+      alert(error instanceof Error ? error.message : t.settings.saveError);
     }
   };
 
@@ -165,6 +171,10 @@ export default function AdminMapsPage() {
     }
     if (!markerForm.name_uz.trim()) {
       alert(t.maps.markerNameUzRequired);
+      return;
+    }
+    if (!markerForm.name_en.trim()) {
+      alert(t.maps.markerNameEnRequired);
       return;
     }
     if (!markerForm.type_id) {
@@ -182,15 +192,16 @@ export default function AdminMapsPage() {
         name: markerForm.name_ru.trim(),
         name_ru: markerForm.name_ru.trim(),
         name_uz: markerForm.name_uz.trim(),
+        name_en: markerForm.name_en.trim(),
         type_id: markerForm.type_id,
         lat: selectedCoords[0],
         lng: selectedCoords[1],
       });
-      setMarkerForm({ name_ru: "", name_uz: "", type_id: 0 });
+      setMarkerForm({ name_ru: "", name_uz: "", name_en: "", type_id: 0 });
       setSelectedCoords(null);
       loadMarkers();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to save");
+      alert(error instanceof Error ? error.message : t.settings.saveError);
     } finally {
       setIsSavingMarker(false);
     }
@@ -202,7 +213,7 @@ export default function AdminMapsPage() {
       await mapIconsApi.delete(id);
       loadMarkers();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to delete");
+      alert(error instanceof Error ? error.message : t.settings.saveError);
     }
   };
 
@@ -230,7 +241,7 @@ export default function AdminMapsPage() {
       ]);
       alert(t.maps.defaultsSaved);
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to save");
+      alert(error instanceof Error ? error.message : t.settings.saveError);
     } finally {
       setIsSavingDefaults(false);
     }
@@ -363,6 +374,18 @@ export default function AdminMapsPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t.maps.markerNameEn}
+                    </label>
+                    <input
+                      type="text"
+                      value={markerForm.name_en}
+                      onChange={(e) => setMarkerForm({ ...markerForm, name_en: e.target.value })}
+                      placeholder={t.maps.markerNamePlaceholderEn}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       {t.maps.markerType}
                     </label>
                     <select
@@ -477,6 +500,18 @@ export default function AdminMapsPage() {
                   value={typeForm.name_uz}
                   onChange={(e) => setTypeForm({ ...typeForm, name_uz: e.target.value })}
                   placeholder={t.maps.typeNamePlaceholderUz}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t.maps.typeNameEn}
+                </label>
+                <input
+                  type="text"
+                  value={typeForm.name_en}
+                  onChange={(e) => setTypeForm({ ...typeForm, name_en: e.target.value })}
+                  placeholder={t.maps.typeNamePlaceholderEn}
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                 />
               </div>

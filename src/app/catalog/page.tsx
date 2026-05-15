@@ -124,6 +124,10 @@ function CatalogContent() {
   const searchParams = useSearchParams();
   const catalogListRef = useRef<HTMLDivElement | null>(null);
   const desktopFilterRef = useRef<HTMLDivElement | null>(null);
+  const apartmentAltSuffix =
+    language === "uz" ? "-xonali kvartira" : language === "ru" ? "-комнатная квартира" : "-room apartment";
+  const apartmentFallbackTitle =
+    language === "uz" ? "Lyuks Ekstra" : language === "ru" ? "Люкс Экстра" : "Lux Extra";
 
   // React Query - get all data once with caching
   const { data: allApartments = [], isLoading } = useEstates({ type: "living", limit: 5000 });
@@ -466,8 +470,8 @@ function CatalogContent() {
         {/* Price range slider */}
         <div className="rounded-2xl bg-white shadow-sm border border-gray-100 px-4 py-2 w-full sm:w-auto sm:flex-1 lg:max-w-[380px]">
           <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
-            <span>{t.catalog.from} {effectivePriceRange[0].toLocaleString()} {language === "uz" ? "so'm" : "сум"}</span>
-            <span>{t.catalog.priceTo} {effectivePriceRange[1].toLocaleString()} {language === "uz" ? "so'm" : "сум"}</span>
+            <span>{t.catalog.from} {effectivePriceRange[0].toLocaleString()} {language === "uz" ? "so'm" : language === "ru" ? "сум" : "UZS"}</span>
+            <span>{t.catalog.priceTo} {effectivePriceRange[1].toLocaleString()} {language === "uz" ? "so'm" : language === "ru" ? "сум" : "UZS"}</span>
           </div>
           <Slider
             min={0}
@@ -505,7 +509,7 @@ function CatalogContent() {
             onClick={() => setCurrentPage(1)}
             className="rounded-full px-5 py-2 text-xs font-medium bg-primary text-white hover:bg-primary/90 transition-colors uppercase tracking-wider"
           >
-            {language === "uz" ? "Filtr bo'yicha qidirish" : "Поиск по фильтру"}
+            {language === "uz" ? "Filtr bo'yicha qidirish" : language === "ru" ? "Поиск по фильтрам" : "Search by filters"}
           </button>
         </div>
       </div>
@@ -591,7 +595,7 @@ function CatalogContent() {
                           >
                             <Image
                               src={getApartmentImage(apartment)}
-                              alt={`${apartment.estate_rooms}-комнатная квартира`}
+                              alt={`${apartment.estate_rooms}${apartmentAltSuffix}`}
                               fill
                               className="object-cover"
                               sizes="(max-width: 640px) 96px, (max-width: 768px) 144px, 160px"
@@ -607,7 +611,7 @@ function CatalogContent() {
                                   className="text-sm sm:text-base font-semibold text-gray-900 hover:text-primary transition-colors truncate"
                                   data-catalog-item-title
                                 >
-                                  {apartment.title || "Люкс Экстра"}
+                                  {apartment.title || apartmentFallbackTitle}
                                 </h3>
                               </Link>
                               <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs sm:text-sm text-gray-500">

@@ -5,6 +5,7 @@ export interface MapIconType {
   name: string;
   name_ru: string;
   name_uz: string;
+  name_en: string;
   icon: string;
   created_at: string;
   updated_at: string;
@@ -15,6 +16,7 @@ export interface MapIcon {
   name: string;
   name_ru: string;
   name_uz: string;
+  name_en: string;
   lat: number;
   lng: number;
   type_id: number;
@@ -37,6 +39,7 @@ export interface CreateMapIconRequest {
   name: string;
   name_ru: string;
   name_uz: string;
+  name_en: string;
   lat: number;
   lng: number;
   type_id: number;
@@ -46,6 +49,7 @@ export interface CreateMapIconTypeRequest {
   name: string;
   name_ru: string;
   name_uz: string;
+  name_en: string;
   icon: string;
 }
 

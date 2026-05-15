@@ -5,6 +5,7 @@ import { useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
+import { pickLocalizedString } from "@/lib/i18n/localized";
 import { sanitizeRichTextHtml } from "@/lib/rich-text";
 
 function resolveMediaUrl(value: string): string {
@@ -53,15 +54,17 @@ export default function AboutCompanySection() {
   const { language } = useLanguage();
   const { settings, isLoading } = useSiteSettings();
 
-  const titleRaw =
-    language === "uz"
-      ? settings.content.about_us_title_uz
-      : settings.content.about_us_title;
+  const titleRaw = pickLocalizedString(language, {
+    ru: settings.content.about_us_title,
+    uz: settings.content.about_us_title_uz,
+    en: settings.content.about_us_title_en,
+  });
 
-  const contentRawFromSettings =
-    language === "uz"
-      ? settings.content.about_us_content_uz
-      : settings.content.about_us_content;
+  const contentRawFromSettings = pickLocalizedString(language, {
+    ru: settings.content.about_us_content,
+    uz: settings.content.about_us_content_uz,
+    en: settings.content.about_us_content_en,
+  });
 
   const brandTitle = settings.content.hero_title?.trim() || "EMAN RIVERSIDE";
   const title = titleRaw?.trim() || "";
@@ -177,11 +180,11 @@ export default function AboutCompanySection() {
           {certificates.length > 0 && (
             <div className="relative z-40 mt-0 pb-8 pt-8 lg:pb-12 lg:pt-9">
               <div className="pointer-events-none absolute right-10 top-8 text-5xl font-medium tracking-[-0.02em] text-[#D9D1C4]/35 lg:text-7xl">
-                {language === "uz" ? "Sertifikatlar" : "Сертификаты"}
+                {language === "uz" ? "Sertifikatlar" : language === "ru" ? "Сертификаты" : "Certificates"}
               </div>
 
               <h3 className="relative z-10 text-5xl font-medium tracking-[-0.02em] text-[#141311] lg:text-6xl">
-                {language === "uz" ? "Hujjatlar" : "Документы"}
+                {language === "uz" ? "Hujjatlar" : language === "ru" ? "Документы" : "Documents"}
               </h3>
 
               <div className="relative z-10 mt-6">
@@ -190,7 +193,7 @@ export default function AboutCompanySection() {
                     type="button"
                     onClick={() => scrollCertificates("prev")}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#D8CCBD] bg-[#F8F0E7] text-[#1F1A17] transition-colors hover:bg-[#EFE3D4]"
-                    aria-label={language === "uz" ? "Oldingi sertifikatlar" : "Предыдущие сертификаты"}
+                    aria-label={language === "uz" ? "Oldingi sertifikatlar" : language === "ru" ? "Предыдущие сертификаты" : "Previous certificates"}
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
@@ -198,7 +201,7 @@ export default function AboutCompanySection() {
                     type="button"
                     onClick={() => scrollCertificates("next")}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#D8CCBD] bg-[#F8F0E7] text-[#1F1A17] transition-colors hover:bg-[#EFE3D4]"
-                    aria-label={language === "uz" ? "Keyingi sertifikatlar" : "Следующие сертификаты"}
+                    aria-label={language === "uz" ? "Keyingi sertifikatlar" : language === "ru" ? "Следующие сертификаты" : "Next certificates"}
                   >
                     <ChevronRight className="h-4 w-4" />
                   </button>
@@ -209,13 +212,17 @@ export default function AboutCompanySection() {
                   className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 >
                 {certificates.map((item, index) => {
-                  const certTitle =
-                    language === "uz" ? item.title_uz : item.title_ru;
+                  const certTitle = pickLocalizedString(language, {
+                    ru: item.title_ru,
+                    uz: item.title_uz,
+                    en: item.title_en,
+                  });
 
-                  const certDescription =
-                    language === "uz"
-                      ? item.description_uz
-                      : item.description_ru;
+                  const certDescription = pickLocalizedString(language, {
+                    ru: item.description_ru,
+                    uz: item.description_uz,
+                    en: item.description_en,
+                  });
 
                   const certImage = resolveMediaUrl(item.image || "");
 

@@ -12,6 +12,7 @@ import { useEstate } from "@/hooks/useEstates";
 import { Estate, EstateImage } from "@/lib/api/estates";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
+import { pickLocalizedString } from "@/lib/i18n/localized";
 
 const normalizeKey = (value: string) => value.trim().toLowerCase();
 
@@ -38,6 +39,25 @@ const STATUS_MAP_RU: Record<string, string> = {
   "hot": "Акция",
 };
 
+const STATUS_MAP_EN: Record<string, string> = {
+  "свободна": "Available",
+  "свободно": "Available",
+  "в продаже": "On sale",
+  "доступна": "Available",
+  "забронирована": "Reserved",
+  "резерв": "Reserved",
+  "продана": "Sold",
+  "архив": "Archive",
+  "акция": "Promo",
+  "available": "Available",
+  "free": "Available",
+  "reserved": "Reserved",
+  "sold": "Sold",
+  "archive": "Archive",
+  "promo": "Promo",
+  "hot": "Hot offer",
+};
+
 const CATEGORY_MAP_UZ: Record<string, string> = {
   "эконом": "Ekonom",
   "стандарт": "Standart",
@@ -60,10 +80,30 @@ const CATEGORY_MAP_RU: Record<string, string> = {
   "apartment": "Апартаменты",
 };
 
+const CATEGORY_MAP_EN: Record<string, string> = {
+  "эконом": "Economy",
+  "стандарт": "Standard",
+  "комфорт": "Comfort",
+  "бизнес": "Business",
+  "премиум": "Premium",
+  "элит": "Elite",
+  "кладовая": "Storage",
+  "апартаменты": "Apartment",
+  "economy": "Economy",
+  "standard": "Standard",
+  "comfort": "Comfort",
+  "business": "Business",
+  "premium": "Premium",
+  "elite": "Elite",
+  "storage": "Storage",
+  "apartment": "Apartment",
+};
+
 const translateStatusName = (value: string | undefined, language: string) => {
   if (!value) return null;
   const key = normalizeKey(value);
   if (language === "uz") return STATUS_MAP_UZ[key] ?? value;
+  if (language === "en") return STATUS_MAP_EN[key] ?? STATUS_MAP_RU[key] ?? value;
   if (language === "ru") return STATUS_MAP_RU[key] ?? value;
   return value;
 };
@@ -72,6 +112,7 @@ const translateCategoryName = (value: string | undefined, language: string) => {
   if (!value) return null;
   const key = normalizeKey(value);
   if (language === "uz") return CATEGORY_MAP_UZ[key] ?? value;
+  if (language === "en") return CATEGORY_MAP_EN[key] ?? CATEGORY_MAP_RU[key] ?? value;
   if (language === "ru") return CATEGORY_MAP_RU[key] ?? value;
   return value;
 };
@@ -163,7 +204,11 @@ export default function ApartmentDetailPage() {
   const { data: apartment, isLoading } = useEstate(apartmentId);
   const phone = apartment?.contact_phones?.[0] || settings.contact.phone;
   const email = settings.contact.email;
-  const address = language === "uz" ? settings.contact.address_uz : settings.contact.address;
+  const address = pickLocalizedString(language, {
+    ru: settings.contact.address,
+    uz: settings.contact.address_uz,
+    en: settings.contact.address_en,
+  });
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<"plans" | "gallery">("plans");
@@ -443,7 +488,13 @@ export default function ApartmentDetailPage() {
                   >
                     <Image
                       src={img.url}
-                      alt={`Инфраструктура ${idx + 1}`}
+                      alt={
+                        language === "uz"
+                          ? `Infratuzilma ${idx + 1}`
+                          : language === "ru"
+                            ? `Инфраструктура ${idx + 1}`
+                            : `Infrastructure ${idx + 1}`
+                      }
                       fill
                       className="object-contain object-center"
                       sizes="100vw"

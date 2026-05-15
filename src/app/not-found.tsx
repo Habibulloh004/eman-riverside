@@ -17,17 +17,19 @@ export default function NotFound() {
             404
           </span>
           <h1 className="text-2xl lg:text-4xl font-serif text-primary -mt-6 mb-3">
-            {language === "uz" ? "Sahifa topilmadi" : "Страница не найдена"}
+            {language === "uz" ? "Sahifa topilmadi" : language === "ru" ? "Страница не найдена" : "Page not found"}
           </h1>
           <p className="text-sm text-muted-foreground mb-8 max-w-md mx-auto">
             {language === "uz"
               ? "Siz qidirayotgan sahifa mavjud emas yoki ko'chirilgan"
-              : "Страница, которую вы ищете, не существует или была перемещена"}
+              : language === "ru"
+                ? "Страница, которую вы ищете, не существует или была перемещена"
+                : "The page you are looking for does not exist or has been moved"}
           </p>
           <div className="flex items-center justify-center gap-3">
             <Button asChild>
               <Link href="/">
-                {language === "uz" ? "Bosh sahifa" : "На главную"}
+                {language === "uz" ? "Bosh sahifa" : language === "ru" ? "Главная" : "Home"}
               </Link>
             </Button>
             <Button variant="outline" asChild>

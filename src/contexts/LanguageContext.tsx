@@ -1,9 +1,9 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { ru, uz, type Translations } from "@/lib/i18n";
+import { en, ru, uz, type Translations } from "@/lib/i18n";
 
-type Language = "ru" | "uz";
+export type Language = "ru" | "uz" | "en";
 
 interface LanguageContextType {
   language: Language;
@@ -13,26 +13,25 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-const translations: Record<Language, Translations> = { ru, uz };
+const translations: Record<Language, Translations> = { ru, uz, en };
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>("ru");
+  const [language, setLanguageState] = useState<Language>("uz");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // LocalStorage dan tilni olish
     const savedLang = localStorage.getItem("language") as Language;
-    if (savedLang && (savedLang === "ru" || savedLang === "uz")) {
+    if (savedLang === "uz" || savedLang === "en" || savedLang === "ru") {
       setLanguageState(savedLang);
+    } else if (savedLang === "rus") {
+      setLanguageState("ru");
     }
     setMounted(true);
   }, []);
 
   useEffect(() => {
     if (mounted) {
-      // LocalStorage ga saqlash
       localStorage.setItem("language", language);
-      // HTML lang atributini yangilash
       document.documentElement.lang = language;
     }
   }, [language, mounted]);

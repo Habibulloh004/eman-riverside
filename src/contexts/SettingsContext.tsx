@@ -18,8 +18,10 @@ interface ContactSettings {
   email: string;
   address: string;
   address_uz: string;
+  address_en: string;
   working_hours: string;
   working_hours_uz: string;
+  working_hours_en: string;
 }
 
 interface SocialSettings {
@@ -35,10 +37,13 @@ interface ContentSettings {
   hero_title: string;
   hero_subtitle: string;
   hero_subtitle_uz: string;
+  hero_subtitle_en: string;
   about_us_title: string;
   about_us_title_uz: string;
+  about_us_title_en: string;
   about_us_content: string;
   about_us_content_uz: string;
+  about_us_content_en: string;
   about_us_right_image: string;
   about_us_certificates: AboutCertificateItem[];
   hero_banners: HeroBannerItem[];
@@ -55,12 +60,16 @@ interface SiteSettings {
   content: ContentSettings;
   payment_plans: PaymentPlan[];
   payment_plans_uz: PaymentPlan[];
+  payment_plans_en: PaymentPlan[];
   faq_items: FAQItem[];
   faq_items_uz: FAQItem[];
+  faq_items_en: FAQItem[];
   projects: ProjectItem[];
   projects_uz: ProjectItem[];
+  projects_en: ProjectItem[];
   gallery_items: GalleryItem[];
   gallery_items_uz: GalleryItem[];
+  gallery_items_en: GalleryItem[];
   raw: SettingsResponse;
 }
 
@@ -77,8 +86,10 @@ const defaultSettings: SiteSettings = {
     email: "info@eman-riverside.uz",
     address: "Город Ташкент",
     address_uz: "Toshkent shahri",
+    address_en: "Tashkent city",
     working_hours: "Пн-Пт: 9:00 - 18:00",
     working_hours_uz: "Du-Ju: 9:00 - 18:00",
+    working_hours_en: "Mon-Fri: 9:00 - 18:00",
   },
   social: {
     telegram: "https://t.me/emanriverside",
@@ -92,10 +103,13 @@ const defaultSettings: SiteSettings = {
     hero_title: "EMAN RIVERSIDE",
     hero_subtitle: "Жилой комплекс нового уровня",
     hero_subtitle_uz: "Yangi darajadagi turar-joy majmuasi",
+    hero_subtitle_en: "A new-generation residential complex",
     about_us_title: "",
     about_us_title_uz: "",
+    about_us_title_en: "",
     about_us_content: "",
     about_us_content_uz: "",
+    about_us_content_en: "",
     about_us_right_image: "",
     about_us_certificates: [],
     hero_banners: [],
@@ -107,12 +121,16 @@ const defaultSettings: SiteSettings = {
   },
   payment_plans: [],
   payment_plans_uz: [],
+  payment_plans_en: [],
   faq_items: [],
   faq_items_uz: [],
+  faq_items_en: [],
   projects: [],
   projects_uz: [],
+  projects_en: [],
   gallery_items: [],
   gallery_items_uz: [],
+  gallery_items_en: [],
   raw: {},
 };
 
@@ -177,8 +195,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           email: getValue(data, "contact", "email", defaultSettings.contact.email),
           address: getValue(data, "contact", "address", defaultSettings.contact.address),
           address_uz: getValue(data, "contact", "address_uz", defaultSettings.contact.address_uz),
+          address_en: getValue(data, "contact", "address_en", defaultSettings.contact.address_en),
           working_hours: getValue(data, "contact", "working_hours", defaultSettings.contact.working_hours),
           working_hours_uz: getValue(data, "contact", "working_hours_uz", defaultSettings.contact.working_hours_uz),
+          working_hours_en: getValue(data, "contact", "working_hours_en", defaultSettings.contact.working_hours_en),
         },
         social: {
           telegram: getValue(data, "social", "telegram", defaultSettings.social.telegram),
@@ -192,14 +212,22 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           hero_title: getValue(data, "content", "hero_title", defaultSettings.content.hero_title),
           hero_subtitle: getValue(data, "content", "hero_subtitle", defaultSettings.content.hero_subtitle),
           hero_subtitle_uz: getValue(data, "content", "hero_subtitle_uz", defaultSettings.content.hero_subtitle_uz),
+          hero_subtitle_en: getValue(data, "content", "hero_subtitle_en", defaultSettings.content.hero_subtitle_en),
           about_us_title: getValue(data, "content", "about_us_title", defaultSettings.content.about_us_title),
           about_us_title_uz: getValue(data, "content", "about_us_title_uz", defaultSettings.content.about_us_title_uz),
+          about_us_title_en: getValue(data, "content", "about_us_title_en", defaultSettings.content.about_us_title_en),
           about_us_content: getValue(data, "content", "about_us_content", defaultSettings.content.about_us_content),
           about_us_content_uz: getValue(
             data,
             "content",
             "about_us_content_uz",
             defaultSettings.content.about_us_content_uz
+          ),
+          about_us_content_en: getValue(
+            data,
+            "content",
+            "about_us_content_en",
+            defaultSettings.content.about_us_content_en
           ),
           about_us_right_image: getValue(
             data,
@@ -227,12 +255,16 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         },
         payment_plans: getJSONValue<PaymentPlan[]>(data, "pricing", "payment_plans", []),
         payment_plans_uz: getJSONValue<PaymentPlan[]>(data, "pricing", "payment_plans_uz", []),
+        payment_plans_en: getJSONValue<PaymentPlan[]>(data, "pricing", "payment_plans_en", []),
         faq_items: getJSONValue<FAQItem[]>(data, "faq", "faq_items", []),
         faq_items_uz: getJSONValue<FAQItem[]>(data, "faq", "faq_items_uz", []),
+        faq_items_en: getJSONValue<FAQItem[]>(data, "faq", "faq_items_en", []),
         projects: getJSONValue<ProjectItem[]>(data, "projects", "projects", []),
         projects_uz: getJSONValue<ProjectItem[]>(data, "projects", "projects_uz", []),
+        projects_en: getJSONValue<ProjectItem[]>(data, "projects", "projects_en", []),
         gallery_items: getJSONValue<GalleryItem[]>(data, "gallery", "gallery_items", []),
         gallery_items_uz: getJSONValue<GalleryItem[]>(data, "gallery", "gallery_items_uz", []),
+        gallery_items_en: getJSONValue<GalleryItem[]>(data, "gallery", "gallery_items_en", []),
         raw: data,
       };
 

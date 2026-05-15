@@ -61,16 +61,20 @@ export interface HeroBannerItem {
   image: string;
   title_ru: string;
   title_uz: string;
+  title_en: string;
   subtitle_ru: string;
   subtitle_uz: string;
+  subtitle_en: string;
 }
 
 export interface AboutCertificateItem {
   image: string;
   title_ru: string;
   title_uz: string;
+  title_en: string;
   description_ru: string;
   description_uz: string;
+  description_en: string;
 }
 
 // Grouped settings response from public API

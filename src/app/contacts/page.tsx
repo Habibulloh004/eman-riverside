@@ -5,11 +5,13 @@ import { Header, Footer } from "@/components/sections";
 import { PageHero } from "@/components/shared";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import PhoneNumberInput from "@/components/ui/phone-input";
 import { Phone, MapPin, Clock, AtSign } from "lucide-react";
 import { YandexMap } from "@/components/shared";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
 import { submissionsApi } from "@/lib/api/submissions";
+import { pickLocalizedString } from "@/lib/i18n/localized";
 import { toast } from "sonner";
 import { gsap } from "gsap";
 
@@ -22,8 +24,16 @@ export default function ContactsPage() {
   const pendingRowsRef = useRef(new WeakSet<HTMLElement>());
 
   // Dynamic contact info from settings
-  const address = language === "uz" ? settings.contact.address_uz : settings.contact.address;
-  const workingHours = language === "uz" ? settings.contact.working_hours_uz : settings.contact.working_hours;
+  const address = pickLocalizedString(language, {
+    ru: settings.contact.address,
+    uz: settings.contact.address_uz,
+    en: settings.contact.address_en,
+  });
+  const workingHours = pickLocalizedString(language, {
+    ru: settings.contact.working_hours,
+    uz: settings.contact.working_hours_uz,
+    en: settings.contact.working_hours_en,
+  });
   const phoneHref = `tel:${settings.contact.phone.replace(/\s/g, "")}`;
   const whatsappHref = `https://wa.me/${settings.social.whatsapp.replace(/\D/g, "")}`;
 
@@ -346,15 +356,14 @@ export default function ContactsPage() {
                     />
                   </div>
                   <div>
-                    <Input
-                      type="tel"
-                      placeholder={t.contacts.phone}
+                    <PhoneNumberInput
                       value={formData.phone}
-                      onChange={(e) =>
-                        setFormData({ ...formData, phone: e.target.value })
+                      onChange={(value) =>
+                        setFormData({ ...formData, phone: value })
                       }
+                      placeholder={t.contacts.phone}
                       required
-                      className="bg-transparent border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-primary focus:ring-0 placeholder:text-gray-400 placeholder:text-sm"
+                      className="bg-transparent border-0 border-b border-gray-300 rounded-none px-0 py-3 focus-within:border-primary placeholder:text-gray-400 placeholder:text-sm"
                     />
                   </div>
                 </div>

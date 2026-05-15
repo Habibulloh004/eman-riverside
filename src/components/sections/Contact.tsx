@@ -5,9 +5,11 @@ import { MapPin, Phone, Mail, Clock, AtSign } from "lucide-react";
 import { YandexMap } from "@/components/shared";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
+import { pickLocalizedString } from "@/lib/i18n/localized";
 import { submissionsApi } from "@/lib/api/submissions";
 import { toast } from "sonner";
 import { gsap } from "gsap";
+import PhoneNumberInput from "@/components/ui/phone-input";
 
 /* ------------------------------------------------------------------ */
 /*  ContactForm — isolated so typing never re-renders Contact / Map    */
@@ -69,16 +71,14 @@ const ContactForm = memo(function ContactForm({ t }: { t: TType }) {
           />
         </div>
         <div>
-          <input
-            name="phone"
-            type="tel"
-            placeholder={t.contactSection.phone}
+          <PhoneNumberInput
             value={formData.phone}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, phone: e.target.value }))
+            onChange={(value) =>
+              setFormData((prev) => ({ ...prev, phone: value }))
             }
+            placeholder={t.contactSection.phone}
             required
-            className="w-full px-0 py-3 text-sm bg-transparent border-b border-border placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+            className="w-full px-0 py-3 text-sm bg-transparent border-b border-border placeholder:text-muted-foreground focus-within:border-primary transition-colors"
           />
         </div>
         <div>
@@ -120,12 +120,16 @@ export default function Contact() {
   const animatedRowsRef = useRef(new WeakSet<HTMLElement>());
   const pendingRowsRef = useRef(new WeakSet<HTMLElement>());
 
-  const address =
-    language === "uz" ? settings.contact.address_uz : settings.contact.address;
-  const workingHours =
-    language === "uz"
-      ? settings.contact.working_hours_uz
-      : settings.contact.working_hours;
+  const address = pickLocalizedString(language, {
+    ru: settings.contact.address,
+    uz: settings.contact.address_uz,
+    en: settings.contact.address_en,
+  });
+  const workingHours = pickLocalizedString(language, {
+    ru: settings.contact.working_hours,
+    uz: settings.contact.working_hours_uz,
+    en: settings.contact.working_hours_en,
+  });
   const phoneHref = `tel:${settings.contact.phone.replace(/\s/g, "")}`;
   const emailHref = `mailto:${settings.contact.email}`;
   const whatsappHref = `https://wa.me/${settings.social.whatsapp.replace(/\D/g, "")}`;

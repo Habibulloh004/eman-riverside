@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useAdminLanguage } from "@/contexts/AdminLanguageContext";
 import RichTextEditor from "@/components/ui/rich-text-editor";
+import PhoneNumberInput from "@/components/ui/phone-input";
 
 interface PaymentPlan {
   title: string;
@@ -68,8 +69,10 @@ interface HeroBannerItem {
   image: string;
   title_ru: string;
   title_uz: string;
+  title_en: string;
   subtitle_ru: string;
   subtitle_uz: string;
+  subtitle_en: string;
 }
 
 function extractFileNameFromUrl(url: string): string {
@@ -94,7 +97,7 @@ export default function SettingsPage() {
   const [isUploadingBrochure, setIsUploadingBrochure] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [activeTab, setActiveTab] = useState<"contact" | "social" | "pricing" | "faq" | "projects" | "banners">("contact");
-  const [activeLang, setActiveLang] = useState<"ru" | "uz">("ru");
+  const [activeLang, setActiveLang] = useState<"ru" | "uz" | "en">("ru");
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const { t } = useAdminLanguage();
 
@@ -104,8 +107,10 @@ export default function SettingsPage() {
     email: "",
     address: "",
     address_uz: "",
+    address_en: "",
     working_hours: "",
     working_hours_uz: "",
+    working_hours_en: "",
     background_music_url: "",
     brochure_file_url: "",
     brochure_file_name: "",
@@ -122,12 +127,15 @@ export default function SettingsPage() {
 
   const [paymentPlans, setPaymentPlans] = useState<PaymentPlan[]>([]);
   const [paymentPlansUz, setPaymentPlansUz] = useState<PaymentPlan[]>([]);
+  const [paymentPlansEn, setPaymentPlansEn] = useState<PaymentPlan[]>([]);
 
   const [faqItems, setFaqItems] = useState<FAQItem[]>([]);
   const [faqItemsUz, setFaqItemsUz] = useState<FAQItem[]>([]);
+  const [faqItemsEn, setFaqItemsEn] = useState<FAQItem[]>([]);
 
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [projectsUz, setProjectsUz] = useState<ProjectItem[]>([]);
+  const [projectsEn, setProjectsEn] = useState<ProjectItem[]>([]);
   const [heroBanners, setHeroBanners] = useState<HeroBannerItem[]>([]);
 
   const loadSettings = useCallback(async () => {
@@ -144,8 +152,10 @@ export default function SettingsPage() {
         email: getValue("email"),
         address: getValue("address"),
         address_uz: getValue("address_uz"),
+        address_en: getValue("address_en"),
         working_hours: getValue("working_hours"),
         working_hours_uz: getValue("working_hours_uz"),
+        working_hours_en: getValue("working_hours_en"),
         background_music_url: getValue("background_music_url"),
         brochure_file_url: brochureFileUrl,
         brochure_file_name: brochureFileName,
@@ -172,6 +182,11 @@ export default function SettingsPage() {
       } catch { setPaymentPlansUz([]); }
 
       try {
+        const plansEn = getValue("payment_plans_en");
+        setPaymentPlansEn(plansEn ? JSON.parse(plansEn) : []);
+      } catch { setPaymentPlansEn([]); }
+
+      try {
         const faq = getValue("faq_items");
         setFaqItems(faq ? JSON.parse(faq) : []);
       } catch { setFaqItems([]); }
@@ -180,6 +195,11 @@ export default function SettingsPage() {
         const faqUz = getValue("faq_items_uz");
         setFaqItemsUz(faqUz ? JSON.parse(faqUz) : []);
       } catch { setFaqItemsUz([]); }
+
+      try {
+        const faqEn = getValue("faq_items_en");
+        setFaqItemsEn(faqEn ? JSON.parse(faqEn) : []);
+      } catch { setFaqItemsEn([]); }
 
       try {
         const proj = getValue("projects");
@@ -192,6 +212,11 @@ export default function SettingsPage() {
       } catch { setProjectsUz([]); }
 
       try {
+        const projEn = getValue("projects_en");
+        setProjectsEn(projEn ? JSON.parse(projEn) : []);
+      } catch { setProjectsEn([]); }
+
+      try {
         const rawBanners = getValue("hero_banners");
         const parsedBanners = rawBanners ? JSON.parse(rawBanners) : [];
 
@@ -201,8 +226,10 @@ export default function SettingsPage() {
               image: String(item?.image || ""),
               title_ru: String(item?.title_ru || ""),
               title_uz: String(item?.title_uz || ""),
+              title_en: String(item?.title_en || ""),
               subtitle_ru: String(item?.subtitle_ru || ""),
               subtitle_uz: String(item?.subtitle_uz || ""),
+              subtitle_en: String(item?.subtitle_en || ""),
             }))
           );
         } else {
@@ -255,8 +282,10 @@ export default function SettingsPage() {
         { key: "email", value: contactForm.email },
         { key: "address", value: contactForm.address },
         { key: "address_uz", value: contactForm.address_uz },
+        { key: "address_en", value: contactForm.address_en },
         { key: "working_hours", value: contactForm.working_hours },
         { key: "working_hours_uz", value: contactForm.working_hours_uz },
+        { key: "working_hours_en", value: contactForm.working_hours_en },
         { key: "background_music_url", value: contactForm.background_music_url },
         { key: "brochure_file_url", value: contactForm.brochure_file_url },
         { key: "brochure_file_name", value: contactForm.brochure_file_name },
@@ -347,8 +376,10 @@ export default function SettingsPage() {
           item.image.trim() !== "" ||
           item.title_ru.trim() !== "" ||
           item.title_uz.trim() !== "" ||
+          item.title_en.trim() !== "" ||
           item.subtitle_ru.trim() !== "" ||
-          item.subtitle_uz.trim() !== ""
+          item.subtitle_uz.trim() !== "" ||
+          item.subtitle_en.trim() !== ""
       );
 
       const updates = [
@@ -373,6 +404,7 @@ export default function SettingsPage() {
   const savePaymentPlans = async (
     nextPlans: PaymentPlan[],
     nextPlansUz: PaymentPlan[],
+    nextPlansEn: PaymentPlan[],
     successMessage: string = t.settings.pricingSaved
   ) => {
     try {
@@ -380,10 +412,12 @@ export default function SettingsPage() {
       const updates = [
         { key: "payment_plans", value: JSON.stringify(nextPlans) },
         { key: "payment_plans_uz", value: JSON.stringify(nextPlansUz) },
+        { key: "payment_plans_en", value: JSON.stringify(nextPlansEn) },
       ];
       await settingsApi.bulkUpdate(updates);
       setPaymentPlans(nextPlans);
       setPaymentPlansUz(nextPlansUz);
+      setPaymentPlansEn(nextPlansEn);
       showNotification("success", successMessage);
     } catch (err) {
       console.error("Failed to save:", err);
@@ -394,7 +428,7 @@ export default function SettingsPage() {
   };
 
   const handleSavePricing = async () => {
-    await savePaymentPlans(paymentPlans, paymentPlansUz);
+    await savePaymentPlans(paymentPlans, paymentPlansUz, paymentPlansEn);
   };
 
   const sanitizeFaq = (items: FAQItem[]) =>
@@ -403,19 +437,23 @@ export default function SettingsPage() {
   const saveFaqItems = async (
     nextFaqItems: FAQItem[],
     nextFaqItemsUz: FAQItem[],
+    nextFaqItemsEn: FAQItem[],
     successMessage: string = t.settings.faqSaved
   ) => {
     try {
       setIsSaving(true);
       const cleanedFaqItems = sanitizeFaq(nextFaqItems);
       const cleanedFaqItemsUz = sanitizeFaq(nextFaqItemsUz);
+      const cleanedFaqItemsEn = sanitizeFaq(nextFaqItemsEn);
       const updates = [
         { key: "faq_items", value: JSON.stringify(cleanedFaqItems) },
         { key: "faq_items_uz", value: JSON.stringify(cleanedFaqItemsUz) },
+        { key: "faq_items_en", value: JSON.stringify(cleanedFaqItemsEn) },
       ];
       await settingsApi.bulkUpdate(updates);
       setFaqItems(cleanedFaqItems);
       setFaqItemsUz(cleanedFaqItemsUz);
+      setFaqItemsEn(cleanedFaqItemsEn);
       showNotification("success", successMessage);
     } catch (err) {
       console.error("Failed to save:", err);
@@ -426,12 +464,13 @@ export default function SettingsPage() {
   };
 
   const handleSaveFaq = async () => {
-    await saveFaqItems(faqItems, faqItemsUz);
+    await saveFaqItems(faqItems, faqItemsUz, faqItemsEn);
   };
 
   const saveProjects = async (
     nextProjects: ProjectItem[],
     nextProjectsUz: ProjectItem[],
+    nextProjectsEn: ProjectItem[],
     successMessage: string = t.settings.projectsSaved
   ) => {
     try {
@@ -439,10 +478,12 @@ export default function SettingsPage() {
       const updates = [
         { key: "projects", value: JSON.stringify(nextProjects) },
         { key: "projects_uz", value: JSON.stringify(nextProjectsUz) },
+        { key: "projects_en", value: JSON.stringify(nextProjectsEn) },
       ];
       await settingsApi.bulkUpdate(updates);
       setProjects(nextProjects);
       setProjectsUz(nextProjectsUz);
+      setProjectsEn(nextProjectsEn);
       showNotification("success", successMessage);
     } catch (err) {
       console.error("Failed to save:", err);
@@ -453,7 +494,7 @@ export default function SettingsPage() {
   };
 
   const handleSaveProjects = async () => {
-    await saveProjects(projects, projectsUz);
+    await saveProjects(projects, projectsUz, projectsEn);
   };
 
   
@@ -462,8 +503,10 @@ export default function SettingsPage() {
     const newPlan: PaymentPlan = { title: "", description: "", price: "", period: "", features: [] };
     if (activeLang === "ru") {
       setPaymentPlans([newPlan, ...paymentPlans]);
-    } else {
+    } else if (activeLang === "uz") {
       setPaymentPlansUz([newPlan, ...paymentPlansUz]);
+    } else {
+      setPaymentPlansEn([newPlan, ...paymentPlansEn]);
     }
     showNotification("success", t.settings.planAdded);
   };
@@ -473,10 +516,14 @@ export default function SettingsPage() {
       const updated = [...paymentPlans];
       updated[index] = { ...updated[index], [field]: value };
       setPaymentPlans(updated);
-    } else {
+    } else if (activeLang === "uz") {
       const updated = [...paymentPlansUz];
       updated[index] = { ...updated[index], [field]: value };
       setPaymentPlansUz(updated);
+    } else {
+      const updated = [...paymentPlansEn];
+      updated[index] = { ...updated[index], [field]: value };
+      setPaymentPlansEn(updated);
     }
   };
 
@@ -484,11 +531,15 @@ export default function SettingsPage() {
     if (activeLang === "ru") {
       const nextPlans = paymentPlans.filter((_, i) => i !== index);
       setPaymentPlans(nextPlans);
-      savePaymentPlans(nextPlans, paymentPlansUz, t.settings.planRemoved);
-    } else {
+      savePaymentPlans(nextPlans, paymentPlansUz, paymentPlansEn, t.settings.planRemoved);
+    } else if (activeLang === "uz") {
       const nextPlansUz = paymentPlansUz.filter((_, i) => i !== index);
       setPaymentPlansUz(nextPlansUz);
-      savePaymentPlans(paymentPlans, nextPlansUz, t.settings.planRemoved);
+      savePaymentPlans(paymentPlans, nextPlansUz, paymentPlansEn, t.settings.planRemoved);
+    } else {
+      const nextPlansEn = paymentPlansEn.filter((_, i) => i !== index);
+      setPaymentPlansEn(nextPlansEn);
+      savePaymentPlans(paymentPlans, paymentPlansUz, nextPlansEn, t.settings.planRemoved);
     }
   };
 
@@ -497,8 +548,10 @@ export default function SettingsPage() {
     const newItem: FAQItem = { question: "", answer: "" };
     if (activeLang === "ru") {
       setFaqItems([newItem, ...faqItems]);
-    } else {
+    } else if (activeLang === "uz") {
       setFaqItemsUz([newItem, ...faqItemsUz]);
+    } else {
+      setFaqItemsEn([newItem, ...faqItemsEn]);
     }
     showNotification("success", t.settings.faqAdded);
   };
@@ -508,10 +561,14 @@ export default function SettingsPage() {
       const updated = [...faqItems];
       updated[index] = { ...updated[index], [field]: value };
       setFaqItems(updated);
-    } else {
+    } else if (activeLang === "uz") {
       const updated = [...faqItemsUz];
       updated[index] = { ...updated[index], [field]: value };
       setFaqItemsUz(updated);
+    } else {
+      const updated = [...faqItemsEn];
+      updated[index] = { ...updated[index], [field]: value };
+      setFaqItemsEn(updated);
     }
   };
 
@@ -519,18 +576,28 @@ export default function SettingsPage() {
     if (activeLang === "ru") {
       const nextFaqItems = faqItems.filter((_, i) => i !== index);
       setFaqItems(nextFaqItems);
-      saveFaqItems(nextFaqItems, faqItemsUz, t.settings.faqRemoved);
-    } else {
+      saveFaqItems(nextFaqItems, faqItemsUz, faqItemsEn, t.settings.faqRemoved);
+    } else if (activeLang === "uz") {
       const nextFaqItemsUz = faqItemsUz.filter((_, i) => i !== index);
       setFaqItemsUz(nextFaqItemsUz);
-      saveFaqItems(faqItems, nextFaqItemsUz, t.settings.faqRemoved);
+      saveFaqItems(faqItems, nextFaqItemsUz, faqItemsEn, t.settings.faqRemoved);
+    } else {
+      const nextFaqItemsEn = faqItemsEn.filter((_, i) => i !== index);
+      setFaqItemsEn(nextFaqItemsEn);
+      saveFaqItems(faqItems, faqItemsUz, nextFaqItemsEn, t.settings.faqRemoved);
     }
   };
 
   // Projects helpers
   const addProject = () => {
     const newProject: ProjectItem = {
-      number: String((activeLang === "ru" ? projects : projectsUz).length + 1).padStart(2, "0"),
+      number: String(
+        (activeLang === "ru"
+          ? projects
+          : activeLang === "uz"
+            ? projectsUz
+            : projectsEn).length + 1
+      ).padStart(2, "0"),
       label: "",
       title: "",
       titleLine2: "",
@@ -541,8 +608,10 @@ export default function SettingsPage() {
     };
     if (activeLang === "ru") {
       setProjects([newProject, ...projects]);
-    } else {
+    } else if (activeLang === "uz") {
       setProjectsUz([newProject, ...projectsUz]);
+    } else {
+      setProjectsEn([newProject, ...projectsEn]);
     }
     showNotification("success", t.settings.projectAdded);
   };
@@ -552,10 +621,14 @@ export default function SettingsPage() {
       const updated = [...projects];
       updated[index] = { ...updated[index], [field]: value };
       setProjects(updated);
-    } else {
+    } else if (activeLang === "uz") {
       const updated = [...projectsUz];
       updated[index] = { ...updated[index], [field]: value };
       setProjectsUz(updated);
+    } else {
+      const updated = [...projectsEn];
+      updated[index] = { ...updated[index], [field]: value };
+      setProjectsEn(updated);
     }
   };
 
@@ -563,18 +636,22 @@ export default function SettingsPage() {
     if (activeLang === "ru") {
       const nextProjects = projects.filter((_, i) => i !== index);
       setProjects(nextProjects);
-      saveProjects(nextProjects, projectsUz, t.settings.projectRemoved);
-    } else {
+      saveProjects(nextProjects, projectsUz, projectsEn, t.settings.projectRemoved);
+    } else if (activeLang === "uz") {
       const nextProjectsUz = projectsUz.filter((_, i) => i !== index);
       setProjectsUz(nextProjectsUz);
-      saveProjects(projects, nextProjectsUz, t.settings.projectRemoved);
+      saveProjects(projects, nextProjectsUz, projectsEn, t.settings.projectRemoved);
+    } else {
+      const nextProjectsEn = projectsEn.filter((_, i) => i !== index);
+      setProjectsEn(nextProjectsEn);
+      saveProjects(projects, projectsUz, nextProjectsEn, t.settings.projectRemoved);
     }
   };
 
   const addBanner = () => {
     setHeroBanners((prev) => [
       ...prev,
-      { image: "", title_ru: "", title_uz: "", subtitle_ru: "", subtitle_uz: "" },
+      { image: "", title_ru: "", title_uz: "", title_en: "", subtitle_ru: "", subtitle_uz: "", subtitle_en: "" },
     ]);
     showNotification("success", t.settings.bannerAdded);
   };
@@ -593,9 +670,9 @@ export default function SettingsPage() {
     void saveHeroBanners(next, t.settings.bannerRemoved);
   };
 
-  const currentPlans = activeLang === "ru" ? paymentPlans : paymentPlansUz;
-  const currentFaq = activeLang === "ru" ? faqItems : faqItemsUz;
-  const currentProjects = activeLang === "ru" ? projects : projectsUz;
+  const currentPlans = activeLang === "ru" ? paymentPlans : activeLang === "uz" ? paymentPlansUz : paymentPlansEn;
+  const currentFaq = activeLang === "ru" ? faqItems : activeLang === "uz" ? faqItemsUz : faqItemsEn;
+  const currentProjects = activeLang === "ru" ? projects : activeLang === "uz" ? projectsUz : projectsEn;
 
   if (isLoading) {
     return (
@@ -723,6 +800,15 @@ export default function SettingsPage() {
                   <Globe className="w-4 h-4" />
                   O&apos;zbek
                 </button>
+                <button
+                  onClick={() => setActiveLang("en")}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeLang === "en" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <Globe className="w-4 h-4" />
+                  EN
+                </button>
               </div>
 
               <div className="space-y-5">
@@ -731,19 +817,18 @@ export default function SettingsPage() {
                     <Phone className="w-4 h-4 text-gray-400" />
                     {t.settings.phoneLabel}
                   </label>
-                  <input
-                    type="text"
+                  <PhoneNumberInput
                     value={contactForm.phone}
-                    onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                    onChange={(value) => setContactForm({ ...contactForm, phone: value })}
                     placeholder="+998 90 123 45 67"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-green-500 focus-within:border-transparent"
                   />
                 </div>
 
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                     <Mail className="w-4 h-4 text-gray-400" />
-                    Email
+                    {t.settings.emailLabel}
                   </label>
                   <input
                     type="email"
@@ -757,15 +842,15 @@ export default function SettingsPage() {
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                     <MapPin className="w-4 h-4 text-gray-400" />
-                    {t.settings.addressLabel} {activeLang === "ru" ? t.settings.addressLangRu : t.settings.addressLangUz}
+                    {t.settings.addressLabel} {activeLang === "ru" ? t.settings.addressLangRu : activeLang === "uz" ? t.settings.addressLangUz : t.settings.addressLangEn}
                   </label>
                   <textarea
-                    value={activeLang === "ru" ? contactForm.address : contactForm.address_uz}
+                    value={activeLang === "ru" ? contactForm.address : activeLang === "uz" ? contactForm.address_uz : contactForm.address_en}
                     onChange={(e) => setContactForm({
                       ...contactForm,
-                      [activeLang === "ru" ? "address" : "address_uz"]: e.target.value
+                      [activeLang === "ru" ? "address" : activeLang === "uz" ? "address_uz" : "address_en"]: e.target.value
                     })}
-                    placeholder={activeLang === "ru" ? "Город Ташкент, улица..." : "Toshkent shahri, ko'cha..."}
+                    placeholder={activeLang === "ru" ? "Город Ташкент, улица..." : activeLang === "uz" ? "Toshkent shahri, ko'cha..." : "Tashkent city, street..."}
                     rows={2}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
                   />
@@ -774,16 +859,16 @@ export default function SettingsPage() {
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                     <Clock className="w-4 h-4 text-gray-400" />
-                    {t.settings.workingHoursLabel} {activeLang === "ru" ? t.settings.addressLangRu : t.settings.addressLangUz}
+                    {t.settings.workingHoursLabel} {activeLang === "ru" ? t.settings.addressLangRu : activeLang === "uz" ? t.settings.addressLangUz : t.settings.addressLangEn}
                   </label>
                   <input
                     type="text"
-                    value={activeLang === "ru" ? contactForm.working_hours : contactForm.working_hours_uz}
+                    value={activeLang === "ru" ? contactForm.working_hours : activeLang === "uz" ? contactForm.working_hours_uz : contactForm.working_hours_en}
                     onChange={(e) => setContactForm({
                       ...contactForm,
-                      [activeLang === "ru" ? "working_hours" : "working_hours_uz"]: e.target.value
+                      [activeLang === "ru" ? "working_hours" : activeLang === "uz" ? "working_hours_uz" : "working_hours_en"]: e.target.value
                     })}
-                    placeholder={activeLang === "ru" ? "Пн-Пт: 9:00 - 18:00" : "Du-Ju: 9:00 - 18:00"}
+                    placeholder={activeLang === "ru" ? "Пн-Пт: 9:00 - 18:00" : activeLang === "uz" ? "Du-Ju: 9:00 - 18:00" : "Mon-Fri: 9:00 - 18:00"}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
@@ -1012,6 +1097,15 @@ export default function SettingsPage() {
                     <Globe className="w-4 h-4" />
                     {t.settings.uzbek}
                   </button>
+                  <button
+                    onClick={() => setActiveLang("en")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      activeLang === "en" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+                    }`}
+                  >
+                    <Globe className="w-4 h-4" />
+                    EN
+                  </button>
                 </div>
                 <button
                   onClick={addPaymentPlan}
@@ -1047,7 +1141,7 @@ export default function SettingsPage() {
                               type="text"
                               value={plan.title}
                               onChange={(e) => updatePaymentPlan(index, "title", e.target.value)}
-                              placeholder={activeLang === "ru" ? "Ипотека" : "Ipoteka"}
+                              placeholder={activeLang === "ru" ? "Ипотека" : activeLang === "uz" ? "Ipoteka" : "Mortgage"}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
                             />
                           </div>
@@ -1067,7 +1161,7 @@ export default function SettingsPage() {
                               type="text"
                               value={plan.period}
                               onChange={(e) => updatePaymentPlan(index, "period", e.target.value)}
-                              placeholder={activeLang === "ru" ? "в месяц" : "oyiga"}
+                              placeholder={activeLang === "ru" ? "в месяц" : activeLang === "uz" ? "oyiga" : "per month"}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
                             />
                           </div>
@@ -1076,7 +1170,7 @@ export default function SettingsPage() {
                             <RichTextEditor
                               value={plan.description}
                               onChange={(value) => updatePaymentPlan(index, "description", value)}
-                              placeholder={activeLang === "ru" ? "Описание..." : "Tavsif..."}
+                              placeholder={activeLang === "ru" ? "Описание..." : activeLang === "uz" ? "Tavsif..." : "Description..."}
                             />
                           </div>
                         </div>
@@ -1096,7 +1190,9 @@ export default function SettingsPage() {
                           onChange={(e) => updatePaymentPlan(index, "features", e.target.value.split("\n"))}
                           placeholder={activeLang === "ru"
                             ? "Первоначальный взнос 30%\nСрок до 15 лет\nБез комиссий"
-                            : "Dastlabki to'lov 30%\nMuddat 15 yilgacha\nKomissiyasiz"}
+                            : activeLang === "uz"
+                              ? "Dastlabki to'lov 30%\nMuddat 15 yilgacha\nKomissiyasiz"
+                              : "Initial payment 30%\nTerm up to 15 years\nNo commission"}
                           rows={3}
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
                         />
@@ -1143,6 +1239,15 @@ export default function SettingsPage() {
                     <Globe className="w-4 h-4" />
                     {t.settings.uzbek}
                   </button>
+                  <button
+                    onClick={() => setActiveLang("en")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      activeLang === "en" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+                    }`}
+                  >
+                    <Globe className="w-4 h-4" />
+                    EN
+                  </button>
                 </div>
                 <button
                   onClick={addFaqItem}
@@ -1180,7 +1285,7 @@ export default function SettingsPage() {
                               type="text"
                               value={item.question}
                               onChange={(e) => updateFaqItem(index, "question", e.target.value)}
-                              placeholder={activeLang === "ru" ? "Вопрос..." : "Savol..."}
+                              placeholder={activeLang === "ru" ? "Вопрос..." : activeLang === "uz" ? "Savol..." : "Question..."}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
                             />
                           </div>
@@ -1189,7 +1294,7 @@ export default function SettingsPage() {
                             <textarea
                               value={item.answer}
                               onChange={(e) => updateFaqItem(index, "answer", e.target.value)}
-                              placeholder={activeLang === "ru" ? "Ответ..." : "Javob..."}
+                              placeholder={activeLang === "ru" ? "Ответ..." : activeLang === "uz" ? "Javob..." : "Answer..."}
                               rows={3}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
                             />
@@ -1243,6 +1348,15 @@ export default function SettingsPage() {
                   >
                     <Globe className="w-4 h-4" />
                     {t.settings.uzbek}
+                  </button>
+                  <button
+                    onClick={() => setActiveLang("en")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      activeLang === "en" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+                    }`}
+                  >
+                    <Globe className="w-4 h-4" />
+                    EN
                   </button>
                 </div>
                 <button
@@ -1305,7 +1419,7 @@ export default function SettingsPage() {
                             type="text"
                             value={project.label}
                             onChange={(e) => updateProject(index, "label", e.target.value)}
-                            placeholder={activeLang === "ru" ? "Современный Дизайн" : "Zamonaviy Dizayn"}
+                            placeholder={activeLang === "ru" ? "Современный Дизайн" : activeLang === "uz" ? "Zamonaviy Dizayn" : "Contemporary Design"}
                             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
                           />
                         </div>
@@ -1315,7 +1429,7 @@ export default function SettingsPage() {
                             type="text"
                             value={project.title}
                             onChange={(e) => updateProject(index, "title", e.target.value)}
-                            placeholder={activeLang === "ru" ? "Комфортное" : "Qulay"}
+                            placeholder={activeLang === "ru" ? "Комфортное" : activeLang === "uz" ? "Qulay" : "Comfortable"}
                             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
                           />
                         </div>
@@ -1325,7 +1439,7 @@ export default function SettingsPage() {
                             type="text"
                             value={project.titleLine2}
                             onChange={(e) => updateProject(index, "titleLine2", e.target.value)}
-                            placeholder={activeLang === "ru" ? "жилье" : "turar-joy"}
+                            placeholder={activeLang === "ru" ? "жилье" : activeLang === "uz" ? "turar-joy" : "living"}
                             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
                           />
                         </div>
@@ -1346,7 +1460,7 @@ export default function SettingsPage() {
                         <RichTextEditor
                           value={project.description || ""}
                           onChange={(value) => updateProject(index, "description", value)}
-                          placeholder={activeLang === "ru" ? "Описание проекта..." : "Loyiha tavsifi..."}
+                          placeholder={activeLang === "ru" ? "Описание проекта..." : activeLang === "uz" ? "Loyiha tavsifi..." : "Project description..."}
                         />
                       </div>
 
@@ -1359,7 +1473,9 @@ export default function SettingsPage() {
                           onChange={(e) => updateProject(index, "features", e.target.value.split("\n").filter(f => f.trim()))}
                           placeholder={activeLang === "ru"
                             ? "Центральное кондиционирование\nПриточно-вытяжная вентиляция\nСистема умный дом"
-                            : "Markaziy konditsioner\nKirish-chiqish ventilyatsiyasi\nAqlli uy tizimi"}
+                            : activeLang === "uz"
+                              ? "Markaziy konditsioner\nKirish-chiqish ventilyatsiyasi\nAqlli uy tizimi"
+                              : "Central air conditioning\nSupply and exhaust ventilation\nSmart home system"}
                           rows={4}
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
                         />
@@ -1479,6 +1595,17 @@ export default function SettingsPage() {
                           </div>
                           <div>
                             <label className="text-xs font-medium text-gray-500 mb-1 block">
+                              {t.settings.bannerTitleEn}
+                            </label>
+                            <textarea
+                              value={banner.title_en}
+                              onChange={(e) => updateBanner(index, "title_en", e.target.value)}
+                              rows={3}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-500 mb-1 block">
                               {t.settings.bannerSubtitleRu}
                             </label>
                             <textarea
@@ -1495,6 +1622,17 @@ export default function SettingsPage() {
                             <textarea
                               value={banner.subtitle_uz}
                               onChange={(e) => updateBanner(index, "subtitle_uz", e.target.value)}
+                              rows={2}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-500 mb-1 block">
+                              {t.settings.bannerSubtitleEn}
+                            </label>
+                            <textarea
+                              value={banner.subtitle_en}
+                              onChange={(e) => updateBanner(index, "subtitle_en", e.target.value)}
                               rows={2}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
                             />

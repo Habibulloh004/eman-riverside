@@ -5,6 +5,7 @@ import { CheckCircle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { submissionsApi } from "@/lib/api/submissions";
 import { Button } from "@/components/ui/button";
+import PhoneNumberInput from "@/components/ui/phone-input";
 import {
   Dialog,
   DialogContent,
@@ -92,14 +93,12 @@ export default function RequestModal({ open, onOpenChange, source = "modal", est
                 />
               </div>
               <div>
-                <input
-                  name="phone"
-                  type="tel"
-                  placeholder={t.requestModal.phone}
+                <PhoneNumberInput
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(value) => setFormData({ ...formData, phone: value })}
+                  placeholder={t.requestModal.phone}
                   required
-                  className="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                  className="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-lg placeholder:text-gray-400 focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary transition-colors"
                 />
               </div>
               <div>

@@ -87,7 +87,7 @@ function SubmissionsContent() {
         setSelectedItem({ ...selectedItem, status: newStatus as Submission["status"] });
       }
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to update");
+      alert(error instanceof Error ? error.message : t.settings.saveError);
     }
   };
 
@@ -99,7 +99,7 @@ function SubmissionsContent() {
       loadItems();
       setSelectedItem({ ...selectedItem, notes });
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to save notes");
+      alert(error instanceof Error ? error.message : t.settings.saveError);
     }
   };
 
@@ -113,7 +113,7 @@ function SubmissionsContent() {
         setSelectedItem(null);
       }
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to delete");
+      alert(error instanceof Error ? error.message : t.settings.saveError);
     }
   };
 

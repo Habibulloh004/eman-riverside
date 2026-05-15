@@ -4,8 +4,10 @@ export interface GalleryItem {
   id: number;
   title: string;
   title_uz: string;
+  title_en: string;
   description: string;
   description_uz: string;
+  description_en: string;
   type: 'image' | 'video';
   url: string;
   redirect_url?: string;
@@ -13,8 +15,10 @@ export interface GalleryItem {
   category: string;
   home_section: string;
   home_section_uz: string;
+  home_section_en: string;
   home_desc: string;
   home_desc_uz: string;
+  home_desc_en: string;
   home_order: number;
   sort_order: number;
   is_published: boolean;
@@ -30,8 +34,10 @@ interface GalleryListResponse {
 export interface CreateGalleryRequest {
   title: string;
   title_uz: string;
+  title_en: string;
   description: string;
   description_uz: string;
+  description_en: string;
   type: 'image' | 'video';
   url: string;
   redirect_url?: string;
@@ -39,8 +45,10 @@ export interface CreateGalleryRequest {
   category: string;
   home_section: string;
   home_section_uz: string;
+  home_section_en: string;
   home_desc: string;
   home_desc_uz: string;
+  home_desc_en: string;
   home_order: number;
   sort_order: number;
   is_published: boolean;

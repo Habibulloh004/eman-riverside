@@ -9,11 +9,13 @@ import { PageHero } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import PhoneNumberInput from "@/components/ui/phone-input";
 import { MapPin, Phone, Mail, Check, Plus, Minus } from "lucide-react";
 import { YandexMap } from "@/components/shared";
 import { submissionsApi } from "@/lib/api/submissions";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/contexts/SettingsContext";
+import { pickLocalizedString } from "@/lib/i18n/localized";
 import { sanitizeRichTextHtml } from "@/lib/rich-text";
 
 export default function ApartmentRequestPage() {
@@ -31,9 +33,73 @@ export default function ApartmentRequestPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const uiCopy =
+    language === "uz"
+      ? {
+          apartmentId: "Kvartira ID",
+          selected: "Tanlangan",
+          select: "Tanlash",
+          paymentPlan: "To'lov rejasi",
+          notSelected: "Tanlanmagan",
+          mortgagePrice: "1 mln so'm",
+          installmentPrice: "2 mln so'm",
+          mortgageFeatures: [
+            "Boshlang'ich to'lov 30% dan",
+            "Muddat 36 oygacha",
+            "Foizsiz",
+          ],
+          installmentFeatures: [
+            "Boshlang'ich to'lov 20% dan",
+            "Muddat 24 oygacha",
+            "5% chegirma",
+          ],
+        }
+      : language === "ru"
+        ? {
+            apartmentId: "Квартира ID",
+            selected: "Выбрано",
+            select: "Выбрать",
+            paymentPlan: "План оплаты",
+            notSelected: "Не выбрано",
+            mortgagePrice: "1 млн сум",
+            installmentPrice: "2 млн сум",
+            mortgageFeatures: [
+              "Первоначальный взнос от 30%",
+              "Срок до 36 месяцев",
+              "Без процентов",
+            ],
+            installmentFeatures: [
+              "Первоначальный взнос от 20%",
+              "Срок до 24 месяцев",
+              "Скидка 5%",
+            ],
+          }
+        : {
+            apartmentId: "Apartment ID",
+            selected: "Selected",
+            select: "Select",
+            paymentPlan: "Payment plan",
+            notSelected: "Not selected",
+            mortgagePrice: "1 million UZS",
+            installmentPrice: "2 million UZS",
+            mortgageFeatures: [
+              "Initial payment from 30%",
+              "Term up to 36 months",
+              "Interest-free",
+            ],
+            installmentFeatures: [
+              "Initial payment from 20%",
+              "Term up to 24 months",
+              "5% discount",
+            ],
+          };
 
   // Dynamic contact info from settings
-  const address = language === "uz" ? settings.contact.address_uz : settings.contact.address;
+  const address = pickLocalizedString(language, {
+    ru: settings.contact.address,
+    uz: settings.contact.address_uz,
+    en: settings.contact.address_en,
+  });
   const phoneHref = `tel:${settings.contact.phone.replace(/\s/g, "")}`;
   const emailHref = `mailto:${settings.contact.email}`;
 
@@ -57,7 +123,12 @@ export default function ApartmentRequestPage() {
   ];
 
   // Dynamic payment plans from settings
-  const paymentPlans = language === "uz" ? settings.payment_plans_uz : settings.payment_plans;
+  const paymentPlans =
+    language === "uz"
+      ? settings.payment_plans_uz
+      : language === "en"
+        ? settings.payment_plans_en
+        : settings.payment_plans;
   const paymentOptions = paymentPlans.length > 0
       ? paymentPlans.map((plan, idx) => ({
         title: plan.title,
@@ -73,35 +144,32 @@ export default function ApartmentRequestPage() {
         {
           title: t.request.mortgage,
           description: t.request.mortgageDesc,
-          price: language === "uz" ? "1 mln so'm" : "1 млн сум",
+          price: uiCopy.mortgagePrice,
           priceNote: t.request.perMonth,
           color: "primary",
           buttonText: t.request.learnMore,
           buttonFilled: true,
-          features: [
-            language === "uz" ? "Boshlang'ich to'lov 30% dan" : "Первоначальный взнос от 30%",
-            language === "uz" ? "Muddat 36 oygacha" : "Срок до 36 месяцев",
-            language === "uz" ? "Foizsiz" : "Без процентов",
-          ],
+          features: uiCopy.mortgageFeatures,
         },
         {
           title: t.request.installment,
           description: t.request.installmentDesc,
-          price: language === "uz" ? "2 mln so'm" : "2 млн сум",
+          price: uiCopy.installmentPrice,
           priceNote: t.request.perMonth,
           color: "white",
           buttonText: t.request.learnMore,
           buttonFilled: false,
-          features: [
-            language === "uz" ? "Boshlang'ich to'lov 20% dan" : "Первоначальный взнос от 20%",
-            language === "uz" ? "Muddat 24 oygacha" : "Срок до 24 месяцев",
-            language === "uz" ? "5% chegirma" : "Скидка 5%",
-          ],
+          features: uiCopy.installmentFeatures,
         },
       ];
 
   // Dynamic FAQ from settings
-  const faqData = language === "uz" ? settings.faq_items_uz : settings.faq_items;
+  const faqData =
+    language === "uz"
+      ? settings.faq_items_uz
+      : language === "en"
+        ? settings.faq_items_en
+        : settings.faq_items;
   const faqItems = faqData.length > 0
     ? faqData
     : [
@@ -131,7 +199,7 @@ export default function ApartmentRequestPage() {
     const selectedPlanTitle = getSelectedPlanTitle();
     const messageText = formData.comment
       ? formData.comment
-      : `${language === "uz" ? "Kvartira ID" : "Квартира ID"}: ${apartmentId}`;
+      : `${uiCopy.apartmentId}: ${apartmentId}`;
 
     try {
       await submissionsApi.create({
@@ -300,7 +368,7 @@ export default function ApartmentRequestPage() {
                           <Check className="w-4 h-4 text-white" />
                         </div>
                         <span className={`text-sm font-medium ${option.color === "primary" ? "text-green-300" : "text-green-600"}`}>
-                          {language === "uz" ? "Tanlangan" : "Выбрано"}
+                          {uiCopy.selected}
                         </span>
                       </div>
                     )}
@@ -329,8 +397,8 @@ export default function ApartmentRequestPage() {
                       }`}
                     >
                       {isSelected
-                        ? (language === "uz" ? "Tanlangan" : "Выбрано")
-                        : (language === "uz" ? "Tanlash" : "Выбрать")}
+                        ? uiCopy.selected
+                        : uiCopy.select}
                     </button>
 
                     {/* Features */}
@@ -484,13 +552,13 @@ export default function ApartmentRequestPage() {
                 <div className="bg-white rounded-lg p-4 mb-6 space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-500">
-                      {language === "uz" ? "Kvartira ID:" : "ID квартиры:"}
+                      {uiCopy.apartmentId}:
                     </span>
                     <span className="font-medium text-gray-900">#{apartmentId}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-500">
-                      {language === "uz" ? "To'lov rejasi:" : "План оплаты:"}
+                      {uiCopy.paymentPlan}:
                     </span>
                     {selectedPlan !== null ? (
                       <span className="font-medium text-primary">
@@ -498,7 +566,7 @@ export default function ApartmentRequestPage() {
                       </span>
                     ) : (
                       <span className="text-gray-400 italic">
-                        {language === "uz" ? "Tanlanmagan" : "Не выбран"}
+                        {uiCopy.notSelected}
                       </span>
                     )}
                   </div>
@@ -517,13 +585,12 @@ export default function ApartmentRequestPage() {
                       />
                     </div>
                     <div>
-                      <Input
-                        type="tel"
-                        placeholder={t.request.phone}
+                      <PhoneNumberInput
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        onChange={(value) => setFormData({ ...formData, phone: value })}
+                        placeholder={t.request.phone}
                         required
-                        className="bg-transparent border-0 border-b border-gray-300 rounded-none px-0 h-12 placeholder:text-gray-400 placeholder:text-xs focus-visible:ring-0 focus-visible:border-primary"
+                        className="bg-transparent border-0 border-b border-gray-300 rounded-none px-0 h-12 placeholder:text-gray-400 placeholder:text-xs focus-within:border-primary"
                       />
                     </div>
                   </div>

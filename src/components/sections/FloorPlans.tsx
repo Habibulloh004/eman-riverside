@@ -43,13 +43,16 @@ function getEstateImages(estate: Estate): string[] {
   return images;
 }
 
-function mapEstateToPlan(estate: Estate): PlanItem {
+function mapEstateToPlan(
+  estate: Estate,
+  labels: { roomApartment: string; floor: string }
+): PlanItem {
   return {
     key: `estate-${estate.id}-${estate.estate_floor}-${estate.estate_rooms}-${estate.estate_area}`,
     href: `/catalog/${estate.id}`,
-    type: `${estate.estate_rooms}-комнатная`,
+    type: `${estate.estate_rooms}${labels.roomApartment}`,
     area: `${estate.estate_area} м²`,
-    description: estate.title || `Этаж ${estate.estate_floor}`,
+    description: estate.title || `${labels.floor} ${estate.estate_floor}`,
     images: getEstateImages(estate),
   };
 }
@@ -118,11 +121,20 @@ function PlanCarousel({ images, alt }: { images: string[]; alt: string }) {
 }
 
 export default function FloorPlans() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { data: estates, isLoading } = useRandomEstates(2);
   const sectionRef = useRef<HTMLElement | null>(null);
 
-  const estatePlans = estates.map(mapEstateToPlan);
+  const roomApartment =
+    language === "uz" ? "-xonali" : language === "ru" ? "-комнатная квартира" : "-room apartment";
+  const floorLabel = language === "uz" ? "Qavat" : language === "ru" ? "Этаж" : "Floor";
+
+  const estatePlans = estates.map((estate) =>
+    mapEstateToPlan(estate, {
+      roomApartment,
+      floor: floorLabel,
+    })
+  );
   const fallbackPlans: PlanItem[] = t.floorPlans.plans.map((p, i) => ({
     key: `fallback-${i}`,
     href: "/catalog",
