@@ -25,7 +25,6 @@ import {
   Plus,
   Trash2,
   GripVertical,
-  Layers,
   Music,
   FileText,
   Upload,
@@ -46,23 +45,6 @@ interface PaymentPlan {
 interface FAQItem {
   question: string;
   answer: string;
-}
-
-interface ProjectItemDetail {
-  title: string;
-  list?: string[];
-  description?: string;
-}
-
-interface ProjectItem {
-  number: string;
-  label: string;
-  title: string;
-  titleLine2: string;
-  image: string;
-  items?: ProjectItemDetail[];
-  description?: string;
-  features?: string[];
 }
 
 interface HeroBannerItem {
@@ -96,7 +78,7 @@ export default function SettingsPage() {
   const [isUploadingMusic, setIsUploadingMusic] = useState(false);
   const [isUploadingBrochure, setIsUploadingBrochure] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
-  const [activeTab, setActiveTab] = useState<"contact" | "social" | "pricing" | "faq" | "projects" | "banners">("contact");
+  const [activeTab, setActiveTab] = useState<"contact" | "social" | "pricing" | "faq" | "banners">("contact");
   const [activeLang, setActiveLang] = useState<"ru" | "uz" | "en">("ru");
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const { t } = useAdminLanguage();
@@ -133,9 +115,6 @@ export default function SettingsPage() {
   const [faqItemsUz, setFaqItemsUz] = useState<FAQItem[]>([]);
   const [faqItemsEn, setFaqItemsEn] = useState<FAQItem[]>([]);
 
-  const [projects, setProjects] = useState<ProjectItem[]>([]);
-  const [projectsUz, setProjectsUz] = useState<ProjectItem[]>([]);
-  const [projectsEn, setProjectsEn] = useState<ProjectItem[]>([]);
   const [heroBanners, setHeroBanners] = useState<HeroBannerItem[]>([]);
 
   const loadSettings = useCallback(async () => {
@@ -200,21 +179,6 @@ export default function SettingsPage() {
         const faqEn = getValue("faq_items_en");
         setFaqItemsEn(faqEn ? JSON.parse(faqEn) : []);
       } catch { setFaqItemsEn([]); }
-
-      try {
-        const proj = getValue("projects");
-        setProjects(proj ? JSON.parse(proj) : []);
-      } catch { setProjects([]); }
-
-      try {
-        const projUz = getValue("projects_uz");
-        setProjectsUz(projUz ? JSON.parse(projUz) : []);
-      } catch { setProjectsUz([]); }
-
-      try {
-        const projEn = getValue("projects_en");
-        setProjectsEn(projEn ? JSON.parse(projEn) : []);
-      } catch { setProjectsEn([]); }
 
       try {
         const rawBanners = getValue("hero_banners");
@@ -467,37 +431,6 @@ export default function SettingsPage() {
     await saveFaqItems(faqItems, faqItemsUz, faqItemsEn);
   };
 
-  const saveProjects = async (
-    nextProjects: ProjectItem[],
-    nextProjectsUz: ProjectItem[],
-    nextProjectsEn: ProjectItem[],
-    successMessage: string = t.settings.projectsSaved
-  ) => {
-    try {
-      setIsSaving(true);
-      const updates = [
-        { key: "projects", value: JSON.stringify(nextProjects) },
-        { key: "projects_uz", value: JSON.stringify(nextProjectsUz) },
-        { key: "projects_en", value: JSON.stringify(nextProjectsEn) },
-      ];
-      await settingsApi.bulkUpdate(updates);
-      setProjects(nextProjects);
-      setProjectsUz(nextProjectsUz);
-      setProjectsEn(nextProjectsEn);
-      showNotification("success", successMessage);
-    } catch (err) {
-      console.error("Failed to save:", err);
-      showNotification("error", t.settings.saveError);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleSaveProjects = async () => {
-    await saveProjects(projects, projectsUz, projectsEn);
-  };
-
-  
   // Payment Plans helpers
   const addPaymentPlan = () => {
     const newPlan: PaymentPlan = { title: "", description: "", price: "", period: "", features: [] };
@@ -588,66 +521,6 @@ export default function SettingsPage() {
     }
   };
 
-  // Projects helpers
-  const addProject = () => {
-    const newProject: ProjectItem = {
-      number: String(
-        (activeLang === "ru"
-          ? projects
-          : activeLang === "uz"
-            ? projectsUz
-            : projectsEn).length + 1
-      ).padStart(2, "0"),
-      label: "",
-      title: "",
-      titleLine2: "",
-      image: "/images/hero/1.png",
-      items: [],
-      description: "",
-      features: [],
-    };
-    if (activeLang === "ru") {
-      setProjects([newProject, ...projects]);
-    } else if (activeLang === "uz") {
-      setProjectsUz([newProject, ...projectsUz]);
-    } else {
-      setProjectsEn([newProject, ...projectsEn]);
-    }
-    showNotification("success", t.settings.projectAdded);
-  };
-
-  const updateProject = (index: number, field: keyof ProjectItem, value: unknown) => {
-    if (activeLang === "ru") {
-      const updated = [...projects];
-      updated[index] = { ...updated[index], [field]: value };
-      setProjects(updated);
-    } else if (activeLang === "uz") {
-      const updated = [...projectsUz];
-      updated[index] = { ...updated[index], [field]: value };
-      setProjectsUz(updated);
-    } else {
-      const updated = [...projectsEn];
-      updated[index] = { ...updated[index], [field]: value };
-      setProjectsEn(updated);
-    }
-  };
-
-  const removeProject = (index: number) => {
-    if (activeLang === "ru") {
-      const nextProjects = projects.filter((_, i) => i !== index);
-      setProjects(nextProjects);
-      saveProjects(nextProjects, projectsUz, projectsEn, t.settings.projectRemoved);
-    } else if (activeLang === "uz") {
-      const nextProjectsUz = projectsUz.filter((_, i) => i !== index);
-      setProjectsUz(nextProjectsUz);
-      saveProjects(projects, nextProjectsUz, projectsEn, t.settings.projectRemoved);
-    } else {
-      const nextProjectsEn = projectsEn.filter((_, i) => i !== index);
-      setProjectsEn(nextProjectsEn);
-      saveProjects(projects, projectsUz, nextProjectsEn, t.settings.projectRemoved);
-    }
-  };
-
   const addBanner = () => {
     setHeroBanners((prev) => [
       ...prev,
@@ -672,7 +545,6 @@ export default function SettingsPage() {
 
   const currentPlans = activeLang === "ru" ? paymentPlans : activeLang === "uz" ? paymentPlansUz : paymentPlansEn;
   const currentFaq = activeLang === "ru" ? faqItems : activeLang === "uz" ? faqItemsUz : faqItemsEn;
-  const currentProjects = activeLang === "ru" ? projects : activeLang === "uz" ? projectsUz : projectsEn;
 
   if (isLoading) {
     return (
@@ -750,17 +622,6 @@ export default function SettingsPage() {
           >
             <HelpCircle className="w-4 h-4" />
             FAQ
-          </button>
-          <button
-            onClick={() => setActiveTab("projects")}
-            className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
-              activeTab === "projects"
-                ? "text-green-600 border-b-2 border-green-600 bg-green-50/50"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-            }`}
-          >
-            <Layers className="w-4 h-4" />
-            {t.settings.projectsTab}
           </button>
           <button
             onClick={() => setActiveTab("banners")}
@@ -1315,179 +1176,6 @@ export default function SettingsPage() {
               <div className="mt-8 pt-6 border-t border-gray-100">
                 <button
                   onClick={handleSaveFaq}
-                  disabled={isSaving}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
-                >
-                  {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                  {t.settings.save}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ==================== PROJECTS TAB ==================== */}
-          {activeTab === "projects" && (
-            <div>
-              {/* Language Switcher */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2 p-1 bg-gray-100 rounded-lg">
-                  <button
-                    onClick={() => setActiveLang("ru")}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                      activeLang === "ru" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
-                    }`}
-                  >
-                    <Globe className="w-4 h-4" />
-                    {t.settings.russian}
-                  </button>
-                  <button
-                    onClick={() => setActiveLang("uz")}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                      activeLang === "uz" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
-                    }`}
-                  >
-                    <Globe className="w-4 h-4" />
-                    {t.settings.uzbek}
-                  </button>
-                  <button
-                    onClick={() => setActiveLang("en")}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                      activeLang === "en" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
-                    }`}
-                  >
-                    <Globe className="w-4 h-4" />
-                    EN
-                  </button>
-                </div>
-                <button
-                  onClick={addProject}
-                  className="flex items-center gap-2 px-4 py-2 text-green-600 border border-green-200 rounded-lg hover:bg-green-50 transition-colors text-sm font-medium"
-                >
-                  <Plus className="w-4 h-4" />
-                  {t.settings.addProjectSetting}
-                </button>
-              </div>
-
-              {/* Projects List */}
-              <div className="space-y-6">
-                {currentProjects.length === 0 ? (
-                  <div className="text-center py-12 bg-gray-50 rounded-xl">
-                    <Layers className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                    <p className="text-gray-500">{t.settings.noProjectsSetting}</p>
-                    <button
-                      onClick={addProject}
-                      className="mt-3 text-green-600 text-sm font-medium hover:underline"
-                    >
-                      {t.settings.addFirstProject}
-                    </button>
-                  </div>
-                ) : (
-                  currentProjects.map((project, index) => (
-                    <div key={index} className="border border-gray-200 rounded-xl p-5 bg-gray-50">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <span className="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-bold">
-                            {project.number}
-                          </span>
-                          <div>
-                            <h4 className="font-medium text-gray-900">{project.title || t.settings.newProject}</h4>
-                            <p className="text-sm text-gray-500">{project.label || t.settings.noLabel}</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => removeProject(index)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.numberLabel}</label>
-                          <input
-                            type="text"
-                            value={project.number}
-                            onChange={(e) => updateProject(index, "number", e.target.value)}
-                            placeholder="01"
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.labelField}</label>
-                          <input
-                            type="text"
-                            value={project.label}
-                            onChange={(e) => updateProject(index, "label", e.target.value)}
-                            placeholder={activeLang === "ru" ? "Современный Дизайн" : activeLang === "uz" ? "Zamonaviy Dizayn" : "Contemporary Design"}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.titleLine1}</label>
-                          <input
-                            type="text"
-                            value={project.title}
-                            onChange={(e) => updateProject(index, "title", e.target.value)}
-                            placeholder={activeLang === "ru" ? "Комфортное" : activeLang === "uz" ? "Qulay" : "Comfortable"}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.titleLine2}</label>
-                          <input
-                            type="text"
-                            value={project.titleLine2}
-                            onChange={(e) => updateProject(index, "titleLine2", e.target.value)}
-                            placeholder={activeLang === "ru" ? "жилье" : activeLang === "uz" ? "turar-joy" : "living"}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.imageUrl}</label>
-                          <input
-                            type="text"
-                            value={project.image}
-                            onChange={(e) => updateProject(index, "image", e.target.value)}
-                            placeholder="/images/hero/1.png"
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mb-4">
-                        <label className="text-xs font-medium text-gray-500 mb-1 block">{t.settings.descriptionOptional}</label>
-                        <RichTextEditor
-                          value={project.description || ""}
-                          onChange={(value) => updateProject(index, "description", value)}
-                          placeholder={activeLang === "ru" ? "Описание проекта..." : activeLang === "uz" ? "Loyiha tavsifi..." : "Project description..."}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-medium text-gray-500 mb-1 block">
-                          {t.settings.featuresOptional}
-                        </label>
-                        <textarea
-                          value={(project.features || []).join("\n")}
-                          onChange={(e) => updateProject(index, "features", e.target.value.split("\n").filter(f => f.trim()))}
-                          placeholder={activeLang === "ru"
-                            ? "Центральное кондиционирование\nПриточно-вытяжная вентиляция\nСистема умный дом"
-                            : activeLang === "uz"
-                              ? "Markaziy konditsioner\nKirish-chiqish ventilyatsiyasi\nAqlli uy tizimi"
-                              : "Central air conditioning\nSupply and exhaust ventilation\nSmart home system"}
-                          rows={4}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
-                        />
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <div className="mt-8 pt-6 border-t border-gray-100">
-                <button
-                  onClick={handleSaveProjects}
                   disabled={isSaving}
                   className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
                 >

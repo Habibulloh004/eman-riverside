@@ -12,6 +12,10 @@ type PhoneNumberInputProps = {
   className?: string;
 };
 
+function normalizePhoneValue(value: string): string {
+  return value.trim().replace(/[^\d+]/g, "");
+}
+
 export default function PhoneNumberInput({
   value,
   onChange,
@@ -21,12 +25,14 @@ export default function PhoneNumberInput({
   defaultCountry = "UZ",
   className = "",
 }: PhoneNumberInputProps) {
+  const normalizedValue = normalizePhoneValue(value);
+
   return (
     <PhoneInput
       international
       defaultCountry={defaultCountry}
       countryCallingCodeEditable={false}
-      value={value as Value}
+      value={normalizedValue as Value}
       onChange={(next) => onChange(next || "")}
       placeholder={placeholder}
       required={required}
