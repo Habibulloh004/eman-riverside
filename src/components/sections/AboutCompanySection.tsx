@@ -38,13 +38,13 @@ function resolveMediaUrl(value: string): string {
 
 function EmanRiversideLogo() {
   return (
-    <div className="relative h-[82px] w-[300px] md:h-[96px] md:w-[350px] lg:h-[118px] lg:w-[430px]">
+    <div className="relative h-[82px] w-[300px] md:h-[96px] md:w-[350px] lg:h-[104px] lg:w-[400px]">
       <Image
         src="/logo horizontal green 1.svg"
         alt="Eman Riverside"
         fill
         className="object-contain object-left"
-        sizes="(max-width: 768px) 300px, (max-width: 1024px) 350px, 430px"
+        sizes="(max-width: 768px) 300px, (max-width: 1024px) 350px, 400px"
       />
     </div>
   );
@@ -108,6 +108,11 @@ export default function AboutCompanySection() {
             <div className="absolute inset-0 bg-gradient-to-b from-[#F8F0E7]/40 to-[#F8F0E7]" />
           </div> */}
 
+          {/* Logo aligned with the desktop right image */}
+          <div className="absolute right-[calc(50%-50vw)] top-0 z-30 hidden w-[560px] lg:block">
+            <EmanRiversideLogo />
+          </div>
+
           {/* Right image - desktop only */}
           <div className="absolute right-[calc(50%-50vw)] top-[200px] z-20 hidden h-[455px] w-[560px] overflow-hidden rounded-l-[190px] rounded-tl-none bg-[#F8F0E7] lg:block">
             
@@ -137,7 +142,7 @@ export default function AboutCompanySection() {
                 ) : null}
               </div>
 
-              <div className="flex justify-start lg:justify-center">
+              <div className="flex justify-start lg:hidden">
                 <EmanRiversideLogo />
               </div>
             </div>
